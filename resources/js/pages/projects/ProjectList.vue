@@ -2,7 +2,9 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { Plus, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
+import ArchiveFilterTabs from '@/components/ArchiveFilterTabs.vue';
 import ArchiveToggleButton from '@/components/ArchiveToggleButton.vue';
+import BudgetMeter from '@/components/BudgetMeter.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
@@ -30,12 +32,6 @@ defineOptions({
 const { confirmDelete } = useConfirmDelete();
 
 const rowUrl = (project: ProjectData) => projects.edit(project.id!);
-
-/** The list shows active projects by default; the filter opens up the archive. */
-const archiveOptions = {
-    Archived: { value: '0', label: 'Archived', colorClass: '' },
-    All: { value: 'all', label: 'Active and archived', colorClass: '' },
-};
 
 const billableOptions = {
     Billable: { value: '1', label: 'Billable', colorClass: '' },
@@ -80,6 +76,12 @@ function deleteProject(event: Event, project: ProjectData) {
         </PageHeader>
 
         <DataTable :data="items" :row-url="rowUrl" label="projects">
+            <template #buttons="{ filters }">
+                <ArchiveFilterTabs
+                    :model-value="filters.get('is_active')"
+                    @update:model-value="filters.set('is_active', $event)"
+                />
+            </template>
             <template #rows>
                 <DataTableColumn show="name" label="Project">
                     <template #default="{ item }: { item: ProjectData }">
@@ -142,9 +144,10 @@ function deleteProject(event: Event, project: ProjectData) {
                 </DataTableColumn>
                 <DataTableColumn show="total_hours" label="Hours">
                     <template #default="{ item }: { item: ProjectData }">
-                        <span class="tabular-nums">
-                            {{ formatHours(item.total_hours) }}
-                        </span>
+                        <BudgetMeter
+                            :hours="item.total_hours"
+                            :budget="item.budget_hours"
+                        />
                     </template>
                 </DataTableColumn>
                 <DataTableColumn show="unbilled_hours" label="Unbilled">
@@ -165,9 +168,7 @@ function deleteProject(event: Event, project: ProjectData) {
                 <DataTableColumn
                     show="is_active"
                     label="Status"
-                    filter-type="select"
-                    :filter-options="archiveOptions"
-                    filter-placeholder="Active"
+                    :filterable="false"
                 >
                     <template #default="{ item }: { item: ProjectData }">
                         <StatusBadge

@@ -9,6 +9,12 @@ withDefaults(
         filterType?: 'text' | 'select';
         filterOptions?: EnumOptions;
         /**
+         * Set to `false` to leave the filter row empty for a column the
+         * backend does allow filtering on, because the page offers its own
+         * control for it (the archive switch above the projects list).
+         */
+        filterable?: boolean;
+        /**
          * For a select filter: names the view you get with no filter set.
          * Defaults to "All"; override it when the backend applies its own
          * default (e.g. the sollicitantenlijst, which shows only lopende
@@ -20,6 +26,7 @@ withDefaults(
     }>(),
     {
         filterType: 'text',
+        filterable: true,
     },
 );
 

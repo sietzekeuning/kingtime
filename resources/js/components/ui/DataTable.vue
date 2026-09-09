@@ -40,6 +40,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import type { PaginatedData } from '@/interfaces/PaginatedData';
+import type { TableFilterApi } from '@/interfaces/TableFilterApi';
 import type { EnumOption, EnumOptions } from '@/lib/enums';
 import { rememberListUrl } from '@/lib/listReturn';
 import DataTablePagination from './DataTablePagination.vue';
@@ -53,6 +54,7 @@ interface CustomColumnMeta extends ColumnMeta<any, unknown> {
 }
 
 type Url = string | { url: string } | null;
+
 
 const props = withDefaults(
     defineProps<{
@@ -103,7 +105,7 @@ const emit = defineEmits<{
 
 defineSlots<{
     rows?: any;
-    buttons?: any;
+    buttons?: (props: { filters: TableFilterApi }) => any;
     'bulk-actions'?: (props: { selected: string[]; clear: () => void }) => any;
     empty?: any;
 }>();
@@ -196,6 +198,7 @@ const columns: ColumnDef<TData>[] = rowsSlot
                       sortable: showKey && props.data.allowed_sorts.includes(showKey),
                       filterable:
                           showKey &&
+                          columnProps.filterable !== false &&
                           props.data.allowed_filters.some((f) =>
                               typeof f === 'string' ? f === showKey : f.name === showKey,
                           ),
@@ -372,6 +375,18 @@ function getColumnFilterValue(columnId: string) {
     }
     return filterValueRefs.get(columnId)!;
 }
+
+/**
+ * Lets a page put its own filter control in the `#buttons` slot (a
+ * segmented archive switch, for instance) while the table keeps owning the
+ * filter state, the URL and the reload.
+ */
+const filterApi: TableFilterApi = {
+    get: (columnId: string): string | null => getColumnFilterValue(columnId).value,
+    set: (columnId: string, value: string | null): void => {
+        getColumnFilterValue(columnId).value = value;
+    },
+};
 
 const debouncedReload = debounce((filters: ColumnFiltersState) => {
     const filterParams: Record<string, string> = {};
@@ -558,7 +573,7 @@ function onRowDragEnd(): void {
                     :selected="selected"
                     :clear="clearSelection"
                 />
-                <slot name="buttons" />
+                <slot name="buttons" :filters="filterApi" />
             </div>
         </div>
 
