@@ -2,9 +2,9 @@
 
 namespace App\Domain\User\Controllers\Settings;
 
-use App\Http\Controllers\Controller;
 use App\Domain\User\Requests\Settings\ProfileDeleteRequest;
 use App\Domain\User\Requests\Settings\ProfileUpdateRequest;
+use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

@@ -2,9 +2,9 @@
 
 namespace App\Domain\User\Controllers\Settings;
 
-use App\Http\Controllers\Controller;
 use App\Domain\User\Requests\Settings\PasswordUpdateRequest;
 use App\Domain\User\Requests\Settings\TwoFactorAuthenticationRequest;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
