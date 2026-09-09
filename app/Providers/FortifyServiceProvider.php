@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Domain\User\Actions\Fortify\CreateNewUser;
 use App\Domain\User\Actions\Fortify\ResetUserPassword;
+use App\Domain\User\Actions\RegistrationIsOpenAction;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -50,6 +51,7 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::loginView(fn (Request $request) => Inertia::render('auth/Login', [
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
+            'canRegister' => app(RegistrationIsOpenAction::class)->handle(),
             'status' => $request->session()->get('status'),
         ]));
 
@@ -67,9 +69,13 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => Inertia::render('auth/Register', [
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
-        ]));
+        Fortify::registerView(function () {
+            abort_unless(app(RegistrationIsOpenAction::class)->handle(), 403, 'Registration is closed on this installation.');
+
+            return Inertia::render('auth/Register', [
+                'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            ]);
+        });
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/TwoFactorChallenge'));
 
