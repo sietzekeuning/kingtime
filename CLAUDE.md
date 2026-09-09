@@ -276,6 +276,6 @@ Every list is a `Table` class (`App\Domain\{Domain}\Tables\{Resource}Table exten
 
 ## CI and deploy
 
-- `.github/workflows/production.yml` runs on every push to `main` on the self-hosted runner (`[self-hosted, linux, x64]`, PHP via `/opt/php-shims/8.5`): build assets, Pest, PHPStan, then commits the built assets to the `deploy` branch. Forge auto-deploys that branch with zero downtime (`$CREATE_RELEASE` … `$ACTIVATE_RELEASE`), so migrations must be backward compatible with the release that is still serving.
+- `.github/workflows/production.yml` runs on every push to `master` on the self-hosted runner (`[self-hosted, linux, x64]`, PHP via `/opt/php-shims/8.5`): build assets, Pest, PHPStan, then commits the built assets to the `deploy` branch. Forge auto-deploys that branch with zero downtime (`$CREATE_RELEASE` … `$ACTIVATE_RELEASE`), so migrations must be backward compatible with the release that is still serving.
 - After every push: `gh run watch <id> --exit-status` in the background, and `gh run view <id> --log-failed` when red. Never mark work done while CI is red.
 - Deliverables for Sietze (reports, exports) go in `output/` (gitignored), never in the repo root.

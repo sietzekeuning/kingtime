@@ -3,8 +3,8 @@ name: production
 on:
   push:
     branches:
-      - main
-  # Manual escape hatch: `gh workflow run production --ref main` re-fires CI
+      - master
+  # Manual escape hatch: `gh workflow run production --ref master` re-fires CI
   # without an empty commit when GitHub skips a push event.
   workflow_dispatch:
 
