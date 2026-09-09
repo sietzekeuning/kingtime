@@ -110,13 +110,65 @@ jobs:
         run: cp .env.example .env && php artisan key:generate
 
       # The runner has two cores; four workers cost nothing extra because the
-      # suite is I/O-bound on an in-memory database.
+      # suite is I/O-bound on an in-memory database. The browser suite has
+      # its own job below.
       - name: Run Pest
-        run: ./vendor/bin/pest --parallel --processes=4 --colors=always
+        run: ./vendor/bin/pest --exclude-testsuite=Browser --parallel --processes=4 --colors=always
+
+  # tests/Browser drives the built pages in Playwright's Chromium. The plugin
+  # serves the app from an in-process server that calls the Laravel kernel
+  # directly, so it shares the worker's in-memory SQLite database. Chromium
+  # and its system libraries stay on the runner between runs, so the install
+  # step is a no-op once it has run.
+  browser:
+    runs-on: [self-hosted, linux, x64]
+    needs: [build]
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Select PHP 8.5
+        run: echo "/opt/php-shims/8.5" >> $GITHUB_PATH
+
+      - name: Install Node dependencies
+        run: |
+          echo "//npm.fontawesome.com/:_authToken=${FONTAWESOME_NPM_AUTH_TOKEN}" >> .npmrc
+          npm ci
+        env:
+          FONTAWESOME_NPM_AUTH_TOKEN: ${{ secrets.FONTAWESOME_NPM_TOKEN }}
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare environment
+        run: cp .env.example .env && php artisan key:generate
+
+      - name: Download built assets
+        uses: actions/download-artifact@v8
+        with:
+          name: built-assets
+          path: .
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+
+      - name: Run browser tests
+        run: ./vendor/bin/pest --testsuite=Browser --colors=always
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pest-browser-screenshots
+          path: tests/Browser/Screenshots
+          if-no-files-found: ignore
 
   deploy:
     runs-on: [self-hosted, linux, x64]
-    needs: [build, pest]
+    needs: [build, pest, browser]
     timeout-minutes: 10
 
     permissions:

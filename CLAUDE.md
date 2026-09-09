@@ -273,6 +273,7 @@ Every list is a `Table` class (`App\Domain\{Domain}\Tables\{Resource}Table exten
 - Pest 5. Feature tests in `tests/Feature/{Domain}/`, `RefreshDatabase` on an in-memory SQLite. `TestCase` calls `withoutVite()`, so no build is needed.
 - External APIs are always faked (`Http::fake()`), with fixtures in `tests/Fixtures/{harvest,moneybird}/`.
 - Run a single file without `--parallel`; the whole suite with `--parallel --processes=4` at most. Pest prints one JSON line when driven by an agent; don't pipe it through `tail`/`grep`.
+- Browser tests live in `tests/Browser/` (Pest browser plugin on Playwright's Chromium, `BrowserTestCase`). They load the real page, so run `npm run build` first; a stale build tests yesterday's frontend. Run them with `vendor/bin/pest --testsuite=Browser` (never `--parallel` locally) and the rest with `--exclude-testsuite=Browser`. After a click that ends in a visit or a toast, poll with `browserWaitUntilSee()`; `assertSee` looks once. Fields are addressed as `[data-field="name"] input`, reka-ui selects via `button[role="combobox"]` and `[role="option"]:has-text(...)`, the delete dialog via `browserConfirmDelete()`.
 - Before pushing: `vendor/bin/pint --dirty`, `vendor/bin/phpstan analyse --memory-limit=2G` (level 7), `npx vp check --fix`, `npx vue-tsc --noEmit`, and the Pest suite. All four must be green; CI runs the same.
 - Pest helper functions share one global namespace across the suite; prefix them per test subject.
 

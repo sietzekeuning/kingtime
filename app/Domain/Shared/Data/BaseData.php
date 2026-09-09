@@ -268,9 +268,26 @@ abstract class BaseData extends Data
         $reflection = new ReflectionClass(static::class);
         $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
 
+        // A promoted property with a default (`string $currency = 'EUR'`,
+        // `bool $is_active = true`) starts a new record with that default,
+        // not with the empty value of its type.
+        $constructorDefaults = [];
+        foreach ($reflection->getConstructor()?->getParameters() ?? [] as $parameter) {
+            if ($parameter->isDefaultValueAvailable()) {
+                $constructorDefaults[$parameter->getName()] = $parameter->getDefaultValue();
+            }
+        }
+
         $data = [];
         foreach ($properties as $property) {
             $name = $property->getName();
+
+            if (array_key_exists($name, $constructorDefaults)) {
+                $data[$name] = $constructorDefaults[$name];
+
+                continue;
+            }
+
             $type = $property->getType();
             $isNullable = $type?->allowsNull() ?? false;
             $typeName = $type instanceof ReflectionNamedType ? $type->getName() : null;

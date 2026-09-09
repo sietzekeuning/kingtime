@@ -4,8 +4,11 @@ namespace App\Http\Middleware;
 
 use App\Domain\Time\Data\TimeEntryData;
 use App\Domain\Time\Models\TimeEntry;
+use Closure;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Middleware;
+use Symfony\Component\HttpFoundation\Response;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -17,6 +20,21 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    /**
+     * Controllers flash a toast with `->with('toast', …)`. Inertia only ships
+     * its own flash store to the client, so the session toast is handed over
+     * before the page renders; `initializeFlashToast` on the front-end shows
+     * it. Without this the toast sits in the session and nobody sees it.
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        if ($request->hasSession() && $request->session()->has('toast')) {
+            Inertia::flash('toast', $request->session()->get('toast'));
+        }
+
+        return parent::handle($request, $next);
+    }
 
     /**
      * Determines the current asset version.

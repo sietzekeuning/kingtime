@@ -13,7 +13,18 @@ abstract class TestCase extends BaseTestCase
 
         // Pages render through app.blade.php, which asks Vite for the page chunk.
         // The suite must not depend on a production build being present.
-        $this->withoutVite();
+        if ($this->rendersWithoutVite()) {
+            $this->withoutVite();
+        }
+    }
+
+    /**
+     * Browser tests load the real page in Chromium, so they need the built
+     * assets and override this.
+     */
+    protected function rendersWithoutVite(): bool
+    {
+        return true;
     }
 
     protected function skipUnlessFortifyHas(string $feature, ?string $message = null): void

@@ -12,6 +12,7 @@
 /resources/js/wayfinder
 /resources/js/typescript-transformer-manifest.json
 /output
+/tests/Browser/Screenshots
 /vendor
 .DS_Store
 .env
