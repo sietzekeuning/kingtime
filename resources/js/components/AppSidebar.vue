@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import FaIcon from '@/components/FaIcon.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -21,7 +21,6 @@ import reports from '@/routes/reports';
 import timeEntries from '@/routes/time-entries';
 import type { NavItem } from '@/types';
 
-const appName = usePage().props.name;
 const { toggleSidebar } = useSidebar();
 
 const mainNavItems: NavItem[] = [
@@ -71,9 +70,9 @@ const footerNavItems: NavItem[] = [
                         <AppLogoIcon class="size-5" />
                     </span>
                     <span
-                        class="truncate text-[17px] font-semibold tracking-tight group-data-[collapsible=icon]:hidden"
+                        class="truncate text-lg font-bold tracking-tight group-data-[collapsible=icon]:hidden"
                     >
-                        {{ appName }}
+                        KingTime
                     </span>
                 </Link>
                 <button

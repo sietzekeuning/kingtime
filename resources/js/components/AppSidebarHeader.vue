@@ -39,7 +39,7 @@ const { getInitials } = useInitials();
 
 <template>
     <header
-        class="border-border flex h-16 shrink-0 items-center gap-3 border-b px-4 md:px-5"
+        class="border-border bg-background sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b px-4 md:px-5"
     >
         <SidebarTrigger
             class="-ml-1 md:hidden md:group-has-data-[collapsible=icon]/sidebar-wrapper:inline-flex"
