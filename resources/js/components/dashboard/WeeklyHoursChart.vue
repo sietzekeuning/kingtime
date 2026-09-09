@@ -1,31 +1,22 @@
 <script setup lang="ts">
 import {
+    BarElement,
     CategoryScale,
     Chart,
-    Filler,
-    LineElement,
     LinearScale,
-    PointElement,
     Tooltip,
 } from 'chart.js';
-import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
+import type { ChartData, ChartOptions } from 'chart.js';
 import { computed, onMounted, ref } from 'vue';
-import { Line } from 'vue-chartjs';
+import { Bar } from 'vue-chartjs';
 import { formatHours } from '@/lib/utils';
 
-Chart.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Filler,
-    Tooltip,
-);
+Chart.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
 /**
- * Hours per week as an orange line with a soft gradient underneath. Colors
- * are read from the theme tokens at mount so the chart follows app.css in
- * both light and dark mode.
+ * Hours per week as rounded orange bars; the last bar is the current,
+ * still growing week and is drawn lighter. Colors are read from the theme
+ * tokens at mount so the chart follows app.css in light and dark mode.
  */
 const props = defineProps<{
     labels: string[];
@@ -69,47 +60,32 @@ onMounted(() => {
     };
 });
 
-function gradient(context: ScriptableContext<'line'>): string | CanvasGradient {
-    const { ctx, chartArea } = context.chart;
+const chartData = computed<ChartData<'bar'>>(() => {
+    const lastIndex = props.values.length - 1;
 
-    if (!chartArea) {
-        return 'transparent';
-    }
+    return {
+        labels: props.labels,
+        datasets: [
+            {
+                label: 'Hours',
+                data: props.values,
+                backgroundColor: props.values.map((_, index) =>
+                    index === lastIndex
+                        ? withAlpha(colors.value.primary, 0.45)
+                        : colors.value.primary,
+                ),
+                hoverBackgroundColor: colors.value.primary,
+                borderRadius: 6,
+                borderSkipped: 'bottom',
+                maxBarThickness: 28,
+                categoryPercentage: 0.7,
+                barPercentage: 0.9,
+            },
+        ],
+    };
+});
 
-    const fill = ctx.createLinearGradient(
-        0,
-        chartArea.top,
-        0,
-        chartArea.bottom,
-    );
-    fill.addColorStop(0, withAlpha(colors.value.primary, 0.28));
-    fill.addColorStop(1, withAlpha(colors.value.primary, 0));
-
-    return fill;
-}
-
-const chartData = computed<ChartData<'line'>>(() => ({
-    labels: props.labels,
-    datasets: [
-        {
-            label: 'Hours',
-            data: props.values,
-            borderColor: colors.value.primary,
-            backgroundColor: gradient,
-            borderWidth: 2,
-            fill: true,
-            tension: 0.35,
-            pointRadius: 0,
-            pointHitRadius: 12,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: colors.value.primary,
-            pointHoverBorderColor: colors.value.card,
-            pointHoverBorderWidth: 2,
-        },
-    ],
-}));
-
-const chartOptions = computed<ChartOptions<'line'>>(() => ({
+const chartOptions = computed<ChartOptions<'bar'>>(() => ({
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 300 },
@@ -125,7 +101,12 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
             cornerRadius: 8,
             callbacks: {
                 title: (items) => `Week of ${items[0]?.label ?? ''}`,
-                label: (item) => `${formatHours(item.parsed.y)} hours`,
+                label: (item) =>
+                    `${formatHours(item.parsed.y)} hours${
+                        item.dataIndex === props.values.length - 1
+                            ? ' so far'
+                            : ''
+                    }`,
             },
         },
     },
@@ -138,7 +119,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
                 maxRotation: 0,
                 autoSkip: true,
                 maxTicksLimit: 9,
-                font: { size: 11 },
+                font: { size: 12 },
             },
         },
         y: {
@@ -147,8 +128,8 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
             border: { display: false, dash: [3, 3] },
             ticks: {
                 color: colors.value.muted,
-                font: { size: 11 },
-                maxTicksLimit: 5,
+                font: { size: 12 },
+                maxTicksLimit: 6,
                 callback: (value) => `${value}h`,
             },
         },
@@ -157,7 +138,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
 </script>
 
 <template>
-    <div class="relative h-64 w-full">
-        <Line :data="chartData" :options="chartOptions" />
+    <div class="relative h-72 w-full">
+        <Bar :data="chartData" :options="chartOptions" />
     </div>
 </template>

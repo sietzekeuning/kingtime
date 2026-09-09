@@ -1,0 +1,85 @@
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faGithub } from '@fortawesome/free-brands-svg-icons';
+import {
+    faArrowDown,
+    faArrowLeft,
+    faArrowRight,
+    faArrowUp,
+    faArrowUpRightFromSquare,
+    faBook,
+    faBriefcase,
+    faBuilding,
+    faCalendar,
+    faChartSimple,
+    faChevronDown,
+    faChevronRight,
+    faCircleCheck,
+    faClock,
+    faEllipsis,
+    faFileInvoice,
+    faGear,
+    faHouse,
+    faKey,
+    faMagnifyingGlass,
+    faMinus,
+    faPalette,
+    faPlug,
+    faPlus,
+    faRightFromBracket,
+    faShield,
+    faSidebar,
+    faStopwatch,
+    faTimer,
+    faUser,
+    faXmark,
+} from '@fortawesome/pro-regular-svg-icons';
+import {
+    faPlay as faPlaySolid,
+    faSquare as faSquareSolid,
+    faStop as faStopSolid,
+} from '@fortawesome/pro-solid-svg-icons';
+
+/**
+ * Every Font Awesome Pro icon the app renders through `<FaIcon>`. Icons
+ * are registered by name once here so a template can ask for `icon="clock"`
+ * and tree-shaking still drops the thousands we never use. Regular is the
+ * house weight; solid is reserved for small filled glyphs (stop, play).
+ * Add an icon here before using it, otherwise `<FaIcon>` renders nothing.
+ */
+library.add(
+    faArrowDown,
+    faArrowLeft,
+    faArrowRight,
+    faArrowUp,
+    faArrowUpRightFromSquare,
+    faBook,
+    faBriefcase,
+    faBuilding,
+    faCalendar,
+    faChartSimple,
+    faChevronDown,
+    faChevronRight,
+    faCircleCheck,
+    faClock,
+    faEllipsis,
+    faFileInvoice,
+    faGear,
+    faGithub,
+    faHouse,
+    faKey,
+    faMagnifyingGlass,
+    faMinus,
+    faPalette,
+    faPlaySolid,
+    faPlug,
+    faPlus,
+    faRightFromBracket,
+    faShield,
+    faSidebar,
+    faSquareSolid,
+    faStopSolid,
+    faStopwatch,
+    faTimer,
+    faUser,
+    faXmark,
+);

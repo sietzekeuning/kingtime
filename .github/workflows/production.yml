@@ -40,8 +40,14 @@ jobs:
       - name: Select PHP 8.5
         run: echo "/opt/php-shims/8.5" >> $GITHUB_PATH
 
+      # Font Awesome Pro lives on npm.fontawesome.com; the token is a repo
+      # secret and only ever lands in the runner's workspace copy of .npmrc.
       - name: Install Node dependencies
-        run: npm ci
+        run: |
+          echo "//npm.fontawesome.com/:_authToken=${FONTAWESOME_NPM_AUTH_TOKEN}" >> .npmrc
+          npm ci
+        env:
+          FONTAWESOME_NPM_AUTH_TOKEN: ${{ secrets.FONTAWESOME_NPM_TOKEN }}
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader

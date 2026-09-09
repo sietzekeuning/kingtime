@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FaIcon from '@/components/FaIcon.vue';
 import {
     SidebarGroup,
     SidebarGroupContent,
@@ -19,21 +20,22 @@ defineProps<Props>();
 
 <template>
     <SidebarGroup
-        :class="`group-data-[collapsible=icon]:p-0 ${$props.class || ''}`"
+        :class="`p-0 group-data-[collapsible=icon]:p-0 ${$props.class || ''}`"
     >
         <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu class="gap-0.5">
                 <SidebarMenuItem v-for="item in items" :key="item.title">
                     <SidebarMenuButton
-                        class="text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100"
+                        class="text-muted-foreground hover:text-foreground h-8 gap-2.5 rounded-lg px-2.5 text-sm"
                         as-child
+                        :tooltip="item.title"
                     >
                         <a
                             :href="toUrl(item.href)"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <component :is="item.icon" />
+                            <FaIcon :icon="item.icon" class="text-sm" />
                             <span>{{ item.title }}</span>
                         </a>
                     </SidebarMenuButton>

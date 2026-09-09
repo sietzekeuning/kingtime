@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { KeyRound, Palette, Plug, Shield, User } from '@lucide/vue';
+import FaIcon from '@/components/FaIcon.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -14,11 +14,11 @@ import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
-    { title: 'Profile', href: editProfile(), icon: User },
-    { title: 'Security', href: editSecurity(), icon: Shield },
-    { title: 'Appearance', href: editAppearance(), icon: Palette },
-    { title: 'Integrations', href: editIntegrations(), icon: Plug },
-    { title: 'API tokens', href: apiTokensIndex(), icon: KeyRound },
+    { title: 'Profile', href: editProfile(), icon: 'user' },
+    { title: 'Security', href: editSecurity(), icon: 'shield' },
+    { title: 'Appearance', href: editAppearance(), icon: 'palette' },
+    { title: 'Integrations', href: editIntegrations(), icon: 'plug' },
+    { title: 'API tokens', href: apiTokensIndex(), icon: 'key' },
 ];
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
@@ -48,7 +48,7 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
                         as-child
                     >
                         <Link :href="item.href">
-                            <component :is="item.icon" class="h-4 w-4" />
+                            <FaIcon :icon="item.icon" class="text-sm" />
                             {{ item.title }}
                         </Link>
                     </Button>

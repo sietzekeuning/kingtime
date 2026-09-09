@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from '@lucide/vue';
+import { Menu, Search } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
+import FaIcon from '@/components/FaIcon.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -57,7 +58,7 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
-        icon: LayoutGrid,
+        icon: 'house',
     },
 ];
 
@@ -65,12 +66,12 @@ const rightNavItems: NavItem[] = [
     {
         title: 'Repository',
         href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
+        icon: 'github',
     },
     {
         title: 'Documentation',
         href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
+        icon: 'book',
     },
 ];
 </script>
@@ -116,10 +117,9 @@ const rightNavItems: NavItem[] = [
                                             )
                                         "
                                     >
-                                        <component
-                                            v-if="item.icon"
-                                            :is="item.icon"
-                                            class="h-5 w-5"
+                                        <FaIcon
+                                            :icon="item.icon"
+                                            class="text-base"
                                         />
                                         {{ item.title }}
                                     </Link>
@@ -133,10 +133,9 @@ const rightNavItems: NavItem[] = [
                                         rel="noopener noreferrer"
                                         class="flex items-center space-x-2 text-sm font-medium"
                                     >
-                                        <component
-                                            v-if="item.icon"
-                                            :is="item.icon"
-                                            class="h-5 w-5"
+                                        <FaIcon
+                                            :icon="item.icon"
+                                            class="text-base"
                                         />
                                         <span>{{ item.title }}</span>
                                     </a>
@@ -172,10 +171,9 @@ const rightNavItems: NavItem[] = [
                                     ]"
                                     :href="item.href"
                                 >
-                                    <component
-                                        v-if="item.icon"
-                                        :is="item.icon"
-                                        class="mr-2 h-4 w-4"
+                                    <FaIcon
+                                        :icon="item.icon"
+                                        class="text-base"
                                     />
                                     {{ item.title }}
                                 </Link>
@@ -222,9 +220,9 @@ const rightNavItems: NavItem[] = [
                                                     <span class="sr-only">{{
                                                         item.title
                                                     }}</span>
-                                                    <component
-                                                        :is="item.icon"
-                                                        class="size-5 opacity-80 group-hover:opacity-100"
+                                                    <FaIcon
+                                                        :icon="item.icon"
+                                                        class="text-base"
                                                     />
                                                 </a>
                                             </Button>

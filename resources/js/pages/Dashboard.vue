@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowRight, Clock, Timer } from '@lucide/vue';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import EmptyState from '@/components/EmptyState.vue';
-import PageHeader from '@/components/PageHeader.vue';
+import { computed, ref } from 'vue';
+import CardMenu from '@/components/dashboard/CardMenu.vue';
 import StatCard from '@/components/dashboard/StatCard.vue';
 import WeeklyHoursChart from '@/components/dashboard/WeeklyHoursChart.vue';
+import EmptyState from '@/components/EmptyState.vue';
+import FaIcon from '@/components/FaIcon.vue';
+import PageHeader from '@/components/PageHeader.vue';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useTimerElapsed } from '@/composables/useTimerElapsed';
 import { formatHours } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import projects from '@/routes/projects';
+import reports from '@/routes/reports';
 import timeEntries from '@/routes/time-entries';
 import type {
     DashboardChartData,
@@ -32,6 +36,12 @@ defineOptions({
         breadcrumbs: [{ title: 'Dashboard', href: dashboard() }],
     },
 });
+
+const today = new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+}).format(new Date());
 
 // -- Chart range -----------------------------------------------------------
 
@@ -59,49 +69,21 @@ function selectRange(range: string) {
     });
 }
 
-// -- Running timer ---------------------------------------------------------
-
-const loadedAt = Date.now();
-const now = ref(Date.now());
-let ticker: ReturnType<typeof setInterval> | undefined;
-
-onMounted(() => {
-    ticker = setInterval(() => {
-        now.value = Date.now();
-    }, 1000);
-});
-
-onUnmounted(() => {
-    if (ticker !== undefined) {
-        clearInterval(ticker);
-    }
-});
-
-const runningElapsed = computed(() => {
-    const timer = props.statistics.running_timer;
-
-    if (!timer) {
-        return '';
-    }
-
-    const baseSeconds = (Number.parseFloat(timer.hours) || 0) * 3600;
-    const total = Math.max(
-        0,
-        Math.round(baseSeconds + (now.value - loadedAt) / 1000),
-    );
-    const hours = Math.floor(total / 3600);
-    const minutes = Math.floor((total % 3600) / 60);
-    const seconds = total % 60;
-
-    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-});
+const chartMenu = [
+    { title: 'Time entries', href: timeEntries.index(), icon: 'clock' },
+    { title: 'Reports', href: reports.index(), icon: 'chart-simple' },
+];
 
 // -- Statistics ------------------------------------------------------------
+
+const { formatted: runningElapsed } = useTimerElapsed(
+    () => props.statistics.running_timer?.timer_started_at,
+);
 
 const billableRatio = computed(() => {
     const ratio = props.statistics.billable_ratio;
 
-    return ratio === null ? null : `${ratio.toFixed(1).replace('.', ',')}%`;
+    return ratio === null ? null : `${ratio.toFixed(1)}%`;
 });
 
 const billableDelta = computed(() => {
@@ -114,14 +96,20 @@ const billableDelta = computed(() => {
     const sign = delta > 0 ? '+' : delta < 0 ? '-' : '';
 
     return {
-        text: `${sign}${Math.abs(delta).toFixed(1).replace('.', ',')} pts vs. last month`,
+        text: `${sign}${Math.abs(delta).toFixed(1)} pts`,
         class:
             delta > 0
-                ? 'text-emerald-700'
+                ? 'text-emerald-600'
                 : delta < 0
-                  ? 'text-rose-700'
+                  ? 'text-rose-600'
                   : 'text-muted-foreground',
     };
+});
+
+const workingDays = computed(() => {
+    const days = props.statistics.working_days_this_month;
+
+    return `${days} working ${days === 1 ? 'day' : 'days'} so far`;
 });
 
 // -- Lists -----------------------------------------------------------------
@@ -135,21 +123,55 @@ function formatDay(date: string): string {
     return dayFormatter.format(new Date(`${date}T00:00:00`));
 }
 
-function entryDetail(entry: TimeEntryData): string {
-    return entry.notes ?? '';
+function initials(name: string | null | undefined): string {
+    return (name ?? 'P')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((word) => word[0]?.toUpperCase() ?? '')
+        .join('');
+}
+
+/** Avatar bubble tinted with the project color. */
+function bubbleStyle(color: string | null | undefined) {
+    const base = color ?? 'var(--primary)';
+
+    return {
+        color: base,
+        backgroundColor: `color-mix(in oklab, ${base} 14%, transparent)`,
+    };
+}
+
+function formatPercent(value: number): string {
+    return `${value.toFixed(1)}%`;
 }
 </script>
 
 <template>
     <Head title="Dashboard" />
 
-    <div class="flex flex-1 flex-col gap-4 p-4 md:p-6">
-        <PageHeader
-            title="Dashboard"
-            subtitle="Your hours at a glance: today, this week and this month."
-        />
+    <div class="flex flex-1 flex-col gap-5 p-4 md:p-6">
+        <PageHeader title="Dashboard">
+            <template #actions>
+                <span
+                    class="border-border bg-card text-foreground hidden h-9 items-center gap-2 rounded-lg border px-3 text-sm sm:inline-flex"
+                >
+                    <FaIcon icon="calendar" class="text-muted-foreground" />
+                    {{ today }}
+                </span>
+                <Button variant="outline" class="rounded-lg" as-child>
+                    <Link :href="reports.index()">
+                        <FaIcon icon="chart-simple" class="text-sm" />
+                        Reports
+                    </Link>
+                </Button>
+            </template>
+        </PageHeader>
 
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <!-- Stat tiles share hairlines instead of gaps: a border-colored grid with 1px gaps. -->
+        <div
+            class="bg-border border-border grid gap-px overflow-hidden rounded-xl border sm:grid-cols-2 xl:grid-cols-4"
+        >
             <StatCard
                 v-for="stat in stats.items"
                 :key="stat.label"
@@ -157,42 +179,44 @@ function entryDetail(entry: TimeEntryData): string {
             />
         </div>
 
-        <div class="grid gap-4 lg:grid-cols-3">
-            <Card class="gap-0 py-0 shadow-none lg:col-span-2">
+        <div
+            class="bg-border border-border grid gap-px overflow-hidden rounded-xl border lg:grid-cols-3"
+        >
+            <section class="bg-card flex flex-col lg:col-span-2">
                 <div
-                    class="flex flex-wrap items-center justify-between gap-3 px-5 pt-5 pb-3"
+                    class="flex flex-wrap items-center justify-between gap-3 px-5 pt-5 pb-2"
                 >
-                    <div>
-                        <h2 class="font-semibold">Weekly hours</h2>
-                        <p class="text-muted-foreground text-sm">
-                            Hours logged per week, Monday to Sunday.
-                        </p>
-                    </div>
-                    <div
-                        class="bg-muted inline-flex rounded-lg p-0.5"
-                        role="group"
-                        aria-label="Chart range"
-                    >
-                        <button
-                            v-for="range in ranges"
-                            :key="range.value"
-                            type="button"
-                            class="rounded-md px-3 py-1 text-xs font-medium transition-colors"
-                            :class="
-                                range.value === chart.range
-                                    ? 'bg-card text-foreground border-border border'
-                                    : 'text-muted-foreground hover:text-foreground'
-                            "
-                            :aria-pressed="range.value === chart.range"
-                            :disabled="loadingRange !== null"
-                            @click="selectRange(range.value)"
+                    <h2 class="text-lg font-semibold tracking-tight">
+                        Weekly hours
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <div
+                            class="bg-muted inline-flex rounded-lg p-1"
+                            role="group"
+                            aria-label="Chart range"
                         >
-                            {{ range.label }}
-                        </button>
+                            <button
+                                v-for="range in ranges"
+                                :key="range.value"
+                                type="button"
+                                class="rounded-md px-3 py-1 text-sm font-medium transition-colors"
+                                :class="
+                                    range.value === chart.range
+                                        ? 'bg-card text-foreground border-border border shadow-xs'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                "
+                                :aria-pressed="range.value === chart.range"
+                                :disabled="loadingRange !== null"
+                                @click="selectRange(range.value)"
+                            >
+                                {{ range.label }}
+                            </button>
+                        </div>
+                        <CardMenu :items="chartMenu" />
                     </div>
                 </div>
                 <div
-                    class="px-5 pb-5 transition-opacity"
+                    class="px-5 pt-3 pb-5 transition-opacity"
                     :class="{ 'opacity-60': loadingRange !== null }"
                 >
                     <WeeklyHoursChart
@@ -200,75 +224,104 @@ function entryDetail(entry: TimeEntryData): string {
                         :values="chart.values"
                     />
                 </div>
-            </Card>
+            </section>
 
-            <Card class="gap-0 py-0 shadow-none">
-                <div class="px-5 pt-5 pb-2">
-                    <h2 class="font-semibold">Statistics</h2>
-                    <p class="text-muted-foreground text-sm">This month</p>
+            <section class="bg-card flex flex-col">
+                <div
+                    class="flex items-center justify-between gap-3 px-5 pt-5 pb-2"
+                >
+                    <h2 class="text-lg font-semibold tracking-tight">
+                        Statistics
+                    </h2>
+                    <CardMenu :items="chartMenu" />
                 </div>
                 <div class="flex flex-1 flex-col px-5 pb-5">
                     <div class="py-4">
-                        <div class="text-muted-foreground text-sm">
+                        <div class="text-foreground/80 text-[15px]">
                             Billable ratio
                         </div>
                         <div
-                            class="mt-1 text-2xl font-semibold tracking-tight tabular-nums"
+                            class="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"
                         >
-                            {{ billableRatio ?? '0,0%' }}
-                        </div>
-                        <div
-                            v-if="billableDelta"
-                            class="mt-0.5 text-xs font-medium"
-                            :class="billableDelta.class"
-                        >
-                            {{ billableDelta.text }}
-                        </div>
-                        <div
-                            v-else
-                            class="text-muted-foreground mt-0.5 text-xs"
-                        >
-                            {{
-                                billableRatio === null
-                                    ? 'No hours logged yet'
-                                    : 'No hours last month'
-                            }}
+                            <span
+                                class="text-[32px] leading-none font-semibold tracking-tight tabular-nums"
+                            >
+                                {{ billableRatio ?? '0.0%' }}
+                            </span>
+                            <span v-if="billableDelta" class="text-[15px]">
+                                <span
+                                    class="font-medium"
+                                    :class="billableDelta.class"
+                                >
+                                    {{ billableDelta.text }}
+                                </span>
+                                <span class="text-muted-foreground">
+                                    vs. last month
+                                </span>
+                            </span>
+                            <span
+                                v-else
+                                class="text-muted-foreground text-[15px]"
+                            >
+                                {{
+                                    billableRatio === null
+                                        ? 'No hours logged yet'
+                                        : 'No hours last month'
+                                }}
+                            </span>
                         </div>
                     </div>
 
                     <div class="border-border border-t border-dashed py-4">
-                        <div class="text-muted-foreground text-sm">
+                        <div class="text-foreground/80 text-[15px]">
                             Average per working day
                         </div>
                         <div
-                            class="mt-1 flex items-baseline gap-1 text-2xl font-semibold tracking-tight tabular-nums"
+                            class="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"
                         >
-                            {{
-                                formatHours(
-                                    statistics.average_hours_per_working_day,
-                                )
-                            }}
-                            <span class="text-muted-foreground text-sm">h</span>
-                        </div>
-                        <div class="text-muted-foreground mt-0.5 text-xs">
-                            {{ statistics.working_days_this_month }}
-                            working
-                            {{
-                                statistics.working_days_this_month === 1
-                                    ? 'day'
-                                    : 'days'
-                            }}
-                            so far
+                            <span
+                                class="text-[32px] leading-none font-semibold tracking-tight tabular-nums"
+                            >
+                                {{
+                                    formatHours(
+                                        statistics.average_hours_per_working_day,
+                                    )
+                                }}<span
+                                    class="text-muted-foreground ml-1 text-lg font-medium"
+                                    >h</span
+                                >
+                            </span>
+                            <span class="text-muted-foreground text-[15px]">
+                                {{ workingDays }}
+                            </span>
                         </div>
                     </div>
 
                     <div class="border-border border-t border-dashed pt-4">
-                        <div class="text-muted-foreground text-sm">
+                        <div class="text-foreground/80 text-[15px]">
                             Running timer
                         </div>
-                        <template v-if="statistics.running_timer">
-                            <div class="mt-1 flex items-center gap-2">
-                                <span class="relative flex size-2.5">
+                        <div
+                            class="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"
+                        >
+                            <span
+                                class="text-[32px] leading-none font-semibold tracking-tight tabular-nums"
+                                :class="{
+                                    'text-muted-foreground/60':
+                                        !statistics.running_timer,
+                                }"
+                            >
+                                {{
+                                    statistics.running_timer
+                                        ? runningElapsed
+                                        : '0:00:00'
+                                }}
+                            </span>
+                            <span
+                                v-if="statistics.running_timer"
+                                class="text-muted-foreground inline-flex min-w-0 items-center gap-2 text-[15px]"
+                            >
+                                <span class="relative flex size-2.5 shrink-0">
                                     <span
                                         class="bg-primary absolute inline-flex size-full animate-ping rounded-full opacity-60"
                                     />
@@ -276,166 +329,174 @@ function entryDetail(entry: TimeEntryData): string {
                                         class="bg-primary relative inline-flex size-2.5 rounded-full"
                                     />
                                 </span>
-                                <span class="truncate font-medium">
+                                <span class="truncate">
                                     {{
                                         statistics.running_timer.project_name ??
                                         'Project'
                                     }}
                                 </span>
-                            </div>
-                            <div
-                                class="mt-1 text-2xl font-semibold tracking-tight tabular-nums"
+                            </span>
+                            <span
+                                v-else
+                                class="text-muted-foreground text-[15px]"
                             >
-                                {{ runningElapsed }}
-                            </div>
-                            <div
-                                v-if="entryDetail(statistics.running_timer)"
-                                class="text-muted-foreground mt-0.5 truncate text-xs"
-                            >
-                                {{ entryDetail(statistics.running_timer) }}
-                            </div>
-                        </template>
-                        <div
-                            v-else
-                            class="text-muted-foreground mt-2 flex items-center gap-2 text-sm"
-                        >
-                            <Timer class="size-4" />
-                            No timer running
+                                No timer running
+                            </span>
                         </div>
                     </div>
                 </div>
-            </Card>
+            </section>
         </div>
 
-        <div class="grid gap-4 lg:grid-cols-2">
+        <div class="grid gap-5 lg:grid-cols-2">
             <Card class="gap-0 py-0 shadow-none">
-                <div class="px-5 pt-5 pb-2">
-                    <h2 class="font-semibold">Recent entries</h2>
-                    <p class="text-muted-foreground text-sm">
-                        The last six things you logged.
-                    </p>
+                <div
+                    class="flex items-center justify-between gap-3 px-5 pt-5 pb-4"
+                >
+                    <h2 class="text-lg font-semibold tracking-tight">
+                        Recent entries
+                    </h2>
+                    <CardMenu
+                        :items="[
+                            {
+                                title: 'Time entries',
+                                href: timeEntries.index(),
+                                icon: 'clock',
+                            },
+                            {
+                                title: 'Log time',
+                                href: timeEntries.create(),
+                                icon: 'plus',
+                            },
+                        ]"
+                    />
                 </div>
-                <div class="flex-1 px-5 pb-4">
-                    <EmptyState v-if="recent_entries.length === 0">
+                <div class="border-border flex-1 border-t border-dashed px-5">
+                    <EmptyState v-if="recent_entries.length === 0" class="my-5">
                         No time entries yet.
                     </EmptyState>
-                    <ul v-else class="divide-border divide-y">
+                    <ul v-else class="py-2">
                         <li
                             v-for="entry in recent_entries"
                             :key="entry.id ?? entry.spent_on"
-                            class="flex items-center gap-3 py-2.5"
+                            class="flex items-center gap-4 py-3"
                         >
                             <span
-                                class="size-2.5 shrink-0 rounded-full"
-                                :style="{
-                                    backgroundColor:
-                                        entry.project_color ?? 'var(--primary)',
-                                }"
-                            />
+                                class="flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+                                :style="bubbleStyle(entry.project_color)"
+                            >
+                                {{ initials(entry.project_name) }}
+                            </span>
                             <div class="min-w-0 flex-1">
-                                <div class="truncate text-sm font-medium">
+                                <div class="truncate text-[15px] font-medium">
                                     {{ entry.project_name ?? 'Project' }}
                                 </div>
                                 <div
-                                    v-if="entryDetail(entry)"
-                                    class="text-muted-foreground truncate text-xs"
+                                    class="text-muted-foreground truncate text-sm"
                                 >
-                                    {{ entryDetail(entry) }}
+                                    {{ entry.notes || entry.client_name || '' }}
                                 </div>
                             </div>
-                            <div class="shrink-0 text-right">
-                                <div class="text-sm font-medium tabular-nums">
+                            <div
+                                class="text-muted-foreground inline-flex shrink-0 items-center gap-2 text-[15px] tabular-nums"
+                            >
+                                <FaIcon icon="clock" class="text-sm" />
+                                <span class="text-foreground font-medium">
                                     {{ formatHours(entry.hours) }} h
-                                </div>
-                                <div
-                                    class="text-muted-foreground flex items-center justify-end gap-1 text-xs"
-                                >
-                                    <Clock class="size-3" />
-                                    {{ formatDay(entry.spent_on) }}
-                                </div>
+                                </span>
+                                <span class="hidden sm:inline">
+                                    · {{ formatDay(entry.spent_on) }}
+                                </span>
                             </div>
                         </li>
                     </ul>
                 </div>
-                <div class="border-border border-t px-5 py-3">
-                    <Link
-                        :href="timeEntries.index()"
-                        class="text-primary inline-flex items-center gap-1 text-sm font-medium hover:underline"
-                    >
-                        View all
-                        <ArrowRight class="size-3.5" />
-                    </Link>
+                <div
+                    class="border-border flex items-center justify-between gap-4 border-t border-dashed px-5 py-4"
+                >
+                    <p class="text-muted-foreground text-[15px]">
+                        The last six things you logged.
+                    </p>
+                    <Button variant="outline" class="rounded-lg" as-child>
+                        <Link :href="timeEntries.index()">View all</Link>
+                    </Button>
                 </div>
             </Card>
 
             <Card class="gap-0 py-0 shadow-none">
-                <div class="px-5 pt-5 pb-2">
-                    <h2 class="font-semibold">Top projects this month</h2>
-                    <p class="text-muted-foreground text-sm">
-                        Where the hours went, by share of the month.
-                    </p>
+                <div
+                    class="flex items-center justify-between gap-3 px-5 pt-5 pb-4"
+                >
+                    <h2 class="text-lg font-semibold tracking-tight">
+                        Top projects this month
+                    </h2>
+                    <CardMenu
+                        :items="[
+                            {
+                                title: 'Projects',
+                                href: projects.index(),
+                                icon: 'briefcase',
+                            },
+                            {
+                                title: 'Reports',
+                                href: reports.index(),
+                                icon: 'chart-simple',
+                            },
+                        ]"
+                    />
                 </div>
-                <div class="flex-1 px-5 pb-4">
-                    <EmptyState v-if="top_projects.length === 0">
+                <div class="border-border flex-1 border-t border-dashed px-5">
+                    <EmptyState v-if="top_projects.length === 0" class="my-5">
                         No hours logged this month yet.
                     </EmptyState>
-                    <ul v-else class="divide-border divide-y">
+                    <ul v-else class="py-2">
                         <li
                             v-for="project in top_projects"
                             :key="project.id"
-                            class="py-2.5"
+                            class="flex items-center gap-4 py-3"
                         >
-                            <div class="flex items-center gap-3">
-                                <div class="min-w-0 flex-1">
-                                    <div class="truncate text-sm font-medium">
-                                        {{ project.name }}
-                                    </div>
-                                    <div
-                                        class="text-muted-foreground truncate text-xs"
-                                    >
-                                        {{ project.client_name }}
-                                    </div>
+                            <span
+                                class="flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+                                :style="bubbleStyle(project.color)"
+                            >
+                                {{ initials(project.name) }}
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <div class="truncate text-[15px] font-medium">
+                                    {{ project.name }}
                                 </div>
-                                <div class="shrink-0 text-right">
-                                    <div
-                                        class="text-sm font-medium tabular-nums"
-                                    >
-                                        {{ formatHours(project.hours) }} h
-                                    </div>
-                                    <div
-                                        class="text-muted-foreground text-xs tabular-nums"
-                                    >
-                                        {{
-                                            project.percent_of_month
-                                                .toFixed(1)
-                                                .replace('.', ',')
-                                        }}%
-                                    </div>
+                                <div
+                                    class="text-muted-foreground truncate text-sm"
+                                >
+                                    {{ project.client_name }}
                                 </div>
                             </div>
                             <div
-                                class="bg-muted mt-2 h-1.5 w-full overflow-hidden rounded-full"
+                                class="text-muted-foreground inline-flex shrink-0 items-center gap-2 text-[15px] tabular-nums"
                             >
-                                <div
-                                    class="h-full rounded-full"
-                                    :style="{
-                                        width: `${Math.min(100, project.percent_of_month)}%`,
-                                        backgroundColor:
-                                            project.color ?? 'var(--primary)',
-                                    }"
-                                />
+                                <FaIcon icon="clock" class="text-sm" />
+                                <span class="text-foreground font-medium">
+                                    {{ formatHours(project.hours) }} h
+                                </span>
+                                <span class="hidden sm:inline">
+                                    ·
+                                    {{
+                                        formatPercent(project.percent_of_month)
+                                    }}
+                                </span>
                             </div>
                         </li>
                     </ul>
                 </div>
-                <div class="border-border border-t px-5 py-3">
-                    <Link
-                        :href="projects.index()"
-                        class="text-primary inline-flex items-center gap-1 text-sm font-medium hover:underline"
-                    >
-                        View all
-                        <ArrowRight class="size-3.5" />
-                    </Link>
+                <div
+                    class="border-border flex items-center justify-between gap-4 border-t border-dashed px-5 py-4"
+                >
+                    <p class="text-muted-foreground text-[15px]">
+                        Where the hours went, by share of the month.
+                    </p>
+                    <Button variant="outline" class="rounded-lg" as-child>
+                        <Link :href="projects.index()">View all</Link>
+                    </Button>
                 </div>
             </Card>
         </div>

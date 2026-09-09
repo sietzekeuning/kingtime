@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Card } from '@/components/ui/card';
 import { formatEuro } from '@/lib/formatters';
 import { formatHours } from '@/lib/utils';
 import type { DashboardStatData } from '@/types/generated';
 
 /**
- * Dashboard headline tile: a MetricCard variant that also draws the current
- * period as an orange bar over the previous period's grey bar, so the delta
- * has a shape and not only a number.
+ * Dashboard headline tile: label, the current period's total with the
+ * delta next to it, and one stacked bar in which the orange part is the
+ * current period and the grey remainder the previous one. Sits inside the
+ * hairline grid on the dashboard, so it draws no border of its own.
  */
 const props = defineProps<{
     stat: DashboardStatData;
@@ -24,78 +24,89 @@ const current = computed(() => Number.parseFloat(props.stat.value) || 0);
 const previous = computed(
     () => Number.parseFloat(props.stat.previous_value) || 0,
 );
-const scale = computed(() => Math.max(current.value, previous.value));
 
-function widthOf(amount: number): string {
-    if (scale.value <= 0) {
+/** Share of the current period in current + previous, as a bar width. */
+const currentWidth = computed(() => {
+    const total = current.value + previous.value;
+
+    if (total <= 0) {
         return '0%';
     }
 
-    return `${Math.round((amount / scale.value) * 1000) / 10}%`;
-}
-
-const currentWidth = computed(() => widthOf(current.value));
-const previousWidth = computed(() => widthOf(previous.value));
+    return `${Math.round((current.value / total) * 1000) / 10}%`;
+});
 
 const previousLabel = computed(() => props.stat.previous_label.toLowerCase());
 
-const deltaClass = computed(() => {
-    const delta = props.stat.delta_percent;
+const delta = computed(() => {
+    const percent = props.stat.delta_percent;
 
-    if (delta === null || delta === 0) {
-        return 'text-muted-foreground';
+    if (percent === null) {
+        return null;
     }
 
-    return delta > 0 ? 'text-emerald-700' : 'text-rose-700';
-});
+    const sign = percent > 0 ? '+' : percent < 0 ? '-' : '';
 
-const deltaText = computed(() => {
-    const delta = props.stat.delta_percent;
-
-    if (delta === null) {
-        return `No hours ${previousLabel.value}`;
-    }
-
-    const sign = delta > 0 ? '+' : delta < 0 ? '-' : '';
-
-    return `${sign}${Math.abs(delta).toFixed(1)}% vs. ${previousLabel.value}`;
+    return {
+        text: `${sign}${Math.abs(percent).toFixed(2)}%`,
+        class:
+            percent > 0
+                ? 'text-emerald-600'
+                : percent < 0
+                  ? 'text-rose-600'
+                  : 'text-muted-foreground',
+    };
 });
 </script>
 
 <template>
-    <Card class="gap-0 p-5 shadow-none">
-        <div class="text-muted-foreground text-sm">{{ stat.label }}</div>
-        <div class="mt-1 flex items-baseline gap-1">
-            <span class="text-3xl font-semibold tracking-tight tabular-nums">
-                {{ value }}
+    <div class="bg-card flex flex-col p-5">
+        <div class="text-foreground/80 text-[15px]">{{ stat.label }}</div>
+        <div
+            class="mt-1.5 mb-4 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5"
+        >
+            <span
+                class="text-[32px] leading-none font-semibold tracking-tight tabular-nums"
+            >
+                {{ value
+                }}<span
+                    v-if="!isEuro"
+                    class="text-muted-foreground ml-1 text-lg font-medium"
+                    >h</span
+                >
             </span>
-            <span v-if="!isEuro" class="text-muted-foreground text-base">
-                h
+            <span v-if="delta" class="text-[15px]">
+                <span class="font-medium" :class="delta.class">
+                    {{ delta.text }}
+                </span>
+                <span class="text-muted-foreground">
+                    vs. {{ previousLabel }}
+                </span>
             </span>
-        </div>
-        <div class="mt-1 text-xs font-medium" :class="deltaClass">
-            {{ deltaText }}
+            <span v-else class="text-muted-foreground text-[15px]">
+                No hours {{ previousLabel }}
+            </span>
         </div>
 
-        <div class="bg-muted relative mt-4 h-1.5 w-full rounded-full">
+        <div class="border-border mt-auto mb-4 border-t border-dashed" />
+
+        <div class="bg-muted h-6 w-full overflow-hidden rounded-md">
             <div
-                class="bg-muted-foreground/25 absolute inset-y-0 left-0 rounded-full"
-                :style="{ width: previousWidth }"
-            />
-            <div
-                class="bg-primary absolute inset-y-0 left-0 rounded-full transition-[width]"
+                class="from-primary to-primary/75 h-full rounded-md bg-linear-to-r transition-[width] duration-500"
                 :style="{ width: currentWidth }"
             />
         </div>
-        <div class="text-muted-foreground mt-2 flex items-center gap-3 text-xs">
-            <span class="inline-flex items-center gap-1.5">
-                <span class="bg-primary size-1.5 rounded-full" />
+        <div
+            class="text-muted-foreground mt-3 flex items-center justify-between text-[15px]"
+        >
+            <span class="inline-flex items-center gap-2">
+                <span class="bg-primary size-3 rounded-[3px]" />
                 {{ stat.current_label }}
             </span>
-            <span class="inline-flex items-center gap-1.5">
-                <span class="bg-muted-foreground/40 size-1.5 rounded-full" />
+            <span class="inline-flex items-center gap-2">
                 {{ stat.previous_label }}
+                <span class="bg-muted size-3 rounded-[3px]" />
             </span>
         </div>
-    </Card>
+    </div>
 </template>

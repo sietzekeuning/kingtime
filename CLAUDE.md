@@ -256,7 +256,9 @@ Every list is a `Table` class (`App\Domain\{Domain}\Tables\{Resource}Table exten
 
 ## Frontend
 
-- Vue 3 + Inertia v3 + shadcn-vue (`resources/js/components/ui/`) + Tailwind v4. Icons are **lucide** (`@lucide/vue`), passed as components, never as strings.
+- Vue 3 + Inertia v3 + shadcn-vue (`resources/js/components/ui/`) + Tailwind v4.
+- Icons are **Font Awesome Pro** through `<FaIcon icon="clock" />` (regular weight by default, `weight="solid"` for filled glyphs). Register every icon once in `resources/js/plugins/fontawesome.ts` before using it; an unregistered name renders nothing. Size icons with `text-sm`/`text-lg`, not `size-*`. `NavItem.icon` is the Font Awesome name. The Pro packages come from `npm.fontawesome.com` (`.npmrc`); locally the token lives in `~/.npmrc`, in CI it is the `FONTAWESOME_NPM_TOKEN` secret. Lucide (`@lucide/vue`) remains in older pages until they are migrated; do not add new lucide icons.
+- The app shell is a Quantive-style layout: off-white page, borderless sidebar with grouped nav, a white rounded content panel with a top bar (breadcrumb pill, running timer, "Log time", avatar menu) and a full-width `PageHeader` title bar underneath.
 - Routes come from Wayfinder: `import clients from '@/routes/clients'` then `clients.edit(id)`. Run `php artisan wayfinder:generate --with-form` after changing routes. Never hand-write URLs.
 - Forms: `useForm` + `<Form :form>` + `<FormRow label field>` (errors are picked up by field name). Inputs accept `null` v-models.
 - Deletes go through `useConfirmDelete()`; never `window.confirm`.

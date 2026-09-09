@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import type { InertiaLinkProps } from '@inertiajs/vue3';
-import { ArrowLeft } from '@lucide/vue';
+import FaIcon from '@/components/FaIcon.vue';
 
 /**
- * Standard admin page header: optional back-link, title, optional subtitle,
- * and an #actions slot for the primary button(s) on the right. Replaces the
- * hand-rolled "flex items-center justify-between + h1" block on list and
- * detail pages.
+ * Title bar of a page: a full-width row under the app header with an
+ * optional back-link, the title, an optional subtitle and an #actions slot
+ * for the primary button(s) on the right. It pulls itself into the page
+ * padding (`p-4 md:p-6`) so its bottom border runs edge to edge.
  */
 defineProps<{
     title: string;
@@ -19,18 +19,22 @@ defineProps<{
 </script>
 
 <template>
-    <div class="flex items-center justify-between gap-4">
-        <div class="space-y-0.5">
+    <div
+        class="border-border -mx-4 -mt-4 flex min-h-16 items-center justify-between gap-4 border-b px-4 py-3 md:-mx-6 md:-mt-6 md:px-6"
+    >
+        <div class="min-w-0">
             <Link
                 v-if="backHref"
                 :href="backHref"
-                class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
+                class="text-muted-foreground hover:text-foreground mb-0.5 inline-flex items-center gap-1.5 text-xs"
             >
-                <ArrowLeft class="size-3.5" />
+                <FaIcon icon="arrow-left" class="text-[11px]" />
                 {{ backLabel ?? 'Back' }}
             </Link>
-            <h1 class="text-2xl font-semibold tracking-tight">{{ title }}</h1>
-            <p v-if="subtitle" class="text-muted-foreground text-sm">
+            <h1 class="truncate text-lg font-semibold tracking-tight">
+                {{ title }}
+            </h1>
+            <p v-if="subtitle" class="text-muted-foreground truncate text-sm">
                 {{ subtitle }}
             </p>
         </div>

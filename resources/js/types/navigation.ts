@@ -1,5 +1,4 @@
 import type { InertiaLinkProps } from '@inertiajs/vue3';
-import type { LucideIcon } from '@lucide/vue';
 
 export type BreadcrumbItem = {
     title: string;
@@ -9,8 +8,12 @@ export type BreadcrumbItem = {
 export type NavItem = {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
-    /** Every sidebar entry carries an icon, so the collapsed rail stays readable. */
-    icon: LucideIcon;
+    /**
+     * Font Awesome icon name for `<FaIcon>` (registered in
+     * `plugins/fontawesome.ts`). Every entry carries one, so the collapsed
+     * sidebar rail stays readable.
+     */
+    icon: string;
     isActive?: boolean;
     badge?: string | number;
 };
