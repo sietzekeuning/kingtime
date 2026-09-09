@@ -37,7 +37,12 @@ class DemoSeeder extends Seeder
         ])->map(function (array $row) use ($tasks): Project {
             [$clientName, $name, $code, $color, $rate] = $row;
 
-            $client = Client::query()->firstOrCreate(['name' => $clientName], Client::factory()->raw(['name' => $clientName]));
+            $client = Client::query()->firstOrCreate(['name' => $clientName], [
+                'email' => fake()->companyEmail(),
+                'address' => fake()->address(),
+                'currency' => 'EUR',
+                'is_active' => true,
+            ]);
 
             $project = Project::factory()->create([
                 'client_id' => $client->id,
