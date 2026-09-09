@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property bool $is_billable
  * @property string|null $hourly_rate
  * @property string|null $budget_hours
+ * @property string|null $budget_amount
  * @property bool $is_active
  * @property string|null $color
  * @property Carbon|null $starts_on
@@ -47,6 +48,7 @@ class Project extends Model
             'is_active' => 'boolean',
             'hourly_rate' => 'decimal:2',
             'budget_hours' => 'decimal:2',
+            'budget_amount' => 'decimal:2',
             'starts_on' => 'date',
             'ends_on' => 'date',
         ];

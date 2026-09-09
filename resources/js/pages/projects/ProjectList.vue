@@ -142,12 +142,30 @@ function deleteProject(event: Event, project: ProjectData) {
                         <span v-else class="text-muted-foreground">·</span>
                     </template>
                 </DataTableColumn>
-                <DataTableColumn show="total_hours" label="Hours">
+                <DataTableColumn show="budget_amount" label="Budget">
+                    <template #default="{ item }: { item: ProjectData }">
+                        <span
+                            v-if="item.budget_amount !== null"
+                            class="tabular-nums"
+                        >
+                            {{ formatEuro(item.budget_amount) }}
+                        </span>
+                        <span v-else class="text-muted-foreground">·</span>
+                    </template>
+                </DataTableColumn>
+                <DataTableColumn show="spent_amount" label="Spent">
                     <template #default="{ item }: { item: ProjectData }">
                         <BudgetMeter
-                            :hours="item.total_hours"
-                            :budget="item.budget_hours"
+                            :spent="item.spent_amount"
+                            :budget="item.budget_amount"
                         />
+                    </template>
+                </DataTableColumn>
+                <DataTableColumn show="total_hours" label="Hours">
+                    <template #default="{ item }: { item: ProjectData }">
+                        <span class="tabular-nums">
+                            {{ formatHours(item.total_hours) }}
+                        </span>
                     </template>
                 </DataTableColumn>
                 <DataTableColumn show="unbilled_hours" label="Unbilled">

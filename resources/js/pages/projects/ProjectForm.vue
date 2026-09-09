@@ -253,6 +253,16 @@ function destroy() {
                                     placeholder="0,00"
                                 />
                             </FormRow>
+                            <FormRow label="Budget (€)" field="budget_amount">
+                                <Input
+                                    v-model="form.budget_amount"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    class="w-32"
+                                    placeholder="0,00"
+                                />
+                            </FormRow>
                             <FormRow
                                 label="Period"
                                 :fields="['starts_on', 'ends_on']"

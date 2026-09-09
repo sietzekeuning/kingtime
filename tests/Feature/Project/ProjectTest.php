@@ -24,6 +24,7 @@ function projectPayload(Client $client, array $overrides = []): array
         'is_billable' => true,
         'hourly_rate' => '95.00',
         'budget_hours' => '40',
+        'budget_amount' => '10000',
         'is_active' => true,
         'color' => '#F97316',
         'starts_on' => '2026-01-01',
@@ -33,10 +34,11 @@ function projectPayload(Client $client, array $overrides = []): array
     ];
 }
 
-it('lists projects with the table payload, client name and hour totals', function (): void {
-    $project = Project::factory()->create(['name' => 'Aardvark']);
-    TimeEntry::factory()->for($project)->create(['hours' => '2.50', 'is_billable' => true, 'is_billed' => false]);
-    TimeEntry::factory()->for($project)->billed()->create(['hours' => '1.25']);
+it('lists projects with the table payload, client name, hour totals and the amount spent', function (): void {
+    $project = Project::factory()->create(['name' => 'Aardvark', 'budget_amount' => '1000.00']);
+    TimeEntry::factory()->for($project)->create(['hours' => '2.50', 'hourly_rate' => '80.00', 'is_billable' => true, 'is_billed' => false]);
+    TimeEntry::factory()->for($project)->billed()->create(['hours' => '1.25', 'hourly_rate' => '100.00']);
+    TimeEntry::factory()->for($project)->billed()->create(['hours' => '4.00', 'hourly_rate' => null]);
     Project::factory()->count(2)->sequence(['name' => 'Beta'], ['name' => 'Gamma'])->create();
 
     $this->get(route('projects.index'))
@@ -49,8 +51,10 @@ it('lists projects with the table payload, client name and hour totals', functio
             ->has('clients', 3)
             ->where('items.data.0.name', 'Aardvark')
             ->where('items.data.0.client.name', $project->client->name)
-            ->where('items.data.0.total_hours', fn (string $hours) => (float) $hours === 3.75)
-            ->where('items.data.0.unbilled_hours', fn (string $hours) => (float) $hours === 2.5));
+            ->where('items.data.0.total_hours', fn (string $hours) => (float) $hours === 7.75)
+            ->where('items.data.0.unbilled_hours', fn (string $hours) => (float) $hours === 2.5)
+            ->where('items.data.0.budget_amount', '1000.00')
+            ->where('items.data.0.spent_amount', fn (string $amount) => (float) $amount === 325.0));
 });
 
 it('filters projects by client, active status and billability', function (): void {
@@ -92,6 +96,7 @@ it('creates a project from a validated payload', function (): void {
     expect($project->client_id)->toBe($client->id)
         ->and($project->hourly_rate)->toBe('95.00')
         ->and($project->budget_hours)->toBe('40.00')
+        ->and($project->budget_amount)->toBe('10000.00')
         ->and($project->starts_on?->toDateString())->toBe('2026-01-01');
 
     $this->get(route('projects.edit', $project))
@@ -140,6 +145,7 @@ it('renders the edit form for an imported project without optional fields', func
         'color' => null,
         'hourly_rate' => null,
         'budget_hours' => null,
+        'budget_amount' => null,
         'starts_on' => null,
         'ends_on' => null,
         'notes' => '',
@@ -155,6 +161,8 @@ it('renders the edit form for an imported project without optional fields', func
             ->where('project.color', null)
             ->where('project.hourly_rate', null)
             ->where('project.budget_hours', null)
+            ->where('project.budget_amount', null)
+            ->where('project.spent_amount', null)
             ->where('project.starts_on', null)
             ->where('project.ends_on', null)
             ->where('project.total_hours', null)

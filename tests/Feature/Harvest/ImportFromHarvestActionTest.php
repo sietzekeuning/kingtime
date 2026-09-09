@@ -57,6 +57,7 @@ it('imports everything from harvest with the right mappings', function (): void 
         ->and($website->is_billable)->toBeTrue()
         ->and($website->hourly_rate)->toBe('95.00')
         ->and($website->budget_hours)->toBe('100.00')
+        ->and($website->budget_amount)->toBeNull()
         ->and($website->starts_on?->toDateString())->toBe('2026-01-01')
         ->and($website->ends_on)->toBeNull()
         ->and($website->notes)->toBe('Relaunch of the marketing site');
@@ -67,6 +68,7 @@ it('imports everything from harvest with the right mappings', function (): void 
         ->and($support->is_billable)->toBeTrue()
         ->and($support->hourly_rate)->toBeNull()
         ->and($support->budget_hours)->toBeNull()
+        ->and($support->budget_amount)->toBe('5000.00')
         ->and($support->is_active)->toBeFalse()
         ->and($support->ends_on?->toDateString())->toBe('2026-12-31');
 

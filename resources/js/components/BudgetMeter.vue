@@ -1,18 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { formatEuro } from '@/lib/formatters';
 import { formatHours } from '@/lib/utils';
 
 /**
- * Hours spent on a project against its hour budget, Harvest style: the
- * hours, a bar that fills up as the budget is used and turns red once it
- * is exceeded, and what is left. Without a budget only the hours show.
+ * What a project has used of its budget, Harvest style: the amount spent,
+ * a bar that fills up as the budget is used and turns red once it is
+ * exceeded, and what is left with its percentage. Works for a money budget
+ * (unit "euro") and an hour budget (unit "hours"). Without a budget only
+ * the spent value shows.
  */
-const props = defineProps<{
-    hours: string | null;
-    budget: string | null;
-}>();
+const props = withDefaults(
+    defineProps<{
+        spent: string | null;
+        budget: string | null;
+        unit?: 'euro' | 'hours';
+    }>(),
+    { unit: 'euro' },
+);
 
-const spent = computed(() => Number.parseFloat(props.hours ?? '0') || 0);
+const format = (value: number | string | null) =>
+    props.unit === 'hours' ? formatHours(value) : formatEuro(value);
+
+const used = computed(() => Number.parseFloat(props.spent ?? '0') || 0);
 
 const budgeted = computed(() => {
     const value = Number.parseFloat(props.budget ?? '');
@@ -21,13 +31,13 @@ const budgeted = computed(() => {
 });
 
 const remaining = computed(() =>
-    budgeted.value === null ? null : budgeted.value - spent.value,
+    budgeted.value === null ? null : budgeted.value - used.value,
 );
 
 const percentUsed = computed(() =>
     budgeted.value === null
         ? 0
-        : Math.min(100, Math.round((spent.value / budgeted.value) * 100)),
+        : Math.min(100, Math.round((used.value / budgeted.value) * 100)),
 );
 
 const percentLeft = computed(() =>
@@ -51,8 +61,8 @@ const barClass = computed(() => {
 
 <template>
     <div class="flex items-center gap-3">
-        <span class="w-16 shrink-0 text-right tabular-nums">
-            {{ formatHours(hours) }}
+        <span class="w-24 shrink-0 text-right tabular-nums">
+            {{ format(spent) }}
         </span>
         <template v-if="budgeted !== null">
             <div
@@ -61,7 +71,7 @@ const barClass = computed(() => {
                 :aria-valuenow="percentUsed"
                 aria-valuemin="0"
                 aria-valuemax="100"
-                :title="`${formatHours(hours)} of ${formatHours(budget)} hours`"
+                :title="`${format(spent)} of ${format(budget)}`"
             >
                 <div
                     class="h-full rounded-full transition-all"
@@ -76,10 +86,10 @@ const barClass = computed(() => {
                 "
             >
                 <template v-if="overBudget">
-                    {{ formatHours(-remaining!) }} over
+                    {{ format(-remaining!) }} over
                 </template>
                 <template v-else>
-                    {{ formatHours(remaining) }} left ({{ percentLeft }}%)
+                    {{ format(remaining) }} left ({{ percentLeft }}%)
                 </template>
             </span>
         </template>

@@ -32,6 +32,8 @@ class ProjectData extends BaseData
         public ?string $hourly_rate = null,
         #[Numeric, Min(0)]
         public ?string $budget_hours = null,
+        #[Numeric, Min(0)]
+        public ?string $budget_amount = null,
         public bool $is_active = true,
         #[Max(20)]
         public ?string $color = null,
@@ -47,6 +49,8 @@ class ProjectData extends BaseData
         public ?string $total_hours = null,
         #[Derived]
         public ?string $unbilled_hours = null,
+        #[Derived]
+        public ?string $spent_amount = null,
     ) {}
 
     public static function fromModel(Project $project): self
@@ -59,6 +63,7 @@ class ProjectData extends BaseData
             is_billable: $project->is_billable,
             hourly_rate: $project->hourly_rate,
             budget_hours: $project->budget_hours,
+            budget_amount: $project->budget_amount,
             is_active: $project->is_active,
             color: $project->color,
             starts_on: $project->starts_on?->toDateString(),
@@ -68,6 +73,7 @@ class ProjectData extends BaseData
             client: $project->relationLoaded('client') ? ClientData::fromModel($project->client) : null,
             total_hours: self::aggregate($project, 'total_hours'),
             unbilled_hours: self::aggregate($project, 'unbilled_hours'),
+            spent_amount: self::aggregate($project, 'spent_amount'),
         );
     }
 

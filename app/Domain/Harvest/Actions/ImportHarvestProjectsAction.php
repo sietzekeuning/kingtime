@@ -42,6 +42,7 @@ class ImportHarvestProjectsAction
                 'is_billable' => (bool) ($record['is_billable'] ?? true),
                 'hourly_rate' => $record['hourly_rate'] ?? null,
                 'budget_hours' => in_array($budgetBy, self::HOUR_BUDGETS, true) ? ($record['budget'] ?? null) : null,
+                'budget_amount' => $budgetBy === 'project_cost' ? ($record['cost_budget'] ?? $record['budget'] ?? null) : null,
                 'is_active' => (bool) ($record['is_active'] ?? true),
                 'starts_on' => $record['starts_on'] ?? null,
                 'ends_on' => $record['ends_on'] ?? null,
