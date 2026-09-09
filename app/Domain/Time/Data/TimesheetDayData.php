@@ -7,7 +7,7 @@ namespace App\Domain\Time\Data;
 use App\Domain\Shared\Data\BaseData;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** One column of the week strip on the timesheet. */
+/** One day of the week strip or the month overview on the timesheet. */
 #[TypeScript]
 class TimesheetDayData extends BaseData
 {
@@ -18,5 +18,7 @@ class TimesheetDayData extends BaseData
         public string $total_hours,
         public int $entries_count,
         public bool $is_today,
+        public bool $is_weekend,
+        public bool $is_future,
     ) {}
 }

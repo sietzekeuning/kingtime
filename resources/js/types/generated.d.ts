@@ -62,6 +62,34 @@ email: string,
 harvest_id: number | null,
 };
 export type BaseData = object;
+export type TimesheetRowData = {
+project_id: number,
+project_name: string,
+project_code: string | null,
+project_color: string | null,
+client_name: string,
+total_hours: string,
+is_locked: boolean,
+cells: TimesheetCellData[],
+};
+export type MonthOverviewData = {
+month_start: string,
+month_end: string,
+total_hours: string,
+working_days: number,
+booked_days: number,
+missing_days: number,
+days: TimesheetDayData[],
+};
+export type TimesheetCellData = {
+date: string,
+hours: string,
+entries_count: number,
+entry_id: number | null,
+is_locked: boolean,
+is_running: boolean,
+notes: string | null,
+};
 export type TimesheetDayData = {
 date: string,
 weekday: string,
@@ -69,6 +97,8 @@ day_of_month: number,
 total_hours: string,
 entries_count: number,
 is_today: boolean,
+is_weekend: boolean,
+is_future: boolean,
 };
 export type ProjectOptionData = {
 id: number,
@@ -108,7 +138,9 @@ week_end: string,
 week_total: string,
 day_total: string,
 days: TimesheetDayData[],
+rows: TimesheetRowData[],
 entries: TimeEntryData[],
+previous_week_project_ids: number[],
 };
 export type HarvestImportProgressData = {
 status: HarvestImportStatus,

@@ -35,3 +35,38 @@ export function formatDuration(totalSeconds: number): string {
         .map((part) => String(part).padStart(2, '0'))
         .join(':');
 }
+
+/** Shifts a `Y-m-d` date by a number of months, landing on the first of that month. */
+export function addMonths(date: string, months: number): string {
+    return dayjs(date)
+        .add(months, 'month')
+        .startOf('month')
+        .format('YYYY-MM-DD');
+}
+
+/**
+ * Reads the hours typed into a timesheet cell: "1,5", "1.5", "1:30" and
+ * "0,25" all work. Empty input is `null` (nothing logged); anything else
+ * that is not a number is `undefined` so the cell can refuse it.
+ */
+export function parseHoursInput(value: string): number | null | undefined {
+    const trimmed = value.trim();
+
+    if (trimmed === '') {
+        return null;
+    }
+
+    const clock = /^(\d{1,2}):([0-5]?\d)$/.exec(trimmed);
+
+    if (clock) {
+        return Number(clock[1]) + Number(clock[2]) / 60;
+    }
+
+    const decimal = Number(trimmed.replace(',', '.'));
+
+    if (!Number.isFinite(decimal) || decimal < 0 || decimal > 24) {
+        return undefined;
+    }
+
+    return decimal;
+}

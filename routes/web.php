@@ -17,6 +17,8 @@ use App\Domain\Reports\Controllers\ReportsController;
 use App\Domain\Time\Controllers\StartTimerController;
 use App\Domain\Time\Controllers\StopTimerController;
 use App\Domain\Time\Controllers\TimeEntryController;
+use App\Domain\Time\Controllers\TimesheetCellController;
+use App\Domain\Time\Controllers\TimesheetRowController;
 use App\Domain\User\Controllers\Settings\IntegrationsController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +35,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::resource('time-entries', TimeEntryController::class)->except(['show']);
     Route::post('time-entries/{time_entry}/start', StartTimerController::class)->name('time-entries.start');
     Route::post('time-entries/{time_entry}/stop', StopTimerController::class)->name('time-entries.stop');
+    Route::post('timesheet/cells', TimesheetCellController::class)->name('timesheet.cells.store');
+    Route::delete('timesheet/rows', TimesheetRowController::class)->name('timesheet.rows.destroy');
 
     // -- Projects ----------------------------------------------------------
     Route::resource('projects', ProjectController::class)->except(['show']);

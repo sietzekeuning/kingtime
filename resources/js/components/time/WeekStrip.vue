@@ -1,79 +1,44 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
-import { ChevronLeft, ChevronRight } from '@lucide/vue';
-import { Button } from '@/components/ui/button';
+import PeriodNav from '@/components/time/PeriodNav.vue';
 import { addDays, formatDate } from '@/lib/time';
+import { visitTimesheetDate } from '@/lib/timesheet';
 import { formatHours } from '@/lib/utils';
-import timeEntries from '@/routes/time-entries';
 import type { TimesheetData } from '@/types/generated';
 
 /**
  * Monday-to-Sunday strip with a total per day. Selecting a day (or moving a
- * week) reloads only the timesheet prop and keeps the table filters in the
- * URL, so the "All entries" tab is unaffected.
+ * week) reloads only the timesheet props and keeps the table filters in
+ * the URL, so the "All entries" tab is unaffected.
  */
 const props = defineProps<{
     timesheet: TimesheetData;
 }>();
 
-function visitDate(date: string | null) {
-    const params = new URLSearchParams(window.location.search);
-
-    if (date) {
-        params.set('date', date);
-    } else {
-        params.delete('date');
-    }
-
-    const query = params.toString();
-
-    router.visit(`${timeEntries.index.url()}${query ? `?${query}` : ''}`, {
-        only: ['timesheet'],
-        preserveState: true,
-        preserveScroll: true,
-    });
-}
-
-const previousWeek = () => visitDate(addDays(props.timesheet.week_start, -7));
-const nextWeek = () => visitDate(addDays(props.timesheet.week_start, 7));
-const today = () => visitDate(null);
+const previousWeek = () =>
+    visitTimesheetDate(addDays(props.timesheet.week_start, -7));
+const nextWeek = () =>
+    visitTimesheetDate(addDays(props.timesheet.week_start, 7));
+const today = () => visitTimesheetDate(null);
 </script>
 
 <template>
     <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-1">
-                <Button
-                    variant="outline"
-                    size="icon-sm"
-                    title="Previous week"
-                    @click="previousWeek"
-                >
-                    <ChevronLeft class="size-4" />
-                </Button>
-                <Button
-                    variant="outline"
-                    size="icon-sm"
-                    title="Next week"
-                    @click="nextWeek"
-                >
-                    <ChevronRight class="size-4" />
-                </Button>
-                <Button variant="outline" size="sm" @click="today">
-                    Today
-                </Button>
-                <span class="text-muted-foreground ml-2 text-sm">
-                    {{ formatDate(timesheet.week_start, 'D MMM') }} ·
-                    {{ formatDate(timesheet.week_end, 'D MMM YYYY') }}
-                </span>
-            </div>
+        <PeriodNav
+            :label="`${formatDate(timesheet.week_start, 'D MMM')} · ${formatDate(timesheet.week_end, 'D MMM YYYY')}`"
+            current-label="Today"
+            previous-title="Previous week"
+            next-title="Next week"
+            @previous="previousWeek"
+            @next="nextWeek"
+            @current="today"
+        >
             <div class="text-sm">
                 <span class="text-muted-foreground">Week total</span>
                 <span class="ml-2 text-lg font-semibold tabular-nums">
                     {{ formatHours(timesheet.week_total) }}
                 </span>
             </div>
-        </div>
+        </PeriodNav>
 
         <div class="grid grid-cols-7 gap-1.5">
             <button
@@ -89,7 +54,7 @@ const today = () => visitDate(null);
                         ? 'border-primary/60'
                         : '',
                 ]"
-                @click="visitDate(day.date)"
+                @click="visitTimesheetDate(day.date)"
             >
                 <span
                     class="text-[11px] font-medium tracking-wide uppercase"

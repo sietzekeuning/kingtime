@@ -6,6 +6,7 @@ namespace App\Domain\Time\Controllers;
 
 use App\Domain\Client\Data\ClientData;
 use App\Domain\Client\Models\Client;
+use App\Domain\Time\Actions\BuildMonthOverviewAction;
 use App\Domain\Time\Actions\BuildTimesheetAction;
 use App\Domain\Time\Actions\DeleteTimeEntryAction;
 use App\Domain\Time\Actions\ListProjectOptionsAction;
@@ -28,6 +29,7 @@ class TimeEntryController
         Request $request,
         TimeEntryTable $table,
         BuildTimesheetAction $buildTimesheet,
+        BuildMonthOverviewAction $buildMonthOverview,
         ListProjectOptionsAction $listProjectOptions,
     ): Response {
         $request->validate(['date' => ['nullable', 'date_format:Y-m-d']]);
@@ -38,6 +40,7 @@ class TimeEntryController
 
         return Inertia::render('time-entries/TimeEntryList', [
             'timesheet' => fn () => $buildTimesheet->handle($user, $date),
+            'month' => fn () => $buildMonthOverview->handle($user, $date),
             'items' => fn () => $table->getData($request)->through(fn (TimeEntry $entry) => TimeEntryData::fromModel($entry)),
             'projects' => fn () => $listProjectOptions->handle(),
             'clients' => fn () => Client::query()->where('is_active', true)->withCount('projects')->orderBy('name')->get()

@@ -6,9 +6,11 @@ import EmptyState from '@/components/EmptyState.vue';
 import Form from '@/components/Form.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
+import MonthOverview from '@/components/time/MonthOverview.vue';
 import TimeEntryForm from '@/components/time/TimeEntryForm.vue';
 import type { TimeEntryFormData } from '@/components/time/TimeEntryForm.vue';
 import TimeEntryRow from '@/components/time/TimeEntryRow.vue';
+import WeekGrid from '@/components/time/WeekGrid.vue';
 import WeekStrip from '@/components/time/WeekStrip.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,10 +20,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { PaginatedData } from '@/interfaces/PaginatedData';
 import type { EnumOptions } from '@/lib/enums';
 import { formatDate } from '@/lib/time';
+import {
+    initialTimesheetView,
+    rememberTimesheetView,
+    visitTimesheetDate,
+} from '@/lib/timesheet';
+import type { TimesheetView } from '@/lib/timesheet';
 import { formatHours } from '@/lib/utils';
 import timeEntries from '@/routes/time-entries';
 import type {
     ClientData,
+    MonthOverviewData,
     ProjectOptionData,
     TimeEntryData,
     TimesheetData,
@@ -30,6 +39,7 @@ import type { User } from '@/types';
 
 const props = defineProps<{
     timesheet: TimesheetData;
+    month: MonthOverviewData;
     items: PaginatedData<TimeEntryData>;
     projects: ProjectOptionData[];
     clients: ClientData[];
@@ -42,13 +52,15 @@ defineOptions({
     },
 });
 
-// A URL that carries table state was shared from the "All entries" tab.
-const initialTab =
-    typeof window !== 'undefined' &&
-    /[?&](filter\[|sort=|page=)/.test(window.location.search)
-        ? 'all'
-        : 'timesheet';
-const tab = ref<string>(initialTab);
+const tab = ref<TimesheetView>(initialTimesheetView());
+
+watch(tab, (view) => rememberTimesheetView(view));
+
+/** The week grid and the month calendar hand a day over to the day view. */
+function openDay(date: string) {
+    tab.value = 'day';
+    visitTimesheetDate(date);
+}
 
 const form = useForm<TimeEntryFormData & { start_timer: boolean }>({
     project_id:
@@ -132,11 +144,33 @@ const rowUrl = (entry: TimeEntryData) =>
 
         <Tabs v-model="tab" class="gap-4">
             <TabsList>
-                <TabsTrigger value="timesheet">Timesheet</TabsTrigger>
+                <TabsTrigger value="day">Day</TabsTrigger>
+                <TabsTrigger value="week">Week</TabsTrigger>
+                <TabsTrigger value="month">Month</TabsTrigger>
                 <TabsTrigger value="all">All entries</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="timesheet" class="flex flex-col gap-4">
+            <TabsContent value="week">
+                <Card class="gap-4 py-4">
+                    <CardContent>
+                        <WeekGrid
+                            :timesheet="timesheet"
+                            :projects="projects"
+                            @open-day="openDay"
+                        />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+
+            <TabsContent value="month">
+                <Card class="gap-4 py-4">
+                    <CardContent>
+                        <MonthOverview :month="month" @select-day="openDay" />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+
+            <TabsContent value="day" class="flex flex-col gap-4">
                 <Card class="gap-4 py-4">
                     <CardContent>
                         <WeekStrip :timesheet="timesheet" />
