@@ -213,3 +213,7 @@ Vue components must have a single root element.
 - IMPORTANT: Activate `inertia-vue-development` when working with Inertia Vue client-side patterns.
 
 </laravel-boost-guidelines>
+
+# Kingtime project conventions
+
+The project-specific conventions (domain layout, DTO/TypeScript pipeline, DataTable pattern, testing and deploy rules) live at the bottom of [CLAUDE.md](CLAUDE.md). Read that section before making changes.
