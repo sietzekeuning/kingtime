@@ -35,4 +35,41 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Harvest
+    |--------------------------------------------------------------------------
+    |
+    | Personal access token + account id from https://id.getharvest.com/developers.
+    | Used by `php artisan harvest:import` to pull clients, projects, tasks and
+    | time entries into this app.
+    |
+    */
+
+    'harvest' => [
+        'account_id' => env('HARVEST_ACCOUNT_ID'),
+        'access_token' => env('HARVEST_ACCESS_TOKEN'),
+        'base_url' => env('HARVEST_BASE_URL', 'https://api.harvestapp.com/v2'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Moneybird
+    |--------------------------------------------------------------------------
+    |
+    | API token + administration id from https://moneybird.com/user/applications.
+    | Invoices prepared in this app are pushed to Moneybird as drafts; the
+    | optional tax rate / ledger ids are applied to every invoice line.
+    |
+    */
+
+    'moneybird' => [
+        'access_token' => env('MONEYBIRD_ACCESS_TOKEN'),
+        'administration_id' => env('MONEYBIRD_ADMINISTRATION_ID'),
+        'base_url' => env('MONEYBIRD_BASE_URL', 'https://moneybird.com/api/v2'),
+        'tax_rate_id' => env('MONEYBIRD_TAX_RATE_ID'),
+        'ledger_account_id' => env('MONEYBIRD_LEDGER_ACCOUNT_ID'),
+        'workflow_id' => env('MONEYBIRD_WORKFLOW_ID'),
+    ],
+
 ];

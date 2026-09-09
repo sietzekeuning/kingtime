@@ -53,6 +53,8 @@ export default defineConfig({
             'resources/js/components/ui/*',
             'resources/js/routes/**',
             'resources/js/wayfinder/**',
+            'resources/js/lib/enums.ts',
+            'resources/js/types/generated.d.ts',
         ],
         options: {
             denyWarnings: true,
@@ -70,6 +72,9 @@ export default defineConfig({
             '.github/**',
             'composer.json',
             'resources/js/components/ui/*',
+            'resources/js/lib/enums.ts',
+            'resources/js/types/generated.d.ts',
+            'resources/js/typescript-transformer-manifest.json',
             'resources/views/mail/*',
         ],
         sortTailwindcss: {

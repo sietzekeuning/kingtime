@@ -9,6 +9,8 @@ export type BreadcrumbItem = {
 export type NavItem = {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
-    icon?: LucideIcon;
+    /** Every sidebar entry carries an icon, so the collapsed rail stays readable. */
+    icon: LucideIcon;
     isActive?: boolean;
+    badge?: string | number;
 };

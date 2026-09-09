@@ -1,28 +1,22 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { Palette, Plug, Shield, User } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editIntegrations } from '@/routes/integrations';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: editProfile(),
-    },
-    {
-        title: 'Security',
-        href: editSecurity(),
-    },
-    {
-        title: 'Appearance',
-        href: editAppearance(),
-    },
+    { title: 'Profile', href: editProfile(), icon: User },
+    { title: 'Security', href: editSecurity(), icon: Shield },
+    { title: 'Appearance', href: editAppearance(), icon: Palette },
+    { title: 'Integrations', href: editIntegrations(), icon: Plug },
 ];
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
