@@ -22,22 +22,24 @@ const props = defineProps<{
     moneybird_configured: boolean;
 }>();
 
-const title = (invoice: InvoiceData) =>
-    invoice.number
-        ? `Invoice ${invoice.number}`
-        : `Draft invoice #${invoice.id}`;
-
 defineOptions({
     layout: (page: { props: { invoice: InvoiceData } }) => ({
         breadcrumbs: [
             { title: 'Invoices', href: invoices.index() },
             {
-                title: title(page.props.invoice),
+                title: page.props.invoice.number
+                    ? `Invoice ${page.props.invoice.number}`
+                    : `Draft invoice #${page.props.invoice.id}`,
                 href: invoices.show(page.props.invoice.id!),
             },
         ],
     }),
 });
+
+const title = (invoice: InvoiceData) =>
+    invoice.number
+        ? `Invoice ${invoice.number}`
+        : `Draft invoice #${invoice.id}`;
 
 const { confirmDelete } = useConfirmDelete();
 
