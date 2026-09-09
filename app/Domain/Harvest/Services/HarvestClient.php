@@ -46,7 +46,7 @@ class HarvestClient
 
         $this->accountId = is_scalar($accountId) && (string) $accountId !== '' ? (string) $accountId : null;
         $this->accessToken = is_string($accessToken) && $accessToken !== '' ? $accessToken : null;
-        $this->baseUrl = rtrim(is_string($baseUrl) && $baseUrl !== '' ? $baseUrl : 'https://api.harvestapp.com/v2', '/');
+        $this->baseUrl = rtrim(is_string($baseUrl) && $baseUrl !== '' ? $baseUrl : 'https://api.harvestapp.com/api/v2', '/');
     }
 
     public function isConfigured(): bool

@@ -12,14 +12,14 @@ use Illuminate\Support\Facades\Http;
  */
 final class HarvestApi
 {
-    public const BASE = 'api.harvestapp.com/v2';
+    public const BASE = 'api.harvestapp.com/api/v2';
 
     public static function configure(): void
     {
         config([
             'services.harvest.account_id' => '12345',
             'services.harvest.access_token' => 'test-token',
-            'services.harvest.base_url' => 'https://api.harvestapp.com/v2',
+            'services.harvest.base_url' => 'https://api.harvestapp.com/api/v2',
         ]);
     }
 

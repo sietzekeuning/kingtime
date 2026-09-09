@@ -40,7 +40,9 @@ Open the app, register the first account (registration closes afterwards), and y
     HARVEST_ACCESS_TOKEN=your-token
     ```
 
-2. Run the import:
+2. Register your Kingtime account with the **same email address as your Harvest user** before the first import: entries are matched to users by email, and a Harvest user without a matching account is created as an inactive user.
+
+3. Run the import:
 
     ```bash
     php artisan harvest:import --full     # everything, the first time

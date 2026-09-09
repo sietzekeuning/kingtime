@@ -49,7 +49,7 @@ return [
     'harvest' => [
         'account_id' => env('HARVEST_ACCOUNT_ID'),
         'access_token' => env('HARVEST_ACCESS_TOKEN'),
-        'base_url' => env('HARVEST_BASE_URL', 'https://api.harvestapp.com/v2'),
+        'base_url' => env('HARVEST_BASE_URL', 'https://api.harvestapp.com/api/v2'),
     ],
 
     /*
