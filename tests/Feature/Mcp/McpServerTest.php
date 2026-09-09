@@ -57,7 +57,7 @@ it('serves the server to a personal access token', function (): void {
         ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/list', 'params' => []])
         ->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
-            ->has('result.tools', 14)
+            ->has('result.tools', 22)
             ->where('result.tools.0.name', 'list_clients')
             ->where('result.tools.0.annotations.readOnlyHint', true)
             ->etc());

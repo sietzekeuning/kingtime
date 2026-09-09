@@ -1,0 +1,42 @@
+[
+    {
+        "id": "426000000000000001",
+        "administration_id": "123456789",
+        "contact_id": "411000000000000010",
+        "contact": {
+            "id": "411000000000000010",
+            "company_name": "Hosting Provider",
+            "firstname": "",
+            "lastname": ""
+        },
+        "reference": "INV-2026-0815",
+        "date": "2026-08-15",
+        "due_date": "2026-08-29",
+        "state": "open",
+        "currency": "EUR",
+        "prices_are_incl_tax": true,
+        "total_price_excl_tax": "49.00",
+        "total_price_incl_tax": "59.29",
+        "details": []
+    },
+    {
+        "id": "426000000000000002",
+        "administration_id": "123456789",
+        "contact_id": "411000000000000011",
+        "contact": {
+            "id": "411000000000000011",
+            "company_name": "Laptop Store",
+            "firstname": "",
+            "lastname": ""
+        },
+        "reference": "ORD-77812",
+        "date": "2026-08-02",
+        "due_date": "2026-08-16",
+        "state": "paid",
+        "currency": "EUR",
+        "prices_are_incl_tax": true,
+        "total_price_excl_tax": "1200.00",
+        "total_price_incl_tax": "1452.00",
+        "details": []
+    }
+]

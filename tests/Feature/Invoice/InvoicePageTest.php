@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Date;
 beforeEach(function (): void {
     $this->user = User::factory()->create();
     $this->actingAs($this->user);
+    config()->set('services.moneybird.access_token', null);
+    config()->set('services.moneybird.administration_id', null);
 });
 
 it('lists invoices with the table payload', function (): void {

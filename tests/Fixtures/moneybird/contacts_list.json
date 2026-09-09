@@ -1,0 +1,32 @@
+[
+    {
+        "id": "411000000000000001",
+        "administration_id": "123456789",
+        "company_name": "Acme Corporation",
+        "firstname": "",
+        "lastname": "",
+        "address1": "Main Street 1",
+        "zipcode": "1234AB",
+        "city": "Amsterdam",
+        "country": "NL",
+        "email": "billing@acme.test",
+        "customer_id": "1",
+        "phone": "",
+        "send_invoices_to_email": "billing@acme.test"
+    },
+    {
+        "id": "411000000000000002",
+        "administration_id": "123456789",
+        "company_name": "",
+        "firstname": "Jan",
+        "lastname": "Jansen",
+        "address1": "Main Street 1",
+        "zipcode": "1234AB",
+        "city": "Amsterdam",
+        "country": "NL",
+        "email": "jan@jansen.test",
+        "customer_id": "2",
+        "phone": "",
+        "send_invoices_to_email": "jan@jansen.test"
+    }
+]

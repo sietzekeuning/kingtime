@@ -1,0 +1,29 @@
+[
+    {
+        "id": "422000000000000004",
+        "administration_id": "123456789",
+        "contact_id": "411000000000000002",
+        "contact": {
+            "id": "411000000000000002",
+            "company_name": "Beta BV",
+            "firstname": "",
+            "lastname": "",
+            "email": "beta@example.test"
+        },
+        "invoice_id": "2026-0043",
+        "draft_id": null,
+        "state": "late",
+        "invoice_date": "2026-09-01",
+        "due_date": "2026-09-15",
+        "paid_at": null,
+        "reference": "September 2026",
+        "currency": "EUR",
+        "prices_are_incl_tax": false,
+        "total_price_excl_tax": "250.00",
+        "total_price_incl_tax": "302.50",
+        "total_tax": "52.50",
+        "total_paid": "0.00",
+        "total_unpaid": "302.50",
+        "details": []
+    }
+]

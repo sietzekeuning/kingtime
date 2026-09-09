@@ -1,0 +1,12 @@
+[
+    {
+        "id": "424000000000000001",
+        "administration_id": "123456789",
+        "invoice_type": "SalesInvoice",
+        "invoice_id": "422000000000000001",
+        "financial_account_id": "436000000000000001",
+        "payment_date": "2026-09-10",
+        "price": "402.33",
+        "price_base": "402.33"
+    }
+]

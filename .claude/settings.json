@@ -22,7 +22,11 @@
         ],
         "deny": []
     },
-    "enabledMcpjsonServers": ["laravel-boost", "herd"],
+    "enabledMcpjsonServers": [
+        "laravel-boost",
+        "herd",
+        "kingtime"
+    ],
     "hooks": {
         "PostToolUse": [
             {

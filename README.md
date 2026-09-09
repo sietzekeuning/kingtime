@@ -91,7 +91,7 @@ Claude Desktop, Cursor and friends take the same thing as JSON:
 
 For a local install without HTTPS you can also run it over stdio: `php artisan mcp:start kingtime` (acts as the first user in the database).
 
-Tools: `list_clients`, `list_projects`, `list_tasks`, `list_time_entries`, `get_timesheet`, `log_time`, `update_time_entry`, `delete_time_entry`, `start_timer`, `stop_timer`, `get_running_timer`, `get_unbilled_summary`, `preview_invoice` and `prepare_invoice`. Invoices prepared through MCP are drafts, exactly like the ones from the UI.
+Tools: `list_clients`, `list_projects`, `list_tasks`, `list_time_entries`, `get_timesheet`, `log_time`, `update_time_entry`, `delete_time_entry`, `start_timer`, `stop_timer`, `get_running_timer`, `get_unbilled_summary`, `preview_invoice`, `prepare_invoice`, `moneybird_status`, `moneybird_list_contacts`, `moneybird_list_sales_invoices`, `moneybird_get_sales_invoice`, `moneybird_list_purchase_invoices`, `moneybird_list_receipts`, `moneybird_revenue_summary` and `moneybird_get`. Invoices prepared through MCP are drafts, exactly like the ones from the UI. The `moneybird_*` tools are read-only queries against your Moneybird administration (contacts, sales and purchase invoices, receipts, revenue per month and per contact, and a generic GET for any other endpoint); they never create or change anything.
 
 ## Development
 

@@ -107,6 +107,132 @@ class MoneybirdClient
     }
 
     /**
+     * Generic read of any endpoint under the administration, for example
+     * `contacts`, `documents/purchase_invoices` or `sales_invoices/1/payments`.
+     * Moneybird's own query params apply: `page`, `per_page`, `query` and
+     * `filter` (a comma separated list such as `period:this_month,state:open`).
+     *
+     * @param  array<string, string|int>  $query
+     * @return array<mixed>
+     */
+    public function get(string $path, array $query = []): array
+    {
+        return $this->request('GET', $path, query: $query);
+    }
+
+    /**
+     * Contacts, optionally narrowed with Moneybird's fuzzy `query` search.
+     *
+     * @return array<int, MoneybirdPayload>
+     */
+    public function contacts(?string $query = null, int $page = 1, int $perPage = 50): array
+    {
+        $parameters = ['page' => $page, 'per_page' => $perPage];
+
+        if ($query !== null && trim($query) !== '') {
+            $parameters['query'] = trim($query);
+        }
+
+        return $this->get('contacts', $parameters);
+    }
+
+    /**
+     * @return MoneybirdPayload
+     */
+    public function contact(string $id): array
+    {
+        /** @var MoneybirdPayload $contact */
+        $contact = $this->get("contacts/{$id}");
+
+        return $contact;
+    }
+
+    /**
+     * Sales invoices matching Moneybird filters such as
+     * `['period' => 'this_month', 'state' => 'open', 'contact_id' => '1']`.
+     *
+     * @param  array<string, string|int|null>  $filters
+     * @return array<int, MoneybirdPayload>
+     */
+    public function salesInvoices(array $filters = [], int $page = 1, int $perPage = 50): array
+    {
+        /** @var array<int, MoneybirdPayload> $invoices */
+        $invoices = $this->get('sales_invoices', $this->listQuery($filters, $page, $perPage));
+
+        return array_map(fn (array $invoice): array => $this->withUrl($invoice), $invoices);
+    }
+
+    /**
+     * @param  array<string, string|int|null>  $filters
+     * @return array<int, MoneybirdPayload>
+     */
+    public function purchaseInvoices(array $filters = [], int $page = 1, int $perPage = 50): array
+    {
+        /** @var array<int, MoneybirdPayload> $documents */
+        $documents = $this->get('documents/purchase_invoices', $this->listQuery($filters, $page, $perPage));
+
+        return array_map(fn (array $document): array => $this->withDocumentUrl($document), $documents);
+    }
+
+    /**
+     * @param  array<string, string|int|null>  $filters
+     * @return array<int, MoneybirdPayload>
+     */
+    public function receipts(array $filters = [], int $page = 1, int $perPage = 50): array
+    {
+        /** @var array<int, MoneybirdPayload> $documents */
+        $documents = $this->get('documents/receipts', $this->listQuery($filters, $page, $perPage));
+
+        return array_map(fn (array $document): array => $this->withDocumentUrl($document), $documents);
+    }
+
+    /**
+     * @return array<int, MoneybirdPayload>
+     */
+    public function financialAccounts(): array
+    {
+        return $this->get('financial_accounts');
+    }
+
+    /**
+     * @return array<int, MoneybirdPayload>
+     */
+    public function products(): array
+    {
+        return $this->get('products');
+    }
+
+    /**
+     * The configured administration (name, currency, language) out of the
+     * ones the token can reach, or null when the token cannot see it.
+     *
+     * @return MoneybirdPayload|null
+     */
+    public function administration(): ?array
+    {
+        if (! $this->isConfigured()) {
+            throw MoneybirdException::notConfigured();
+        }
+
+        $response = $this->http()->get(sprintf('%s/administrations.json', rtrim($this->baseUrl(), '/')));
+
+        if ($response->failed()) {
+            throw MoneybirdException::fromResponse('GET', 'administrations', $response);
+        }
+
+        /** @var array<int, MoneybirdPayload> $administrations */
+        $administrations = $this->decode($response);
+
+        foreach ($administrations as $administration) {
+            if ((string) ($administration['id'] ?? '') === $this->administrationId()) {
+                return $administration;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return array<int, MoneybirdPayload>
      */
     public function taxRates(): array
@@ -135,9 +261,41 @@ class MoneybirdClient
         return sprintf('https://moneybird.com/%s/sales_invoices/%s', $this->administrationId(), $id);
     }
 
+    public function documentUrl(string $id): string
+    {
+        return sprintf('https://moneybird.com/%s/documents/%s', $this->administrationId(), $id);
+    }
+
+    /**
+     * Moneybird's list query: `page`, `per_page` and the filters joined as
+     * `filter=key:value,key:value`. Empty filter values are dropped.
+     *
+     * @param  array<string, string|int|null>  $filters
+     * @return array<string, string|int>
+     */
+    public static function listQuery(array $filters, int $page = 1, int $perPage = 50): array
+    {
+        $query = ['page' => max(1, $page), 'per_page' => max(1, $perPage)];
+        $parts = [];
+
+        foreach ($filters as $key => $value) {
+            if ($value === null || trim((string) $value) === '') {
+                continue;
+            }
+
+            $parts[] = sprintf('%s:%s', $key, trim((string) $value));
+        }
+
+        if ($parts !== []) {
+            $query['filter'] = implode(',', $parts);
+        }
+
+        return $query;
+    }
+
     /**
      * @param  MoneybirdPayload|null  $body
-     * @param  array<string, string>  $query
+     * @param  array<string, string|int>  $query
      * @return array<mixed>
      */
     protected function request(string $method, string $path, ?array $body = null, array $query = []): array
@@ -185,6 +343,20 @@ class MoneybirdClient
         }
 
         return $invoice;
+    }
+
+    /**
+     * @param  array<mixed>  $document
+     * @return MoneybirdPayload
+     */
+    protected function withDocumentUrl(array $document): array
+    {
+        /** @var MoneybirdPayload $document */
+        if (isset($document['id'])) {
+            $document['url'] = $this->documentUrl((string) $document['id']);
+        }
+
+        return $document;
     }
 
     protected function http(): PendingRequest

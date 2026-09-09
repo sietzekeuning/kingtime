@@ -1,0 +1,22 @@
+[
+    {
+        "id": "427000000000000001",
+        "administration_id": "123456789",
+        "contact_id": "411000000000000012",
+        "contact": {
+            "id": "411000000000000012",
+            "company_name": "Coffee Bar",
+            "firstname": "",
+            "lastname": ""
+        },
+        "reference": "Bon 1188",
+        "date": "2026-08-20",
+        "due_date": null,
+        "state": "paid",
+        "currency": "EUR",
+        "prices_are_incl_tax": true,
+        "total_price_excl_tax": "4.13",
+        "total_price_incl_tax": "5.00",
+        "details": []
+    }
+]

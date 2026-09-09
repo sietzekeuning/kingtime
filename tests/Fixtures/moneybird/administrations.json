@@ -1,0 +1,20 @@
+[
+    {
+        "id": "999",
+        "name": "Other Company",
+        "language": "nl",
+        "currency": "EUR",
+        "country": "NL",
+        "time_zone": "Europe/Amsterdam",
+        "access": "owner"
+    },
+    {
+        "id": "123456789",
+        "name": "King Websites",
+        "language": "nl",
+        "currency": "EUR",
+        "country": "NL",
+        "time_zone": "Europe/Amsterdam",
+        "access": "owner"
+    }
+]
