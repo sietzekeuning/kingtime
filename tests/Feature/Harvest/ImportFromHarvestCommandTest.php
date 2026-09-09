@@ -25,7 +25,7 @@ it('runs a full import when nothing was imported before', function (): void {
         ->and($import->updated_since)->toBeNull()
         ->and($import->finished_at)->not->toBeNull()
         ->and($import->counts['clients'])->toBe(['created' => 2, 'updated' => 0])
-        ->and($import->counts['time_entries'])->toBe(['created' => 3, 'updated' => 0]);
+        ->and($import->counts['time_entries'])->toBe(['created' => 2, 'updated' => 0]);
 
     Http::assertSent(fn (Request $request) => str_contains($request->url(), '/time_entries')
         && ! isset(HarvestApi::query($request)['updated_since']));
@@ -60,7 +60,7 @@ it('accepts an explicit --since and ignores history with --full', function (): v
 
 it('records a failed import and exits non-zero on an api error', function (): void {
     HarvestApi::fake([
-        HarvestApi::BASE.'/users*' => Http::response(['message' => 'Nope'], 403),
+        HarvestApi::BASE.'/clients*' => Http::response(['message' => 'Nope'], 403),
     ]);
 
     $this->artisan('harvest:import')

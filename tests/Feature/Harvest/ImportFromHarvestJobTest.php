@@ -30,7 +30,7 @@ it('records a harvest import row and publishes progress to the cache', function 
     expect($progress)->not->toBeNull()
         ->and($progress->status)->toBe(HarvestImportStatus::Finished)
         ->and($progress->harvest_import_id)->toBe($import->id)
-        ->and($progress->counts->time_entries->created)->toBe(3)
+        ->and($progress->counts->time_entries->created)->toBe(2)
         ->and($progress->message)->toContain('records synced');
 
     expect(Cache::get(HarvestImportProgressData::cacheKey($this->userId)))->toBeArray()

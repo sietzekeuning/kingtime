@@ -205,7 +205,7 @@ it('queues an import with the user\'s own connection and reports progress', func
     $this->getJson(route('integrations.harvest.progress'))
         ->assertOk()
         ->assertJsonPath('progress.status', HarvestImportStatus::Queued->value)
-        ->assertJsonPath('progress.counts.users.created', 0);
+        ->assertJsonPath('progress.counts.clients.created', 0);
 
     // A second click while queued does not start another job.
     $this->postJson(route('integrations.harvest.import'))

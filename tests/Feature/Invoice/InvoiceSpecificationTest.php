@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Date;
 
 beforeEach(function (): void {
     $this->user = User::factory()->create();
-    $this->client = Client::factory()->create(['name' => 'Acme Corporation']);
+    $this->client = Client::factory()->for($this->user)->create(['name' => 'Acme Corporation']);
     $this->from = Date::parse('2026-08-01');
     $this->to = Date::parse('2026-08-31');
 });

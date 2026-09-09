@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Client\Models\Client;
 use App\Domain\Mcp\Servers\KingtimeServer;
 use App\Domain\Mcp\Tools\GetRunningTimerTool;
 use App\Domain\Mcp\Tools\LogTimeTool;
@@ -68,7 +69,7 @@ it('serves the server to a personal access token', function (): void {
 it('logs time through the HTTP server as the token owner', function (): void {
     $user = User::factory()->create();
     User::factory()->create();
-    $project = Project::factory()->create();
+    $project = Project::factory()->for(Client::factory()->for($user))->create();
     $token = $user->createToken('Claude Desktop')->plainTextToken;
 
     $this->withToken($token)
@@ -92,7 +93,7 @@ it('registers the local stdio server', function (): void {
 it('acts as the first user when no one is authenticated (local server)', function (): void {
     $first = User::factory()->create();
     User::factory()->create();
-    $project = Project::factory()->create();
+    $project = Project::factory()->for(Client::factory()->for($first))->create();
 
     KingtimeServer::tool(LogTimeTool::class, ['project_id' => $project->id, 'hours' => 1])->assertOk();
     KingtimeServer::tool(GetRunningTimerTool::class)->assertOk();

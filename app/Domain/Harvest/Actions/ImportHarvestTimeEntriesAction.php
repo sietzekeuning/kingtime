@@ -8,25 +8,41 @@ use App\Domain\Harvest\Data\HarvestImportResultData;
 use App\Domain\Harvest\Services\HarvestClient;
 use App\Domain\Project\Models\Project;
 use App\Domain\Time\Models\TimeEntry;
-use App\Domain\User\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Only the hours of the Harvest user behind the token come over: they land
+ * on the account that connected Harvest. Hours of other people in the
+ * Harvest account belong to nobody here and are left out.
+ */
 class ImportHarvestTimeEntriesAction
 {
     public function handle(HarvestClient $client, HarvestImportResultData $result, ?CarbonInterface $updatedSince = null, ?callable $tick = null): void
     {
-        $userIds = User::query()->whereNotNull('harvest_id')->pluck('id', 'harvest_id');
-        $projectIds = Project::withTrashed()->whereNotNull('harvest_id')->pluck('id', 'harvest_id');
+        $connection = $client->connection();
+        $ownerId = $connection->user_id;
+        $harvestUserId = $connection->harvest_user_id;
 
-        foreach ($client->timeEntries($updatedSince) as $record) {
+        if ($harvestUserId === null) {
+            Log::warning('Harvest import: skipping time entries, the Harvest user behind the token is unknown.');
+
+            return;
+        }
+
+        $projectIds = Project::ownedBy($ownerId)->withTrashed()->whereNotNull('harvest_id')->pluck('id', 'harvest_id');
+
+        foreach ($client->timeEntries($updatedSince, harvestUserId: $harvestUserId) as $record) {
             $harvestId = (int) $record['id'];
-            $userId = $userIds->get((int) ($record['user']['id'] ?? 0));
             $projectId = $projectIds->get((int) ($record['project']['id'] ?? 0));
 
-            if ($userId === null || $projectId === null) {
-                Log::warning("Harvest import: skipping time entry {$harvestId}, user or project is unknown.");
+            if ((int) ($record['user']['id'] ?? 0) !== $harvestUserId) {
+                continue;
+            }
+
+            if ($projectId === null) {
+                Log::warning("Harvest import: skipping time entry {$harvestId}, its project is unknown.");
 
                 continue;
             }
@@ -40,7 +56,7 @@ class ImportHarvestTimeEntriesAction
             $hours = $isRunning && isset($record['hours_without_timer']) ? $record['hours_without_timer'] : ($record['hours'] ?? 0);
 
             $attributes = [
-                'user_id' => $userId,
+                'user_id' => $ownerId,
                 'project_id' => $projectId,
                 'spent_on' => (string) $record['spent_date'],
                 'hours' => $hours,
@@ -52,7 +68,7 @@ class ImportHarvestTimeEntriesAction
                 'timer_started_at' => $isRunning ? $timerStartedAt : null,
             ];
 
-            $entry = TimeEntry::withTrashed()->where('harvest_id', $harvestId)->first();
+            $entry = TimeEntry::ownedBy($ownerId)->withTrashed()->where('harvest_id', $harvestId)->first();
 
             if ($entry === null) {
                 TimeEntry::create([...$attributes, 'is_billed' => (bool) ($record['is_billed'] ?? false), 'harvest_id' => $harvestId]);

@@ -26,26 +26,23 @@ it('imports everything from harvest with the right mappings', function (): void 
 
     $result = app(ImportFromHarvestAction::class)->handle($this->connection);
 
-    expect($result->users->created)->toBe(1)
-        ->and($result->users->updated)->toBe(1)
-        ->and($result->clients->created)->toBe(2)
+    expect($result->clients->created)->toBe(2)
         ->and($result->projects->created)->toBe(3)
-        ->and($result->time_entries->created)->toBe(3);
+        ->and($result->time_entries->created)->toBe(2);
 
-    // Users: the token owner becomes the Harvest user behind the token, the unknown one is created.
+    // The token owner becomes the Harvest user behind the token; nobody else gets an account.
     expect($existing->fresh()->harvest_id)->toBe(1001)
         ->and($existing->fresh()->name)->toBe('Local Sietze')
         ->and($this->connection->fresh()->harvest_user_id)->toBe(1001)
-        ->and($this->connection->fresh()->account_email)->toBe('sietze@example.test');
-    $alex = User::query()->where('harvest_id', 1002)->firstOrFail();
-    expect($alex->email)->toBe('alex@example.test')
-        ->and($alex->name)->toBe('Alex Doe')
-        ->and($alex->email_verified_at)->toBeNull();
+        ->and($this->connection->fresh()->account_email)->toBe('sietze@example.test')
+        ->and(User::query()->count())->toBe(1);
 
-    // Clients come from two pages.
+    // Clients come from two pages and belong to the owner.
     $acme = Client::query()->where('harvest_id', 2001)->firstOrFail();
     $globex = Client::query()->where('harvest_id', 2002)->firstOrFail();
-    expect($acme->name)->toBe('Acme')
+    expect($acme->user_id)->toBe($existing->id)
+        ->and($globex->user_id)->toBe($existing->id)
+        ->and($acme->name)->toBe('Acme')
         ->and($acme->address)->toBe("1 Main Street\nAmsterdam")
         ->and($globex->is_active)->toBeFalse()
         ->and($globex->currency)->toBe('USD');
@@ -53,6 +50,7 @@ it('imports everything from harvest with the right mappings', function (): void 
     // Projects map billability, rates, budget and dates.
     $website = Project::query()->where('harvest_id', 3001)->firstOrFail();
     expect($website->client_id)->toBe($acme->id)
+        ->and($website->user_id)->toBe($existing->id)
         ->and($website->code)->toBe('WEB')
         ->and($website->is_billable)->toBeTrue()
         ->and($website->hourly_rate)->toBe('95.00')
@@ -86,13 +84,10 @@ it('imports everything from harvest with the right mappings', function (): void 
         ->and($entry->is_billed)->toBeFalse()
         ->and($entry->is_running)->toBeFalse();
 
-    $billed = TimeEntry::query()->where('harvest_id', 6002)->firstOrFail();
-    expect($billed->user_id)->toBe($alex->id)
-        ->and($billed->is_billable)->toBeFalse()
-        ->and($billed->is_billed)->toBeTrue()
-        ->and($billed->is_locked)->toBeTrue()
-        ->and($billed->hourly_rate)->toBeNull()
-        ->and($billed->notes)->toBe('Weekly sync');
+    // Another Harvest user's entry is not imported; Harvest is asked for the owner's entries only.
+    expect(TimeEntry::query()->where('harvest_id', 6002)->exists())->toBeFalse();
+    Http::assertSent(fn (Request $request) => str_contains($request->url(), '/time_entries')
+        && (HarvestApi::query($request)['user_id'] ?? null) === '1001');
 
     // Tasks are not imported; an entry without notes keeps the task name.
     $running = TimeEntry::query()->where('harvest_id', 6003)->firstOrFail();
@@ -131,13 +126,12 @@ it('updates instead of duplicating on a second run and keeps local-only fields',
 
     expect($result->clients)->toMatchObject(['created' => 0, 'updated' => 2])
         ->and($result->projects)->toMatchObject(['created' => 0, 'updated' => 3])
-        ->and($result->time_entries)->toMatchObject(['created' => 0, 'updated' => 3])
-        ->and($result->users)->toMatchObject(['created' => 0, 'updated' => 2]);
+        ->and($result->time_entries)->toMatchObject(['created' => 0, 'updated' => 2]);
 
     expect(Client::query()->count())->toBe(2)
         ->and(Project::query()->count())->toBe(3)
-        ->and(TimeEntry::query()->count())->toBe(3)
-        ->and(User::query()->count())->toBe(2);
+        ->and(TimeEntry::query()->count())->toBe(2)
+        ->and(User::query()->count())->toBe(1);
 
     $acme->refresh();
     expect($acme->email)->toBe('billing@acme.test')
@@ -171,7 +165,7 @@ it('passes updated_since to every list endpoint on an incremental import', funct
 
     app(ImportFromHarvestAction::class)->handle($this->connection, $since);
 
-    foreach (['/users', '/clients', '/projects', '/time_entries'] as $path) {
+    foreach (['/clients', '/projects', '/time_entries'] as $path) {
         Http::assertSent(fn (Request $request) => str_contains($request->url(), $path.'?')
             && (HarvestApi::query($request)['updated_since'] ?? null) === $since->toIso8601String());
     }
@@ -224,4 +218,23 @@ it('does not steal a harvest id that another local user already carries', functi
     expect($this->owner->fresh()->harvest_id)->toBeNull()
         ->and($alreadyLinked->fresh()->harvest_id)->toBe(1001)
         ->and($this->connection->fresh()->harvest_user_id)->toBe(1001);
+
+    // The hours still land on the owner: the connection knows whose token it is.
+    expect(TimeEntry::query()->where('harvest_id', 6001)->firstOrFail()->user_id)->toBe($this->owner->id)
+        ->and(TimeEntry::ownedBy($alreadyLinked)->count())->toBe(0);
+});
+
+it('keeps two users\' harvest imports apart', function (): void {
+    HarvestApi::fake();
+    $other = User::factory()->create(['email' => 'other@example.test']);
+    $otherConnection = HarvestApi::connect($other);
+
+    app(ImportFromHarvestAction::class)->handle($this->connection);
+    app(ImportFromHarvestAction::class)->handle($otherConnection);
+
+    expect(Client::ownedBy($this->owner)->count())->toBe(2)
+        ->and(Client::ownedBy($other)->count())->toBe(2)
+        ->and(Project::ownedBy($other)->count())->toBe(3)
+        ->and(TimeEntry::ownedBy($other)->count())->toBe(2)
+        ->and(Project::ownedBy($other)->where('harvest_id', 3001)->firstOrFail()->client->user_id)->toBe($other->id);
 });

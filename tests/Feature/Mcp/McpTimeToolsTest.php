@@ -15,6 +15,7 @@ use App\Domain\Mcp\Tools\StartTimerTool;
 use App\Domain\Mcp\Tools\StopTimerTool;
 use App\Domain\Mcp\Tools\UpdateTimeEntryTool;
 use App\Domain\Project\Models\Project;
+use App\Domain\Shared\Models\Scopes\UserScope;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
 use Illuminate\Support\Carbon;
@@ -34,12 +35,12 @@ function mcpTimeTool(string $tool, array $arguments = []): TestResponse
 beforeEach(function (): void {
     $this->travelTo(Carbon::parse('2026-09-09 10:00:00'));
     $this->user = User::factory()->create();
-    $this->client = Client::factory()->create(['name' => 'Acme Corporation']);
+    $this->client = Client::factory()->for($this->user)->create(['name' => 'Acme Corporation']);
     $this->project = Project::factory()->for($this->client)->create(['name' => 'Website redesign', 'code' => 'WEB', 'hourly_rate' => '95.00']);
 });
 
 it('lists active clients', function (): void {
-    Client::factory()->create(['name' => 'Old client', 'is_active' => false]);
+    Client::factory()->for($this->user)->create(['name' => 'Old client', 'is_active' => false]);
 
     mcpTimeTool(ListClientsTool::class)
         ->assertOk()
@@ -54,7 +55,7 @@ it('lists active clients', function (): void {
 });
 
 it('lists projects with their client and billing settings', function (): void {
-    $logo = Project::factory()->for(Client::factory()->create(['name' => 'Beta BV']))->nonBillable()->create(['name' => 'Logo']);
+    $logo = Project::factory()->for(Client::factory()->for($this->user)->create(['name' => 'Beta BV']))->nonBillable()->create(['name' => 'Logo']);
     Project::factory()->for($this->client)->create(['name' => 'Archived', 'is_active' => false]);
 
     mcpTimeTool(ListProjectsTool::class)
@@ -82,7 +83,7 @@ it('lists projects with their client and billing settings', function (): void {
 });
 
 it('lists time entries in a period with filters and totals', function (): void {
-    $other = Project::factory()->create(['name' => 'Other']);
+    $other = Project::factory()->for(Client::factory()->for($this->user))->create(['name' => 'Other']);
     TimeEntry::factory()->for($this->user)->for($this->project)->create(['spent_on' => '2026-09-01', 'hours' => '2.00', 'notes' => 'Homepage']);
     TimeEntry::factory()->for($this->user)->for($this->project)->billed()->create(['spent_on' => '2026-09-02', 'hours' => '1.00']);
     TimeEntry::factory()->for($this->user)->for($other)->create(['spent_on' => '2026-09-03', 'hours' => '0.50', 'is_billable' => false]);
@@ -256,7 +257,7 @@ it('deletes an entry and refuses entries of other users', function (): void {
         ->assertHasErrors(["No time entry with id {$someoneElse->id} exists for you"]);
 
     expect(TimeEntry::query()->find($entry->id))->toBeNull()
-        ->and(TimeEntry::query()->find($someoneElse->id))->not->toBeNull();
+        ->and(TimeEntry::withoutGlobalScope(UserScope::class)->find($someoneElse->id))->not->toBeNull();
 });
 
 it('starts a timer, stopping the other running one', function (): void {

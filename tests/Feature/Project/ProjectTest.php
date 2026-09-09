@@ -36,9 +36,10 @@ function projectPayload(Client $client, array $overrides = []): array
 
 it('lists projects with the table payload, client name, hour totals and the amount spent', function (): void {
     $project = Project::factory()->for(Client::factory()->create(['name' => 'Aardvark Inc']))->create(['name' => 'Aardvark', 'budget_amount' => '1000.00']);
-    TimeEntry::factory()->for($project)->create(['hours' => '2.50', 'hourly_rate' => '80.00', 'is_billable' => true, 'is_billed' => false]);
-    TimeEntry::factory()->for($project)->billed()->create(['hours' => '1.25', 'hourly_rate' => '100.00']);
-    TimeEntry::factory()->for($project)->billed()->create(['hours' => '4.00', 'hourly_rate' => null]);
+    $mine = TimeEntry::factory()->for($project)->for(auth()->user());
+    $mine->create(['hours' => '2.50', 'hourly_rate' => '80.00', 'is_billable' => true, 'is_billed' => false]);
+    $mine->billed()->create(['hours' => '1.25', 'hourly_rate' => '100.00']);
+    $mine->billed()->create(['hours' => '4.00', 'hourly_rate' => null]);
     Project::factory()->count(2)->sequence(['name' => 'Beta'], ['name' => 'Gamma'])->create();
 
     $this->get(route('projects.index'))

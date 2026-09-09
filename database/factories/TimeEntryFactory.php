@@ -17,8 +17,8 @@ class TimeEntryFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
             'project_id' => Project::factory(),
+            'user_id' => User::factory(),
             'spent_on' => fake()->dateTimeBetween('-30 days', 'now')->format('Y-m-d'),
             'hours' => fake()->randomElement(['0.50', '1.00', '1.50', '2.00', '3.25', '4.00']),
             'notes' => fake()->sentence(),

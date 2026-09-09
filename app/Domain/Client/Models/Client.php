@@ -6,7 +6,9 @@ namespace App\Domain\Client\Models;
 
 use App\Domain\Invoice\Models\Invoice;
 use App\Domain\Project\Models\Project;
+use App\Domain\Shared\Models\Concerns\BelongsToUser;
 use App\Domain\Time\Models\TimeEntry;
+use App\Domain\User\Models\User;
 use Database\Factories\ClientFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +19,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property int $user_id
  * @property string $name
  * @property string|null $email
  * @property string|null $address
@@ -28,9 +31,12 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
+ * @property-read User $user
  */
 class Client extends Model
 {
+    use BelongsToUser;
+
     /** @use HasFactory<ClientFactory> */
     use HasFactory;
 

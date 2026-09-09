@@ -6,6 +6,7 @@ namespace App\Domain\Time\Models;
 
 use App\Domain\Invoice\Models\Invoice;
 use App\Domain\Project\Models\Project;
+use App\Domain\Shared\Models\Concerns\BelongsToUser;
 use App\Domain\User\Models\User;
 use Database\Factories\TimeEntryFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,6 +40,8 @@ use Illuminate\Support\Carbon;
  */
 class TimeEntry extends Model
 {
+    use BelongsToUser;
+
     /** @use HasFactory<TimeEntryFactory> */
     use HasFactory;
 
@@ -56,12 +59,6 @@ class TimeEntry extends Model
             'is_running' => 'boolean',
             'timer_started_at' => 'datetime',
         ];
-    }
-
-    /** @return BelongsTo<User, $this> */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     /** @return BelongsTo<Project, $this> */

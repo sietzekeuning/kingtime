@@ -6,13 +6,14 @@ namespace App\Domain\Time\Data;
 
 use App\Domain\Shared\Data\Attributes\Derived;
 use App\Domain\Shared\Data\BaseData;
+use App\Domain\Shared\Validation\Owned;
 use App\Domain\Time\Models\TimeEntry;
 use Spatie\LaravelData\Attributes\Validation\Date;
-use Spatie\LaravelData\Attributes\Validation\Exists;
 use Spatie\LaravelData\Attributes\Validation\Max;
 use Spatie\LaravelData\Attributes\Validation\Min;
 use Spatie\LaravelData\Attributes\Validation\Numeric;
 use Spatie\LaravelData\Attributes\Validation\Required;
+use Spatie\LaravelData\Support\Validation\ValidationContext;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 #[TypeScript]
@@ -20,7 +21,6 @@ class TimeEntryData extends BaseData
 {
     public function __construct(
         public ?int $id,
-        #[Required, Exists('projects', 'id')]
         public int $project_id,
         #[Required, Date]
         public string $spent_on,
@@ -50,6 +50,16 @@ class TimeEntryData extends BaseData
         #[Derived]
         public ?string $user_name = null,
     ) {}
+
+    /**
+     * @return array<string, array<int, mixed>>
+     */
+    public static function rules(ValidationContext $context): array
+    {
+        return [
+            'project_id' => ['required', 'integer', Owned::exists('projects')],
+        ];
+    }
 
     public static function fromModel(TimeEntry $entry): self
     {

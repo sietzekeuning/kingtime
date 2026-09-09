@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Project\Models\Project;
+use App\Domain\Shared\Models\Scopes\UserScope;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
 
@@ -66,7 +67,7 @@ it('never touches another user\'s entry in the same cell', function (): void {
         ->assertRedirect();
 
     expect($other->fresh()?->hours)->toBe('7.00')
-        ->and(TimeEntry::query()->count())->toBe(2);
+        ->and(TimeEntry::withoutGlobalScope(UserScope::class)->count())->toBe(2);
 });
 
 it('validates the cell payload', function (): void {
@@ -86,6 +87,6 @@ it('deletes the open entries of a project row for the week and keeps the locked 
         ->assertRedirect()
         ->assertSessionHas('toast.message', '2 time entries deleted.');
 
-    expect(TimeEntry::query()->pluck('id')->sort()->values()->all())
+    expect(TimeEntry::withoutGlobalScope(UserScope::class)->pluck('id')->sort()->values()->all())
         ->toBe(collect([$locked->id, $nextWeek->id, $otherProject->id, $otherUser->id])->sort()->values()->all());
 });

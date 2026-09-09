@@ -26,7 +26,7 @@ it('hides archived projects from the list unless the filter asks for them', func
 
 it('archives and restores a project without touching its hours', function (): void {
     $project = Project::factory()->create(['is_active' => true]);
-    TimeEntry::factory()->for($project)->create(['hours' => '2.00']);
+    TimeEntry::factory()->for($project)->create(['user_id' => auth()->id(), 'hours' => '2.00']);
 
     $this->from(route('projects.edit', $project))
         ->post(route('projects.archive.store', $project))

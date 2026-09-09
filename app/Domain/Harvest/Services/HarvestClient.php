@@ -89,22 +89,21 @@ class HarvestClient
         return $this->paginate('/projects', 'projects', $this->updatedSinceQuery($updatedSince));
     }
 
-    /** @return LazyCollection<int, HarvestRecord> */
-    public function users(?CarbonInterface $updatedSince = null): LazyCollection
-    {
-        return $this->paginate('/users', 'users', $this->updatedSinceQuery($updatedSince));
-    }
-
-    /** @return LazyCollection<int, HarvestRecord> */
+    /**
+     * @param  int|null  $harvestUserId  Only the entries of this Harvest user.
+     * @return LazyCollection<int, HarvestRecord>
+     */
     public function timeEntries(
         ?CarbonInterface $updatedSince = null,
         ?CarbonInterface $from = null,
         ?CarbonInterface $to = null,
+        ?int $harvestUserId = null,
     ): LazyCollection {
         return $this->paginate('/time_entries', 'time_entries', array_filter([
             ...$this->updatedSinceQuery($updatedSince),
             'from' => $from?->toDateString(),
             'to' => $to?->toDateString(),
+            'user_id' => $harvestUserId,
         ]));
     }
 

@@ -41,7 +41,6 @@ final class HarvestApi
 
         $defaults = [
             self::BASE.'/users/me*' => Http::response(self::fixture('me')),
-            self::BASE.'/users*' => Http::response(self::fixture('users')),
             self::BASE.'/clients*' => fn (Request $request) => Http::response(
                 self::fixture(self::page($request) === 2 ? 'clients_page2' : 'clients_page1'),
             ),

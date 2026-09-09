@@ -190,7 +190,7 @@ it('refreshes every pushed invoice that is not settled yet', function (): void {
     $open = Invoice::factory()->for($this->user)->create(['moneybird_invoice_id' => '422000000000000001', 'status' => InvoiceStatus::Draft]);
     Invoice::factory()->for($this->user)->create(['moneybird_invoice_id' => '422000000000000009', 'status' => InvoiceStatus::Paid]);
     Invoice::factory()->for($this->user)->create(['moneybird_invoice_id' => null]);
-    $orphan = Invoice::factory()->create(['moneybird_invoice_id' => '422000000000000002', 'status' => InvoiceStatus::Open]); // owner without a connection
+    $orphan = Invoice::factory()->for(User::factory())->create(['moneybird_invoice_id' => '422000000000000002', 'status' => InvoiceStatus::Open]); // owner without a connection
 
     $synced = app(SyncInvoiceStatusesAction::class)->handle();
 

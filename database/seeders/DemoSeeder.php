@@ -29,10 +29,10 @@ class DemoSeeder extends Seeder
             ['Acme Corporation', 'Support retainer', 'ACME-S', '#F59E0B', '85.00'],
             ['Globex', 'Mobile app', 'GLX', '#3B82F6', '110.00'],
             ['Initech', 'TPS report automation', 'INT', '#10B981', '100.00'],
-        ])->map(function (array $row): Project {
+        ])->map(function (array $row) use ($user): Project {
             [$clientName, $name, $code, $color, $rate] = $row;
 
-            $client = Client::query()->firstOrCreate(['name' => $clientName], [
+            $client = Client::query()->firstOrCreate(['user_id' => $user->id, 'name' => $clientName], [
                 'email' => fake()->companyEmail(),
                 'address' => fake()->address(),
                 'currency' => 'EUR',

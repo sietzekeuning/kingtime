@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Domain\Harvest\Models;
 
 use App\Domain\Harvest\Enums\HarvestImportStatus;
+use App\Domain\Shared\Models\Concerns\BelongsToUser;
 use App\Domain\User\Models\User;
 use Database\Factories\HarvestImportFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
@@ -30,6 +30,8 @@ use Illuminate\Support\Carbon;
  */
 class HarvestImport extends Model
 {
+    use BelongsToUser;
+
     /** @use HasFactory<HarvestImportFactory> */
     use HasFactory;
 
@@ -44,12 +46,6 @@ class HarvestImport extends Model
         ];
     }
 
-    /** @return BelongsTo<User, $this> */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
     /**
      * @param  Builder<HarvestImport>  $query
      * @return Builder<HarvestImport>
@@ -61,6 +57,6 @@ class HarvestImport extends Model
 
     public static function lastSuccessfulFor(User $user): ?self
     {
-        return self::query()->where('user_id', $user->id)->finished()->latest('started_at')->first();
+        return self::ownedBy($user)->finished()->latest('started_at')->first();
     }
 }

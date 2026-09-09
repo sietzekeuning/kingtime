@@ -20,14 +20,13 @@ use Carbon\CarbonInterface;
  */
 class ImportFromHarvestAction
 {
-    public const STEPS = ['users', 'clients', 'projects', 'time_entries'];
+    public const STEPS = ['clients', 'projects', 'time_entries'];
 
     public const DONE = 'done';
 
     private const REPORT_EVERY = 25;
 
     public function __construct(
-        private readonly ImportHarvestUsersAction $users,
         private readonly ImportHarvestClientsAction $clients,
         private readonly ImportHarvestProjectsAction $projects,
         private readonly ImportHarvestTimeEntriesAction $timeEntries,
@@ -41,7 +40,6 @@ class ImportFromHarvestAction
         $this->linkTokenOwner($client);
 
         $steps = [
-            'users' => $this->users,
             'clients' => $this->clients,
             'projects' => $this->projects,
             'time_entries' => $this->timeEntries,
@@ -74,8 +72,9 @@ class ImportFromHarvestAction
 
     /**
      * The Harvest user behind the token is the Kingtime user who connected
-     * it, whatever email either side uses. Their hours land on their own
-     * account, unless another local user already carries that Harvest id.
+     * it, whatever email either side uses. Only their hours are imported,
+     * onto their own account; the Harvest id is also remembered on the user
+     * unless another local user already carries it.
      */
     private function linkTokenOwner(HarvestClient $client): void
     {

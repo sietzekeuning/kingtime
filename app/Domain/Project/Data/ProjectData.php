@@ -8,12 +8,13 @@ use App\Domain\Client\Data\ClientData;
 use App\Domain\Project\Models\Project;
 use App\Domain\Shared\Data\Attributes\Derived;
 use App\Domain\Shared\Data\BaseData;
+use App\Domain\Shared\Validation\Owned;
 use Spatie\LaravelData\Attributes\Validation\Date;
-use Spatie\LaravelData\Attributes\Validation\Exists;
 use Spatie\LaravelData\Attributes\Validation\Max;
 use Spatie\LaravelData\Attributes\Validation\Min;
 use Spatie\LaravelData\Attributes\Validation\Numeric;
 use Spatie\LaravelData\Attributes\Validation\Required;
+use Spatie\LaravelData\Support\Validation\ValidationContext;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 #[TypeScript]
@@ -21,7 +22,6 @@ class ProjectData extends BaseData
 {
     public function __construct(
         public ?int $id,
-        #[Required, Exists('clients', 'id')]
         public int $client_id,
         #[Required, Max(255)]
         public string $name,
@@ -52,6 +52,16 @@ class ProjectData extends BaseData
         #[Derived]
         public ?string $spent_amount = null,
     ) {}
+
+    /**
+     * @return array<string, array<int, mixed>>
+     */
+    public static function rules(ValidationContext $context): array
+    {
+        return [
+            'client_id' => ['required', 'integer', Owned::exists('clients')],
+        ];
+    }
 
     public static function fromModel(Project $project): self
     {

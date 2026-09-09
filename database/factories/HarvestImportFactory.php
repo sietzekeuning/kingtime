@@ -25,7 +25,6 @@ class HarvestImportFactory extends Factory
             'finished_at' => (clone $startedAt)->modify('+2 minutes'),
             'updated_since' => null,
             'counts' => [
-                'users' => ['created' => 0, 'updated' => 1],
                 'clients' => ['created' => 2, 'updated' => 0],
                 'projects' => ['created' => 3, 'updated' => 0],
                 'time_entries' => ['created' => 25, 'updated' => 0],

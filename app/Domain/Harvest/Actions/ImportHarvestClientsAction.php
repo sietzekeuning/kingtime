@@ -13,6 +13,8 @@ class ImportHarvestClientsAction
 {
     public function handle(HarvestClient $client, HarvestImportResultData $result, ?CarbonInterface $updatedSince = null, ?callable $tick = null): void
     {
+        $ownerId = $client->connection()->user_id;
+
         foreach ($client->clients($updatedSince) as $record) {
             $harvestId = (int) $record['id'];
             $attributes = [
@@ -22,13 +24,13 @@ class ImportHarvestClientsAction
                 'currency' => (string) ($record['currency'] ?? 'EUR'),
             ];
 
-            $client = Client::withTrashed()->where('harvest_id', $harvestId)->first();
+            $existing = Client::ownedBy($ownerId)->withTrashed()->where('harvest_id', $harvestId)->first();
 
-            if ($client === null) {
-                Client::create([...$attributes, 'harvest_id' => $harvestId]);
+            if ($existing === null) {
+                Client::create([...$attributes, 'user_id' => $ownerId, 'harvest_id' => $harvestId]);
                 $result->clients->created++;
             } else {
-                $client->update($attributes);
+                $existing->update($attributes);
                 $result->clients->updated++;
             }
 

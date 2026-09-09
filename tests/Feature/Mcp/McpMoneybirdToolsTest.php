@@ -104,7 +104,7 @@ it('says when the token cannot see the configured administration', function (): 
 });
 
 it('lists contacts and marks the linked Kingtime client', function (): void {
-    Client::factory()->create(['name' => 'Acme Corporation', 'moneybird_contact_id' => '411000000000000001']);
+    Client::factory()->for($this->user)->create(['name' => 'Acme Corporation', 'moneybird_contact_id' => '411000000000000001']);
     Http::fake([MCP_MB_API.'/contacts.json*' => mcpMbFixture('contacts_list')]);
 
     mcpMbTool(MoneybirdListContactsTool::class, ['query' => 'acme', 'page' => 2])

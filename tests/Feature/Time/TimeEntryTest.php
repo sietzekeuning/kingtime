@@ -14,14 +14,13 @@ beforeEach(function (): void {
 it('renders the timesheet with the table payload and the select options', function (): void {
     $project = Project::factory()->create();
     TimeEntry::factory()->count(2)->for($this->user)->for($project)->create();
-    TimeEntry::factory()->for($project)->create();
 
     $this->get(route('time-entries.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('time-entries/TimeEntryList')
             ->has('timesheet.days', 7)
-            ->has('items.data', 3)
+            ->has('items.data', 2)
             ->has('items.allowed_filters')
             ->has('projects', 1)
             ->where('projects.0.client_name', $project->client->name)
@@ -187,15 +186,17 @@ it('refuses to change or delete billed and locked entries', function (): void {
     }
 });
 
-it('shows other users their entries but lets only the owner change them', function (): void {
+it('hides the entries of other users completely', function (): void {
     $entry = TimeEntry::factory()->create();
 
     $this->get(route('time-entries.index'))
-        ->assertInertia(fn ($page) => $page->has('items.data', 1)->where('items.data.0.id', $entry->id));
+        ->assertInertia(fn ($page) => $page->has('items.data', 0));
 
-    $this->get(route('time-entries.edit', $entry))->assertForbidden();
-    $this->patch(route('time-entries.update', $entry), [...$entry->toArray(), 'hours' => '5'])->assertForbidden();
-    $this->delete(route('time-entries.destroy', $entry))->assertForbidden();
-    $this->post(route('time-entries.start', $entry))->assertForbidden();
-    $this->post(route('time-entries.stop', $entry))->assertForbidden();
+    $this->get(route('time-entries.edit', $entry))->assertNotFound();
+    $this->patch(route('time-entries.update', $entry), [...$entry->toArray(), 'hours' => '5'])->assertNotFound();
+    $this->delete(route('time-entries.destroy', $entry))->assertNotFound();
+    $this->post(route('time-entries.start', $entry))->assertNotFound();
+    $this->post(route('time-entries.stop', $entry))->assertNotFound();
+
+    expect($entry->fresh()?->hours)->toBe($entry->hours);
 });

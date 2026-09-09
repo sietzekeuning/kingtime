@@ -24,7 +24,7 @@ class ImportFromHarvestCommand extends Command
         {--since= : Only fetch records updated since this date or time (defaults to the last successful import)}
         {--full : Ignore previous imports and fetch everything}';
 
-    protected $description = 'Import users, clients, projects and time entries from Harvest, per connected user';
+    protected $description = 'Import clients, projects and your own time entries from Harvest, per connected user';
 
     public function handle(RunHarvestImportAction $runImport): int
     {

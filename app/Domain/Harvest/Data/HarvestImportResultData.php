@@ -15,7 +15,6 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 class HarvestImportResultData extends BaseData
 {
     public function __construct(
-        public HarvestImportCountData $users = new HarvestImportCountData,
         public HarvestImportCountData $clients = new HarvestImportCountData,
         public HarvestImportCountData $projects = new HarvestImportCountData,
         public HarvestImportCountData $time_entries = new HarvestImportCountData,
@@ -23,15 +22,15 @@ class HarvestImportResultData extends BaseData
 
     public function total(): int
     {
-        return $this->users->total()
-            + $this->clients->total()
+        return $this->clients->total()
             + $this->projects->total()
             + $this->time_entries->total();
     }
 
     /**
      * Imports that ran before tasks were dropped stored `tasks` and
-     * `task_assignments` counters too; those keys are ignored.
+     * `task_assignments` counters, older ones a `users` counter; those keys
+     * are ignored.
      *
      * @param  array<string, array{created?: int, updated?: int}>|null  $counts
      */

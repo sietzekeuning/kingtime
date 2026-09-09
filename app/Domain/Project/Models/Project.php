@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Project\Models;
 
 use App\Domain\Client\Models\Client;
+use App\Domain\Shared\Models\Concerns\BelongsToUser;
+use App\Domain\Shared\Models\Scopes\UserScope;
 use App\Domain\Time\Models\TimeEntry;
+use App\Domain\User\Models\User;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +19,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property int $user_id
  * @property int $client_id
  * @property string $name
  * @property string|null $code
@@ -32,10 +36,15 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
+ * @property-read User $user
  * @property-read Client $client
  */
 class Project extends Model
 {
+    use BelongsToUser {
+        resolveOwnerId as resolveAuthenticatedOwnerId;
+    }
+
     /** @use HasFactory<ProjectFactory> */
     use HasFactory;
 
@@ -73,5 +82,16 @@ class Project extends Model
     public function billableRate(): ?string
     {
         return $this->is_billable ? $this->hourly_rate : null;
+    }
+
+    /**
+     * A project always belongs to the owner of its client, whoever creates
+     * it.
+     */
+    protected function resolveOwnerId(): ?int
+    {
+        $client = Client::withoutGlobalScope(UserScope::class)->find($this->client_id);
+
+        return $client !== null ? $client->user_id : $this->resolveAuthenticatedOwnerId();
     }
 }

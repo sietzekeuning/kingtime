@@ -45,7 +45,7 @@ function mcpConfigureMoneybird(): void
 beforeEach(function (): void {
     $this->travelTo(Carbon::parse('2026-09-09 10:00:00'));
     $this->user = User::factory()->create();
-    $this->client = Client::factory()->create(['name' => 'Acme Corporation', 'currency' => 'EUR', 'moneybird_contact_id' => '411000000000000001']);
+    $this->client = Client::factory()->for($this->user)->create(['name' => 'Acme Corporation', 'currency' => 'EUR', 'moneybird_contact_id' => '411000000000000001']);
     $this->project = Project::factory()->for($this->client)->create(['name' => 'Website redesign']);
     $this->entries = TimeEntry::factory()->count(2)->for($this->user)->for($this->project)
         ->sequence(['spent_on' => '2026-08-03', 'hours' => '2.50', 'notes' => 'Homepage'], ['spent_on' => '2026-08-04', 'hours' => '1.00', 'notes' => 'Footer'])
@@ -53,7 +53,7 @@ beforeEach(function (): void {
 });
 
 it('summarises unbilled hours per client', function (): void {
-    $beta = Client::factory()->create(['name' => 'Beta BV']);
+    $beta = Client::factory()->for($this->user)->create(['name' => 'Beta BV']);
     $betaProject = Project::factory()->for($beta)->create();
     TimeEntry::factory()->for($this->user)->for($betaProject)->create(['spent_on' => '2026-07-15', 'hours' => '3.00', 'hourly_rate' => null]);
     TimeEntry::factory()->for($this->user)->for($betaProject)->create(['spent_on' => '2026-09-01', 'hours' => '1.00', 'hourly_rate' => '100.00']);
@@ -119,7 +119,7 @@ it('finds the client by name and reports ambiguity', function (): void {
         ->assertOk()
         ->assertStructuredContent(fn (AssertableJson $json) => $json->where('client.id', $this->client->id)->etc());
 
-    Client::factory()->create(['name' => 'Acme Corporation Holding']);
+    Client::factory()->for($this->user)->create(['name' => 'Acme Corporation Holding']);
 
     mcpInvoiceTool(PreviewInvoiceTool::class, ['client_name' => 'Acme Corporation'])
         ->assertOk()

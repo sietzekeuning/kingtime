@@ -44,17 +44,21 @@ abstract class KingtimeTool extends Tool
     {
         $user = $request->user();
 
-        if ($user instanceof User) {
-            return $user;
+        if (! $user instanceof User) {
+            $user = User::query()->orderBy('id')->first();
         }
 
-        $firstUser = User::query()->orderBy('id')->first();
-
-        if ($firstUser === null) {
+        if ($user === null) {
             throw new McpToolException('Kingtime has no user account yet. Register one in the web app first.');
         }
 
-        return $firstUser;
+        // The tenant scope reads the authenticated user, so the local server
+        // signs its stand-in user in for the duration of the process.
+        if (auth()->id() !== $user->id) {
+            auth()->setUser($user);
+        }
+
+        return $user;
     }
 
     /**

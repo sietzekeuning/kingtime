@@ -6,6 +6,7 @@ namespace App\Domain\Invoice\Models;
 
 use App\Domain\Client\Models\Client;
 use App\Domain\Invoice\Enums\InvoiceStatus;
+use App\Domain\Shared\Models\Concerns\BelongsToUser;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
 use Carbon\CarbonInterface;
@@ -42,6 +43,8 @@ use Illuminate\Support\Carbon;
  */
 class Invoice extends Model
 {
+    use BelongsToUser;
+
     /** @use HasFactory<InvoiceFactory> */
     use HasFactory;
 
@@ -64,17 +67,6 @@ class Invoice extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
-    }
-
-    /**
-     * The user who prepared the invoice; it is pushed to and synced from
-     * Moneybird with that user's connection.
-     *
-     * @return BelongsTo<User, $this>
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     /** @return HasMany<InvoiceLine, $this> */
