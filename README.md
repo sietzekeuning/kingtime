@@ -112,6 +112,21 @@ How the code is organised:
 - List pages are one `Table` class (sorting, filtering) plus the `DataTable` component.
 - `CLAUDE.md` documents the conventions for contributors and coding agents.
 
+## Backups
+
+[spatie/laravel-backup](https://spatie.be/docs/laravel-backup) dumps the database and `storage/app` every night at 02:00 to the `s3` disk (cleanup at 01:30, health check at 03:00), keeping 7 daily, 16 daily-after-that, 8 weekly and 4 monthly archives. Point it at a bucket with a key that can only reach that bucket:
+
+```dotenv
+BACKUP_DISK=s3
+BACKUP_NOTIFICATION_EMAIL=you@example.com
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=eu-central-1
+AWS_BUCKET=your-backup-bucket
+```
+
+`BACKUP_DISK=local` keeps the archives in `storage/app/private` instead. Run one by hand with `php artisan backup:run`.
+
 ## Deploying
 
 The project deploys with [Laravel Forge](https://forge.laravel.com) using zero-downtime deployments: GitHub Actions builds the assets and runs the test suite, then force-pushes a `deploy` branch that Forge picks up. See `.github/workflows/production.yml`. Any host that runs Laravel works; build the assets with `npm run build` and run the scheduler (`php artisan schedule:run` every minute) plus a queue worker for the Harvest import job.

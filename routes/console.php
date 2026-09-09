@@ -25,3 +25,11 @@ Schedule::command(ImportFromHarvestCommand::class)
     ->hourly()
     ->withoutOverlapping()
     ->when(fn (): bool => app(HarvestClient::class)->isConfigured());
+
+// Spatie backup to S3. Clean first so a fresh archive is never pushed only to
+// be deleted minutes later, then dump the database plus storage/app. The
+// health monitor runs an hour later and mails BACKUP_NOTIFICATION_EMAIL when
+// the latest backup is missing or stale.
+Schedule::command('backup:clean')->dailyAt('01:30')->withoutOverlapping();
+Schedule::command('backup:run')->dailyAt('02:00')->withoutOverlapping();
+Schedule::command('backup:monitor')->dailyAt('03:00')->withoutOverlapping();

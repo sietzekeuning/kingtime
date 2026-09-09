@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Palette, Plug, Shield, User } from '@lucide/vue';
+import { KeyRound, Palette, Plug, Shield, User } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
+import { index as apiTokensIndex } from '@/routes/api-tokens';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit as editIntegrations } from '@/routes/integrations';
 import { edit as editProfile } from '@/routes/profile';
@@ -17,6 +18,7 @@ const sidebarNavItems: NavItem[] = [
     { title: 'Security', href: editSecurity(), icon: Shield },
     { title: 'Appearance', href: editAppearance(), icon: Palette },
     { title: 'Integrations', href: editIntegrations(), icon: Plug },
+    { title: 'API tokens', href: apiTokensIndex(), icon: KeyRound },
 ];
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
