@@ -3,10 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Client\Models\Client;
-use App\Domain\Project\Enums\BillBy;
 use App\Domain\Project\Models\Project;
-use App\Domain\Project\Models\ProjectTask;
-use App\Domain\Project\Models\Task;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
 
@@ -25,7 +22,6 @@ function projectPayload(Client $client, array $overrides = []): array
         'name' => 'Website',
         'code' => 'WEB',
         'is_billable' => true,
-        'bill_by' => BillBy::Project->value,
         'hourly_rate' => '95.00',
         'budget_hours' => '40',
         'is_active' => true,
@@ -33,7 +29,6 @@ function projectPayload(Client $client, array $overrides = []): array
         'starts_on' => '2026-01-01',
         'ends_on' => null,
         'notes' => null,
-        'tasks' => [],
         ...$overrides,
     ];
 }
@@ -58,11 +53,11 @@ it('lists projects with the table payload, client name and hour totals', functio
             ->where('items.data.0.unbilled_hours', fn (string $hours) => (float) $hours === 2.5));
 });
 
-it('filters projects by client, active status and bill-by', function (): void {
+it('filters projects by client, active status and billability', function (): void {
     $acme = Client::factory()->create(['name' => 'Acme']);
     $globex = Client::factory()->create(['name' => 'Globex']);
     Project::factory()->for($acme)->create(['name' => 'Acme site', 'is_active' => true]);
-    Project::factory()->for($globex)->create(['name' => 'Globex app', 'is_active' => false, 'bill_by' => BillBy::Task]);
+    Project::factory()->for($globex)->nonBillable()->create(['name' => 'Globex app', 'is_active' => false]);
 
     $this->get(route('projects.index', ['filter' => ['client_id' => $acme->id]]))
         ->assertInertia(fn ($page) => $page->has('items.data', 1)->where('items.data.0.name', 'Acme site'));
@@ -70,106 +65,65 @@ it('filters projects by client, active status and bill-by', function (): void {
     $this->get(route('projects.index', ['filter' => ['is_active' => '0']]))
         ->assertInertia(fn ($page) => $page->has('items.data', 1)->where('items.data.0.name', 'Globex app'));
 
-    $this->get(route('projects.index', ['filter' => ['bill_by' => 'task']]))
+    $this->get(route('projects.index', ['filter' => ['is_billable' => '0', 'is_active' => 'all']]))
         ->assertInertia(fn ($page) => $page->has('items.data', 1)->where('items.data.0.name', 'Globex app'));
 });
 
-it('offers clients and active tasks on the create form', function (): void {
-    Client::factory()->create();
-    Task::factory()->create(['name' => 'Development', 'is_active' => true]);
-    Task::factory()->create(['name' => 'Retired', 'is_active' => false]);
+it('offers active clients on the create form', function (): void {
+    Client::factory()->create(['name' => 'Active']);
+    Client::factory()->create(['name' => 'Retired', 'is_active' => false]);
 
     $this->get(route('projects.create'))
         ->assertInertia(fn ($page) => $page
             ->component('projects/ProjectForm')
             ->where('project.id', null)
             ->where('project.client_id', null)
-            ->where('project.tasks', [])
             ->has('clients', 1)
-            ->has('tasks', 1)
-            ->where('tasks.0.name', 'Development'));
+            ->where('clients.0.name', 'Active'));
 });
 
-it('creates a project with task assignments', function (): void {
+it('creates a project from a validated payload', function (): void {
     $client = Client::factory()->create();
-    [$development, $meeting] = Task::factory()->count(2)->sequence(['name' => 'Development'], ['name' => 'Meeting'])->create();
 
-    $this->post(route('projects.store'), projectPayload($client, [
-        'bill_by' => BillBy::Task->value,
-        'hourly_rate' => null,
-        'tasks' => [
-            ['id' => null, 'task_id' => $development->id, 'is_billable' => true, 'hourly_rate' => '110.00', 'is_active' => true],
-            ['id' => null, 'task_id' => $meeting->id, 'is_billable' => false, 'hourly_rate' => null, 'is_active' => true],
-        ],
-    ]))->assertRedirect();
+    $this->post(route('projects.store'), projectPayload($client))->assertRedirect();
 
     $project = Project::query()->where('name', 'Website')->firstOrFail();
 
     expect($project->client_id)->toBe($client->id)
-        ->and($project->bill_by)->toBe(BillBy::Task)
-        ->and($project->starts_on?->toDateString())->toBe('2026-01-01')
-        ->and($project->taskAssignments()->count())->toBe(2);
-
-    $assignment = $project->taskAssignments()->where('task_id', $development->id)->firstOrFail();
-    expect($assignment->hourly_rate)->toBe('110.00')->and($assignment->is_billable)->toBeTrue();
+        ->and($project->hourly_rate)->toBe('95.00')
+        ->and($project->budget_hours)->toBe('40.00')
+        ->and($project->starts_on?->toDateString())->toBe('2026-01-01');
 
     $this->get(route('projects.edit', $project))
         ->assertInertia(fn ($page) => $page
             ->component('projects/ProjectForm')
-            ->where('project.client.name', $client->name)
-            ->has('project.tasks', 2)
-            ->where('project.tasks.0.task_name', 'Development')
-            ->has('tasks', 2));
+            ->where('project.name', 'Website')
+            ->where('project.client.name', $client->name));
 });
 
-it('rejects an invalid project and an invalid task assignment', function (): void {
-    $client = Client::factory()->create();
-
+it('rejects an invalid project', function (): void {
     $this->from(route('projects.create'))
         ->post(route('projects.store'), ['name' => '', 'client_id' => null, 'hourly_rate' => '-1'])
         ->assertSessionHasErrors(['name', 'client_id', 'hourly_rate']);
 
-    $this->from(route('projects.create'))
-        ->post(route('projects.store'), projectPayload($client, [
-            'tasks' => [['id' => null, 'task_id' => 999, 'is_billable' => true, 'hourly_rate' => null, 'is_active' => true]],
-        ]))
-        ->assertSessionHasErrors(['tasks.0.task_id']);
-
-    $task = Task::factory()->create();
-    $this->from(route('projects.create'))
-        ->post(route('projects.store'), projectPayload($client, [
-            'tasks' => [
-                ['id' => null, 'task_id' => $task->id, 'is_billable' => true, 'hourly_rate' => null, 'is_active' => true],
-                ['id' => null, 'task_id' => $task->id, 'is_billable' => true, 'hourly_rate' => null, 'is_active' => true],
-            ],
-        ]))
-        ->assertSessionHasErrors(['tasks.1.task_id']);
-
     expect(Project::query()->count())->toBe(0);
 });
 
-it('updates a project, adding and removing assignments while keeping the harvest id', function (): void {
-    $project = Project::factory()->create(['name' => 'Old']);
-    [$keep, $drop, $add] = Task::factory()->count(3)->sequence(['name' => 'Keep'], ['name' => 'Drop'], ['name' => 'Add'])->create();
-    $kept = ProjectTask::query()->create(['project_id' => $project->id, 'task_id' => $keep->id, 'hourly_rate' => '80.00', 'harvest_id' => 4242]);
-    ProjectTask::query()->create(['project_id' => $project->id, 'task_id' => $drop->id]);
+it('updates a project', function (): void {
+    $project = Project::factory()->create(['name' => 'Old', 'harvest_id' => 4242]);
 
     $this->patch(route('projects.update', $project), projectPayload($project->client, [
         'name' => 'New',
-        'tasks' => [
-            ['id' => $kept->id, 'task_id' => $keep->id, 'is_billable' => false, 'hourly_rate' => '90.00', 'is_active' => false],
-            ['id' => null, 'task_id' => $add->id, 'is_billable' => true, 'hourly_rate' => null, 'is_active' => true],
-        ],
+        'is_billable' => false,
+        'hourly_rate' => null,
+        'harvest_id' => 4242,
     ]))->assertRedirect();
 
-    expect($project->fresh()->name)->toBe('New')
-        ->and($project->taskAssignments()->pluck('task_id')->all())->toEqualCanonicalizing([$keep->id, $add->id]);
-
-    $kept->refresh();
-    expect($kept->harvest_id)->toBe(4242)
-        ->and($kept->hourly_rate)->toBe('90.00')
-        ->and($kept->is_billable)->toBeFalse()
-        ->and($kept->is_active)->toBeFalse();
+    $project->refresh();
+    expect($project->name)->toBe('New')
+        ->and($project->is_billable)->toBeFalse()
+        ->and($project->hourly_rate)->toBeNull()
+        ->and($project->harvest_id)->toBe(4242);
 });
 
 it('deletes a project', function (): void {
@@ -180,22 +134,40 @@ it('deletes a project', function (): void {
     expect(Project::query()->find($project->id))->toBeNull();
 });
 
-it('resolves the rate for a task from the project or the assignment', function (): void {
-    $task = Task::factory()->create(['default_hourly_rate' => '70.00']);
+it('renders the edit form for an imported project without optional fields', function (): void {
+    $project = Project::factory()->create([
+        'code' => null,
+        'color' => null,
+        'hourly_rate' => null,
+        'budget_hours' => null,
+        'starts_on' => null,
+        'ends_on' => null,
+        'notes' => '',
+        'harvest_id' => 49054616,
+    ]);
 
-    $byProject = Project::factory()->create(['bill_by' => BillBy::Project, 'hourly_rate' => '95.00']);
-    ProjectTask::query()->create(['project_id' => $byProject->id, 'task_id' => $task->id, 'hourly_rate' => '110.00']);
-    expect($byProject->rateForTask($task))->toBe('95.00')
-        ->and($byProject->rateForTask(null))->toBe('95.00');
+    $this->get(route('projects.edit', $project))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('projects/ProjectForm')
+            ->where('project.id', $project->id)
+            ->where('project.code', null)
+            ->where('project.color', null)
+            ->where('project.hourly_rate', null)
+            ->where('project.budget_hours', null)
+            ->where('project.starts_on', null)
+            ->where('project.ends_on', null)
+            ->where('project.total_hours', null)
+            ->where('project.harvest_id', 49054616)
+            ->where('project.client.name', $project->client->name));
+});
 
-    $byTask = Project::factory()->create(['bill_by' => BillBy::Task, 'hourly_rate' => '95.00']);
-    ProjectTask::query()->create(['project_id' => $byTask->id, 'task_id' => $task->id, 'hourly_rate' => '110.00']);
-    expect($byTask->rateForTask($task))->toBe('110.00');
+it('bills new entries at the project rate only when the project is billable', function (): void {
+    $billable = Project::factory()->create(['hourly_rate' => '95.00']);
+    $unpriced = Project::factory()->create(['hourly_rate' => null]);
+    $nonBillable = Project::factory()->create(['is_billable' => false, 'hourly_rate' => '95.00']);
 
-    $byTaskDefault = Project::factory()->create(['bill_by' => BillBy::Task, 'hourly_rate' => null]);
-    ProjectTask::query()->create(['project_id' => $byTaskDefault->id, 'task_id' => $task->id, 'hourly_rate' => null]);
-    expect($byTaskDefault->rateForTask($task))->toBe('70.00');
-
-    $nonBillable = Project::factory()->nonBillable()->create();
-    expect($nonBillable->rateForTask($task))->toBeNull();
+    expect($billable->billableRate())->toBe('95.00')
+        ->and($unpriced->billableRate())->toBeNull()
+        ->and($nonBillable->billableRate())->toBeNull();
 });

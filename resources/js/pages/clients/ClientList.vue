@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { Plus, Trash2 } from '@lucide/vue';
+import ArchiveToggleButton from '@/components/ArchiveToggleButton.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
@@ -25,9 +26,10 @@ const { confirmDelete } = useConfirmDelete();
 
 const rowUrl = (client: ClientData) => clients.edit(client.id!);
 
-const activeOptions = {
-    Active: { value: '1', label: 'Active', colorClass: '' },
-    Inactive: { value: '0', label: 'Inactive', colorClass: '' },
+/** The list shows active clients by default; the filter opens up the archive. */
+const archiveOptions = {
+    Archived: { value: '0', label: 'Archived', colorClass: '' },
+    All: { value: 'all', label: 'Active and archived', colorClass: '' },
 };
 
 function deleteClient(event: Event, client: ClientData) {
@@ -81,25 +83,39 @@ function deleteClient(event: Event, client: ClientData) {
                     show="is_active"
                     label="Status"
                     filter-type="select"
-                    :filter-options="activeOptions"
+                    :filter-options="archiveOptions"
+                    filter-placeholder="Active"
                 >
                     <template #default="{ item }: { item: ClientData }">
                         <StatusBadge
                             :tone="item.is_active ? 'green' : 'gray'"
-                            :label="item.is_active ? 'Active' : 'Inactive'"
+                            :label="item.is_active ? 'Active' : 'Archived'"
                         />
                     </template>
                 </DataTableColumn>
                 <DataTableColumn show="actions" label="">
                     <template #default="{ item }: { item: ClientData }">
-                        <button
-                            type="button"
-                            class="text-muted-foreground hover:text-destructive transition-colors"
-                            title="Delete client"
-                            @click="deleteClient($event, item)"
-                        >
-                            <Trash2 class="size-4" />
-                        </button>
+                        <div class="flex items-center justify-end gap-3">
+                            <ArchiveToggleButton
+                                :active="item.is_active"
+                                :archive-url="
+                                    clients.archive.store(item.id!).url
+                                "
+                                :restore-url="
+                                    clients.archive.destroy(item.id!).url
+                                "
+                                subject="client"
+                                icon-only
+                            />
+                            <button
+                                type="button"
+                                class="text-muted-foreground hover:text-destructive transition-colors"
+                                title="Delete client"
+                                @click="deleteClient($event, item)"
+                            >
+                                <Trash2 class="size-4" />
+                            </button>
+                        </div>
                     </template>
                 </DataTableColumn>
             </template>

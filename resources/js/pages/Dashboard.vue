@@ -136,7 +136,7 @@ function formatDay(date: string): string {
 }
 
 function entryDetail(entry: TimeEntryData): string {
-    return [entry.task_name, entry.notes].filter(Boolean).join(' · ');
+    return entry.notes ?? '';
 }
 </script>
 

@@ -24,21 +24,22 @@ const props = defineProps<{
 const isNew = props.entry.id === null;
 const locked = computed(() => props.entry.is_locked || props.entry.is_billed);
 
+// Inertia calls a layout function with the page props, not the page itself.
 defineOptions({
-    layout: (page: { props: { entry: TimeEntryData } }) => ({
+    layout: ({ entry }: { entry: TimeEntryData }) => ({
         breadcrumbs: [
             {
                 title: 'Time entries',
                 href: timeEntries.index({
-                    query: { date: page.props.entry.spent_on },
+                    query: { date: entry.spent_on },
                 }),
             },
             {
-                title: page.props.entry.id
-                    ? `${formatDate(page.props.entry.spent_on)} · ${page.props.entry.project_name}`
+                title: entry.id
+                    ? `${formatDate(entry.spent_on)} · ${entry.project_name}`
                     : 'New entry',
-                href: page.props.entry.id
-                    ? timeEntries.edit(page.props.entry.id)
+                href: entry.id
+                    ? timeEntries.edit(entry.id)
                     : timeEntries.create(),
             },
         ],
@@ -47,7 +48,6 @@ defineOptions({
 
 const form = useForm<TimeEntryFormData>({
     project_id: props.entry.project_id || null,
-    task_id: props.entry.task_id,
     spent_on: props.entry.spent_on,
     hours: props.entry.hours,
     notes: props.entry.notes,

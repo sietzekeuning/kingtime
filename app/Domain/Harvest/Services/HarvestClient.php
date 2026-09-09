@@ -77,22 +77,6 @@ class HarvestClient
     }
 
     /** @return LazyCollection<int, HarvestRecord> */
-    public function tasks(?CarbonInterface $updatedSince = null): LazyCollection
-    {
-        return $this->paginate('/tasks', 'tasks', $this->updatedSinceQuery($updatedSince));
-    }
-
-    /**
-     * Task assignments across all projects.
-     *
-     * @return LazyCollection<int, HarvestRecord>
-     */
-    public function taskAssignments(?CarbonInterface $updatedSince = null): LazyCollection
-    {
-        return $this->paginate('/task_assignments', 'task_assignments', $this->updatedSinceQuery($updatedSince));
-    }
-
-    /** @return LazyCollection<int, HarvestRecord> */
     public function users(?CarbonInterface $updatedSince = null): LazyCollection
     {
         return $this->paginate('/users', 'users', $this->updatedSinceQuery($updatedSince));

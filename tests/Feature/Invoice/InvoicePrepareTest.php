@@ -10,7 +10,6 @@ use App\Domain\Invoice\Exceptions\InvoiceLockedException;
 use App\Domain\Invoice\Exceptions\NothingToInvoiceException;
 use App\Domain\Invoice\Models\Invoice;
 use App\Domain\Project\Models\Project;
-use App\Domain\Project\Models\Task;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
 use Illuminate\Support\Facades\Date;
@@ -21,11 +20,10 @@ beforeEach(function (): void {
     $this->actingAs($this->user);
     $this->client = Client::factory()->create(['name' => 'Acme Corporation', 'currency' => 'EUR']);
     $this->project = Project::factory()->for($this->client)->create(['name' => 'Website redesign']);
-    $this->task = Task::factory()->create(['name' => 'Development']);
 });
 
 it('prepares a draft invoice and locks the entries to it', function (): void {
-    $entries = TimeEntry::factory()->count(2)->for($this->user)->for($this->project)->for($this->task)
+    $entries = TimeEntry::factory()->count(2)->for($this->user)->for($this->project)
         ->sequence(['spent_on' => '2026-08-03', 'hours' => '2.50'], ['spent_on' => '2026-08-04', 'hours' => '1.00'])
         ->create(['hourly_rate' => '95.00']);
 
@@ -40,7 +38,7 @@ it('prepares a draft invoice and locks the entries to it', function (): void {
         ->and($invoice->period_starts_on?->toDateString())->toBe('2026-08-01')
         ->and($invoice->period_ends_on?->toDateString())->toBe('2026-08-31')
         ->and($invoice->lines)->toHaveCount(1)
-        ->and($invoice->lines->first()?->description)->toBe('Website redesign · Development')
+        ->and($invoice->lines->first()?->description)->toBe('Website redesign')
         ->and($invoice->lines->first()?->quantity)->toBe('3.50')
         ->and($invoice->lines->first()?->project_id)->toBe($this->project->id);
 
@@ -101,8 +99,8 @@ it('shows the prepare form without a preview until a client is chosen', function
 });
 
 it('previews the specification for a client and period', function (): void {
-    $first = TimeEntry::factory()->for($this->user)->for($this->project)->for($this->task)->create(['spent_on' => '2026-08-03', 'hours' => '2.00', 'hourly_rate' => '95.00']);
-    $second = TimeEntry::factory()->for($this->user)->for($this->project)->for($this->task)->create(['spent_on' => '2026-08-04', 'hours' => '1.00', 'hourly_rate' => '95.00']);
+    $first = TimeEntry::factory()->for($this->user)->for($this->project)->create(['spent_on' => '2026-08-03', 'hours' => '2.00', 'hourly_rate' => '95.00']);
+    $second = TimeEntry::factory()->for($this->user)->for($this->project)->create(['spent_on' => '2026-08-04', 'hours' => '1.00', 'hourly_rate' => '95.00']);
 
     $this->get(route('invoices.prepare.create', ['client_id' => $this->client->id, 'period_starts_on' => '2026-08-01', 'period_ends_on' => '2026-08-31']))
         ->assertOk()

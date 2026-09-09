@@ -231,7 +231,7 @@ Kingtime is an open-source time tracker for freelancers: a Harvest-style hour re
 
 All PHP lives in `app/Domain/{Domain}/`. Never add files to `app/` root (`app/Providers` and `app/Http/Middleware` are the only framework exceptions).
 
-Domains: `Client`, `Project` (projects, tasks, task assignments), `Time` (time entries, timer), `Invoice`, `Harvest`, `Moneybird`, `Mcp`, `Dashboard`, `User`, `Shared`.
+Domains: `Client`, `Project` (projects), `Time` (time entries, timer), `Invoice`, `Harvest`, `Moneybird`, `Mcp`, `Dashboard`, `User`, `Shared`.
 
 Per domain: `Models`, `Data` (DTOs), `Tables`, `Controllers`, `Actions`, `Services`, `Enums`, `Commands`, `Jobs`, `Requests`. If unsure, use `Shared`.
 

@@ -76,7 +76,7 @@ final class BuildDashboardAction
         return TimeEntry::query()
             ->where('user_id', $user->id)
             ->where('is_running', true)
-            ->with(['project.client', 'task'])
+            ->with('project.client')
             ->latest('timer_started_at')
             ->first();
     }
@@ -210,7 +210,7 @@ final class BuildDashboardAction
     {
         return TimeEntry::query()
             ->where('user_id', $user->id)
-            ->with(['project.client', 'task'])
+            ->with('project.client')
             ->orderByDesc('spent_on')
             ->orderByDesc('id')
             ->limit(self::RECENT_ENTRIES)

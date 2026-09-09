@@ -107,12 +107,6 @@ function toggle(entry: TimeEntryData, checked: boolean | 'indeterminate') {
                                 entry.project_name
                             }}</span>
                             <span
-                                v-if="entry.task_name"
-                                class="text-muted-foreground"
-                            >
-                                {{ entry.task_name }}
-                            </span>
-                            <span
                                 v-if="entry.hourly_rate === null"
                                 class="rounded-full bg-amber-100 px-1.5 text-xs text-amber-700"
                             >

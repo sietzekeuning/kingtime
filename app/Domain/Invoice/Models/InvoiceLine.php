@@ -5,25 +5,22 @@ declare(strict_types=1);
 namespace App\Domain\Invoice\Models;
 
 use App\Domain\Project\Models\Project;
-use App\Domain\Project\Models\Task;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * One line of the invoice specification: a project/task pair with the hours
- * worked in the period and the rate they are billed at.
+ * One line of the invoice specification: a project with the hours worked in
+ * the period and the rate they are billed at.
  *
  * @property int $id
  * @property int $invoice_id
  * @property int|null $project_id
- * @property int|null $task_id
  * @property string $description
  * @property string $quantity
  * @property string $unit_price
  * @property string $amount
  * @property int $sort_order
  * @property-read Project|null $project
- * @property-read Task|null $task
  */
 class InvoiceLine extends Model
 {
@@ -46,11 +43,5 @@ class InvoiceLine extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
-    }
-
-    /** @return BelongsTo<Task, $this> */
-    public function task(): BelongsTo
-    {
-        return $this->belongsTo(Task::class);
     }
 }

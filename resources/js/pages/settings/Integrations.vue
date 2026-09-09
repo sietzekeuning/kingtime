@@ -56,8 +56,6 @@ const importSteps: { key: keyof HarvestImportResultData; label: string }[] = [
     { key: 'users', label: 'Users' },
     { key: 'clients', label: 'Clients' },
     { key: 'projects', label: 'Projects' },
-    { key: 'tasks', label: 'Tasks' },
-    { key: 'task_assignments', label: 'Task assignments' },
     { key: 'time_entries', label: 'Time entries' },
 ];
 
@@ -237,8 +235,8 @@ function importTitle(item: HarvestImportData): string {
                     <div class="space-y-1">
                         <CardTitle>Harvest</CardTitle>
                         <CardDescription>
-                            Import users, clients, projects, tasks and time
-                            entries from your Harvest account.
+                            Import users, clients, projects and time entries
+                            from your Harvest account.
                         </CardDescription>
                     </div>
                     <StatusBadge

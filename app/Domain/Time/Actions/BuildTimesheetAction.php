@@ -27,7 +27,7 @@ class BuildTimesheetAction
         $today = now()->toDateString();
 
         $entries = $user->timeEntries()
-            ->with(['project.client', 'task'])
+            ->with('project.client')
             ->whereDate('spent_on', '>=', $weekStart->toDateString())
             ->whereDate('spent_on', '<=', $weekEnd->toDateString())
             ->orderBy('spent_on')

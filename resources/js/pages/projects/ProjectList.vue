@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { Plus, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
+import ArchiveToggleButton from '@/components/ArchiveToggleButton.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,6 @@ import DataTable from '@/components/ui/DataTable.vue';
 import DataTableColumn from '@/components/ui/DataTableColumn.vue';
 import { useConfirmDelete } from '@/composables/useConfirmDelete';
 import type { PaginatedData } from '@/interfaces/PaginatedData';
-import { BillByOptions } from '@/lib/enums';
 import type { EnumOptions } from '@/lib/enums';
 import { formatEuro } from '@/lib/formatters';
 import { formatHours } from '@/lib/utils';
@@ -31,9 +31,15 @@ const { confirmDelete } = useConfirmDelete();
 
 const rowUrl = (project: ProjectData) => projects.edit(project.id!);
 
-const activeOptions = {
-    Active: { value: '1', label: 'Active', colorClass: '' },
-    Inactive: { value: '0', label: 'Inactive', colorClass: '' },
+/** The list shows active projects by default; the filter opens up the archive. */
+const archiveOptions = {
+    Archived: { value: '0', label: 'Archived', colorClass: '' },
+    All: { value: 'all', label: 'Active and archived', colorClass: '' },
+};
+
+const billableOptions = {
+    Billable: { value: '1', label: 'Billable', colorClass: '' },
+    NonBillable: { value: '0', label: 'Non-billable', colorClass: '' },
 };
 
 const clientOptions = computed<EnumOptions>(() =>
@@ -44,12 +50,6 @@ const clientOptions = computed<EnumOptions>(() =>
         ]),
     ),
 );
-
-function billByOption(project: ProjectData) {
-    return Object.values(BillByOptions).find(
-        (option) => option.value === project.bill_by,
-    );
-}
 
 function deleteProject(event: Event, project: ProjectData) {
     void confirmDelete(projects.destroy(project.id!).url, {
@@ -67,7 +67,7 @@ function deleteProject(event: Event, project: ProjectData) {
     <div class="flex flex-1 flex-col gap-4 p-4 md:p-6">
         <PageHeader
             title="Projects"
-            subtitle="The work you log hours on, per client, with its rate and tasks."
+            subtitle="The work you log hours on, per client, with its rate."
         >
             <template #actions>
                 <Button as-child>
@@ -115,19 +115,18 @@ function deleteProject(event: Event, project: ProjectData) {
                     </template>
                 </DataTableColumn>
                 <DataTableColumn
-                    show="bill_by"
+                    show="is_billable"
                     label="Billing"
                     filter-type="select"
-                    :filter-options="BillByOptions"
+                    :filter-options="billableOptions"
                 >
                     <template #default="{ item }: { item: ProjectData }">
-                        <span
-                            v-if="billByOption(item)"
-                            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                            :class="billByOption(item)!.colorClass"
-                        >
-                            {{ billByOption(item)!.label }}
-                        </span>
+                        <StatusBadge
+                            :tone="item.is_billable ? 'amber' : 'gray'"
+                            :label="
+                                item.is_billable ? 'Billable' : 'Non-billable'
+                            "
+                        />
                     </template>
                 </DataTableColumn>
                 <DataTableColumn show="hourly_rate" label="Rate">
@@ -167,25 +166,39 @@ function deleteProject(event: Event, project: ProjectData) {
                     show="is_active"
                     label="Status"
                     filter-type="select"
-                    :filter-options="activeOptions"
+                    :filter-options="archiveOptions"
+                    filter-placeholder="Active"
                 >
                     <template #default="{ item }: { item: ProjectData }">
                         <StatusBadge
                             :tone="item.is_active ? 'green' : 'gray'"
-                            :label="item.is_active ? 'Active' : 'Inactive'"
+                            :label="item.is_active ? 'Active' : 'Archived'"
                         />
                     </template>
                 </DataTableColumn>
                 <DataTableColumn show="actions" label="">
                     <template #default="{ item }: { item: ProjectData }">
-                        <button
-                            type="button"
-                            class="text-muted-foreground hover:text-destructive transition-colors"
-                            title="Delete project"
-                            @click="deleteProject($event, item)"
-                        >
-                            <Trash2 class="size-4" />
-                        </button>
+                        <div class="flex items-center justify-end gap-3">
+                            <ArchiveToggleButton
+                                :active="item.is_active"
+                                :archive-url="
+                                    projects.archive.store(item.id!).url
+                                "
+                                :restore-url="
+                                    projects.archive.destroy(item.id!).url
+                                "
+                                subject="project"
+                                icon-only
+                            />
+                            <button
+                                type="button"
+                                class="text-muted-foreground hover:text-destructive transition-colors"
+                                title="Delete project"
+                                @click="deleteProject($event, item)"
+                            >
+                                <Trash2 class="size-4" />
+                            </button>
+                        </div>
                     </template>
                 </DataTableColumn>
             </template>

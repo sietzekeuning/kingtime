@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
 import { Save, Trash2 } from '@lucide/vue';
+import ArchiveToggleButton from '@/components/ArchiveToggleButton.vue';
 import Form from '@/components/Form.vue';
 import FormRow from '@/components/FormRow.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useConfirmDelete } from '@/composables/useConfirmDelete';
 import clients from '@/routes/clients';
@@ -20,16 +21,12 @@ const props = defineProps<{
 const isNew = props.client.id === null;
 
 defineOptions({
-    layout: (page: { props: { client: ClientData } }) => ({
+    layout: ({ client }: { client: ClientData }) => ({
         breadcrumbs: [
             { title: 'Clients', href: clients.index() },
             {
-                title: page.props.client.id
-                    ? page.props.client.name
-                    : 'New client',
-                href: page.props.client.id
-                    ? clients.edit(page.props.client.id)
-                    : clients.create(),
+                title: client.id ? client.name : 'New client',
+                href: client.id ? clients.edit(client.id) : clients.create(),
             },
         ],
     }),
@@ -73,6 +70,18 @@ function destroy() {
             back-label="Clients"
         >
             <template #actions>
+                <StatusBadge
+                    v-if="!isNew && !client.is_active"
+                    tone="gray"
+                    label="Archived"
+                />
+                <ArchiveToggleButton
+                    v-if="!isNew"
+                    :active="client.is_active"
+                    :archive-url="clients.archive.store(client.id!).url"
+                    :restore-url="clients.archive.destroy(client.id!).url"
+                    subject="client"
+                />
                 <Button
                     v-if="!isNew"
                     variant="outline"
@@ -111,9 +120,6 @@ function destroy() {
                         </FormRow>
                         <FormRow label="Notes" field="notes">
                             <Textarea v-model="form.notes" rows="3" />
-                        </FormRow>
-                        <FormRow label="Active" field="is_active" inline>
-                            <Switch v-model="form.is_active" />
                         </FormRow>
                         <FormRow
                             v-if="client.moneybird_contact_id"

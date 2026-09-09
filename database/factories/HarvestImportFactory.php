@@ -26,8 +26,6 @@ class HarvestImportFactory extends Factory
                 'users' => ['created' => 0, 'updated' => 1],
                 'clients' => ['created' => 2, 'updated' => 0],
                 'projects' => ['created' => 3, 'updated' => 0],
-                'tasks' => ['created' => 2, 'updated' => 0],
-                'task_assignments' => ['created' => 4, 'updated' => 0],
                 'time_entries' => ['created' => 25, 'updated' => 0],
             ],
             'error' => null,

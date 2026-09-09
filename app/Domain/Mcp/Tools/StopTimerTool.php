@@ -47,7 +47,7 @@ class StopTimerTool extends KingtimeTool
             throw new McpToolException("Time entry #{$entry->id} has no running timer.");
         }
 
-        $entry = $this->stopTimer->handle($entry)->load(['project.client', 'task']);
+        $entry = $this->stopTimer->handle($entry)->load('project.client');
 
         return Response::structured([
             'message' => "Timer stopped at {$entry->hours} hours.",
@@ -57,7 +57,7 @@ class StopTimerTool extends KingtimeTool
 
     private function runningEntry(User $user): TimeEntry
     {
-        $entry = $user->timeEntries()->where('is_running', true)->with(['project.client', 'task'])->latest('timer_started_at')->first();
+        $entry = $user->timeEntries()->where('is_running', true)->with('project.client')->latest('timer_started_at')->first();
 
         if ($entry === null) {
             throw new McpToolException('No timer is running.');

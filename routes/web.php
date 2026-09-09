@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Client\Controllers\ClientArchiveController;
 use App\Domain\Client\Controllers\ClientController;
 use App\Domain\Dashboard\Controllers\DashboardController;
 use App\Domain\Harvest\Controllers\HarvestImportController;
@@ -8,8 +9,9 @@ use App\Domain\Invoice\Controllers\InvoiceController;
 use App\Domain\Invoice\Controllers\InvoicePrepareController;
 use App\Domain\Invoice\Controllers\InvoicePushController;
 use App\Domain\Invoice\Controllers\InvoiceSyncController;
+use App\Domain\Project\Controllers\ProjectArchiveController;
 use App\Domain\Project\Controllers\ProjectController;
-use App\Domain\Project\Controllers\TaskController;
+use App\Domain\Reports\Controllers\ReportsController;
 use App\Domain\Time\Controllers\StartTimerController;
 use App\Domain\Time\Controllers\StopTimerController;
 use App\Domain\Time\Controllers\TimeEntryController;
@@ -22,17 +24,23 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     // -- Dashboard ---------------------------------------------------------
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
+    // -- Reports -----------------------------------------------------------
+    Route::get('reports', ReportsController::class)->name('reports.index');
+
     // -- Time entries ------------------------------------------------------
     Route::resource('time-entries', TimeEntryController::class)->except(['show']);
     Route::post('time-entries/{time_entry}/start', StartTimerController::class)->name('time-entries.start');
     Route::post('time-entries/{time_entry}/stop', StopTimerController::class)->name('time-entries.stop');
 
-    // -- Projects & tasks --------------------------------------------------
+    // -- Projects ----------------------------------------------------------
     Route::resource('projects', ProjectController::class)->except(['show']);
-    Route::resource('tasks', TaskController::class)->except(['show']);
+    Route::post('projects/{project}/archive', [ProjectArchiveController::class, 'store'])->name('projects.archive.store');
+    Route::delete('projects/{project}/archive', [ProjectArchiveController::class, 'destroy'])->name('projects.archive.destroy');
 
     // -- Clients -----------------------------------------------------------
     Route::resource('clients', ClientController::class)->except(['show']);
+    Route::post('clients/{client}/archive', [ClientArchiveController::class, 'store'])->name('clients.archive.store');
+    Route::delete('clients/{client}/archive', [ClientArchiveController::class, 'destroy'])->name('clients.archive.destroy');
 
     // -- Invoices ----------------------------------------------------------
     Route::get('invoices/prepare', [InvoicePrepareController::class, 'create'])->name('invoices.prepare.create');

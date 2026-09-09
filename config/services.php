@@ -41,7 +41,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Personal access token + account id from https://id.getharvest.com/developers.
-    | Used by `php artisan harvest:import` to pull clients, projects, tasks and
+    | Used by `php artisan harvest:import` to pull clients, projects and
     | time entries into this app.
     |
     */

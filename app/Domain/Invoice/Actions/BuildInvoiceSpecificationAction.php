@@ -18,7 +18,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Turns a client's unbilled billable hours in a period into invoice lines
- * (one per project, task and rate) and a plain-text hour specification.
+ * (one per project and rate) and a plain-text hour specification.
  * Nothing is persisted; PrepareInvoiceAction does that.
  */
 class BuildInvoiceSpecificationAction
@@ -56,16 +56,16 @@ class BuildInvoiceSpecificationAction
             ->whereHas('project', fn (Builder $query) => $query->where('client_id', $client->id))
             ->whereBetween('spent_on', [$from->toDateString(), $to->toDateString()])
             ->when($timeEntryIds !== null, fn (Builder $query) => $query->whereIn('id', array_map('intval', $timeEntryIds ?? [])))
-            ->with(['project.client', 'task'])
+            ->with('project.client')
             ->orderBy('spent_on')
             ->orderBy('id')
             ->get();
     }
 
     /**
-     * One line per project, task and hourly rate. Entries without a rate
-     * still get a line (at 0.00) so the hours show up on the invoice and the
-     * price can be filled in by hand.
+     * One line per project and hourly rate. Entries without a rate still get
+     * a line (at 0.00) so the hours show up on the invoice and the price can
+     * be filled in by hand.
      *
      * @param  EloquentCollection<int, TimeEntry>  $entries
      * @return Collection<int, InvoiceLineData>
@@ -73,29 +73,25 @@ class BuildInvoiceSpecificationAction
     private function lines(EloquentCollection $entries): Collection
     {
         return $entries
-            ->groupBy(fn (TimeEntry $entry) => implode('|', [$entry->project_id, $entry->task_id ?? 0, $entry->hourly_rate ?? '']))
+            ->groupBy(fn (TimeEntry $entry) => implode('|', [$entry->project_id, $entry->hourly_rate ?? '']))
             ->map(function (EloquentCollection $group): InvoiceLineData {
                 /** @var TimeEntry $first */
                 $first = $group->first();
                 $hours = round($group->sum(fn (TimeEntry $entry) => (float) $entry->hours), 2);
                 $rate = $first->hourly_rate !== null ? (float) $first->hourly_rate : 0.0;
-                $taskName = $first->task?->name;
 
                 return new InvoiceLineData(
                     id: null,
                     project_id: $first->project_id,
-                    task_id: $first->task_id,
-                    description: $taskName !== null ? "{$first->project->name} · {$taskName}" : $first->project->name,
+                    description: $first->project->name,
                     quantity: self::decimal($hours),
                     unit_price: self::decimal($rate),
                     amount: self::decimal(round($hours * $rate, 2)),
                     project_name: $first->project->name,
-                    task_name: $taskName,
                 );
             })
             ->sortBy([
                 fn (InvoiceLineData $a, InvoiceLineData $b) => strcasecmp((string) $a->project_name, (string) $b->project_name),
-                fn (InvoiceLineData $a, InvoiceLineData $b) => strcasecmp((string) $a->task_name, (string) $b->task_name),
                 fn (InvoiceLineData $a, InvoiceLineData $b) => (float) $b->unit_price <=> (float) $a->unit_price,
             ])
             ->values()
@@ -130,8 +126,7 @@ class BuildInvoiceSpecificationAction
             $rows = ["## {$first->project->name}"];
 
             foreach ($projectEntries->sortBy([['spent_on', 'asc'], ['id', 'asc']]) as $entry) {
-                $details = array_filter([$entry->task?->name, $entry->notes !== null ? trim($entry->notes) : null], fn (?string $part) => $part !== null && $part !== '');
-                $label = implode(' · ', $details);
+                $label = $entry->notes !== null ? trim($entry->notes) : '';
 
                 if ($entry->hourly_rate === null) {
                     $label = trim($label.' (no rate)');

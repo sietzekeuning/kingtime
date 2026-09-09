@@ -53,7 +53,6 @@ const tab = ref<string>(initialTab);
 const form = useForm<TimeEntryFormData & { start_timer: boolean }>({
     project_id:
         props.projects.length === 1 ? (props.projects[0]?.id ?? null) : null,
-    task_id: null,
     spent_on: props.timesheet.selected_date,
     hours: '',
     notes: '',
@@ -286,13 +285,6 @@ const rowUrl = (entry: TimeEntryData) =>
                                 <span class="text-muted-foreground">{{
                                     item.client_name
                                 }}</span>
-                            </template>
-                        </DataTableColumn>
-                        <DataTableColumn show="task_name" label="Task">
-                            <template
-                                #default="{ item }: { item: TimeEntryData }"
-                            >
-                                {{ item.task_name }}
                             </template>
                         </DataTableColumn>
                         <DataTableColumn show="notes" label="Notes">

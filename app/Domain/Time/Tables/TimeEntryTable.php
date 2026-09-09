@@ -26,7 +26,6 @@ class TimeEntryTable extends BaseTable
             'notes',
             $this->dateFilter('spent_on'),
             AllowedFilter::exact('project_id'),
-            AllowedFilter::exact('task_id'),
             AllowedFilter::exact('is_billable'),
             AllowedFilter::exact('is_billed'),
             AllowedFilter::callback('client_id', static fn (Builder $query, mixed $value) => $query->whereHas(
@@ -41,6 +40,6 @@ class TimeEntryTable extends BaseTable
     /** @return Builder<TimeEntry> */
     protected function baseQuery(): Builder
     {
-        return TimeEntry::query()->with(['project.client', 'task', 'user']);
+        return TimeEntry::query()->with(['project.client', 'user']);
     }
 }

@@ -26,9 +26,8 @@ class ProjectTable extends BaseTable
             'name',
             'code',
             AllowedFilter::exact('client_id'),
-            AllowedFilter::exact('is_active'),
+            $this->archivedFilter(),
             AllowedFilter::exact('is_billable'),
-            AllowedFilter::exact('bill_by'),
         ];
     }
 
@@ -36,6 +35,7 @@ class ProjectTable extends BaseTable
     protected function baseQuery(): Builder
     {
         return Project::query()
+            ->when($this->hidesArchived(), fn (Builder $query) => $query->where('is_active', true))
             ->with('client')
             ->withSum('timeEntries as total_hours', 'hours')
             ->withSum(['timeEntries as unbilled_hours' => fn ($query) => $query->unbilled()], 'hours');

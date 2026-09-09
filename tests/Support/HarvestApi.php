@@ -48,8 +48,6 @@ final class HarvestApi
                 self::fixture(self::page($request) === 2 ? 'clients_page2' : 'clients_page1'),
             ),
             self::BASE.'/projects*' => Http::response(self::fixture('projects')),
-            self::BASE.'/tasks*' => Http::response(self::fixture('tasks')),
-            self::BASE.'/task_assignments*' => Http::response(self::fixture('task_assignments')),
             self::BASE.'/time_entries*' => Http::response(self::fixture('time_entries')),
         ];
 

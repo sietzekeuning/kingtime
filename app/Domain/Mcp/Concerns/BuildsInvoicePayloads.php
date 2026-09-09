@@ -67,7 +67,6 @@ trait BuildsInvoicePayloads
             'lines' => $specification->lines->map(fn (InvoiceLineData $line) => [
                 'description' => $line->description,
                 'project_id' => $line->project_id,
-                'task_id' => $line->task_id,
                 'quantity' => $line->quantity,
                 'unit_price' => $line->unit_price,
                 'amount' => $line->amount,

@@ -22,14 +22,12 @@ class TimeEntryData extends BaseData
         public ?int $id,
         #[Required, Exists('projects', 'id')]
         public int $project_id,
-        #[Exists('tasks', 'id')]
-        public ?int $task_id,
         #[Required, Date]
         public string $spent_on,
         #[Required, Numeric, Min(0), Max(24)]
         public string $hours,
         public ?string $notes = null,
-        /** Null means "not given": the actions then take the project/task default. */
+        /** Null means "not given": the actions then take the project default. */
         public ?bool $is_billable = null,
         public bool $is_billed = false,
         public bool $is_locked = false,
@@ -50,8 +48,6 @@ class TimeEntryData extends BaseData
         #[Derived]
         public ?int $client_id = null,
         #[Derived]
-        public ?string $task_name = null,
-        #[Derived]
         public ?string $user_name = null,
     ) {}
 
@@ -63,7 +59,6 @@ class TimeEntryData extends BaseData
         return new self(
             id: $entry->id,
             project_id: $entry->project_id,
-            task_id: $entry->task_id,
             spent_on: $entry->spent_on->toDateString(),
             hours: number_format($entry->currentHours(), 2, '.', ''),
             notes: $entry->notes,
@@ -81,7 +76,6 @@ class TimeEntryData extends BaseData
             project_color: $project?->color,
             client_name: $client?->name,
             client_id: $project?->client_id,
-            task_name: $entry->relationLoaded('task') ? $entry->task?->name : null,
             user_name: $entry->relationLoaded('user') ? $entry->user->name : null,
         );
     }

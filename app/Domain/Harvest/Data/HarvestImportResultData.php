@@ -18,8 +18,6 @@ class HarvestImportResultData extends BaseData
         public HarvestImportCountData $users = new HarvestImportCountData,
         public HarvestImportCountData $clients = new HarvestImportCountData,
         public HarvestImportCountData $projects = new HarvestImportCountData,
-        public HarvestImportCountData $tasks = new HarvestImportCountData,
-        public HarvestImportCountData $task_assignments = new HarvestImportCountData,
         public HarvestImportCountData $time_entries = new HarvestImportCountData,
     ) {}
 
@@ -28,12 +26,13 @@ class HarvestImportResultData extends BaseData
         return $this->users->total()
             + $this->clients->total()
             + $this->projects->total()
-            + $this->tasks->total()
-            + $this->task_assignments->total()
             + $this->time_entries->total();
     }
 
     /**
+     * Imports that ran before tasks were dropped stored `tasks` and
+     * `task_assignments` counters too; those keys are ignored.
+     *
      * @param  array<string, array{created?: int, updated?: int}>|null  $counts
      */
     public static function restore(?array $counts): ?self

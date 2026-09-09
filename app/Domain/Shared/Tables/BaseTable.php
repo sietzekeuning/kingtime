@@ -80,6 +80,31 @@ abstract class BaseTable
         $this->params[$key] = $param;
     }
 
+    /**
+     * The archive filter every list with an `is_active` column uses: the
+     * list shows active rows unless the filter is set, "0" shows the
+     * archived ones and "all" shows both.
+     */
+    protected function archivedFilter(string $column = 'is_active'): AllowedFilter
+    {
+        return AllowedFilter::callback('is_active', static function (Builder $query, mixed $value) use ($column): void {
+            if ($value === 'all') {
+                return;
+            }
+
+            $query->where($column, filter_var($value, FILTER_VALIDATE_BOOLEAN));
+        });
+    }
+
+    /**
+     * Whether the base query should hide archived rows, which is the case
+     * as long as the request carries no explicit `filter[is_active]`.
+     */
+    protected function hidesArchived(): bool
+    {
+        return ! request()->filled('filter.is_active');
+    }
+
     protected function globalSearchFilter(?string $table = null, string $titleColumn = 'name'): AllowedFilter
     {
         $tablePrefix = $table ? $table.'.' : '';

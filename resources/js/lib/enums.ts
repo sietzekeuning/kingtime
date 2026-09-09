@@ -38,30 +38,6 @@ export const HarvestImportStatusOptions: EnumOptions = {
     },
 };
 
-export enum BillBy {
-    Project = 'project',
-    Task = 'task',
-    None = 'none',
-}
-
-export const BillByOptions: EnumOptions = {
-    Project: {
-        value: 'project',
-        label: 'Project rate',
-        colorClass: 'bg-orange-100 text-orange-700',
-    },
-    Task: {
-        value: 'task',
-        label: 'Task rate',
-        colorClass: 'bg-amber-100 text-amber-700',
-    },
-    None: {
-        value: 'none',
-        label: 'Not billable',
-        colorClass: 'bg-slate-100 text-slate-700',
-    },
-};
-
 export enum InvoiceStatus {
     Draft = 'draft',
     Open = 'open',

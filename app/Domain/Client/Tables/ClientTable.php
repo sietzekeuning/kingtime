@@ -7,7 +7,6 @@ namespace App\Domain\Client\Tables;
 use App\Domain\Client\Models\Client;
 use App\Domain\Shared\Tables\BaseTable;
 use Illuminate\Database\Eloquent\Builder;
-use Spatie\QueryBuilder\AllowedFilter;
 
 /** @extends BaseTable<Client> */
 class ClientTable extends BaseTable
@@ -22,12 +21,14 @@ class ClientTable extends BaseTable
 
     protected function allowedFilters(): array
     {
-        return ['name', 'email', AllowedFilter::exact('is_active')];
+        return ['name', 'email', $this->archivedFilter()];
     }
 
     /** @return Builder<Client> */
     protected function baseQuery(): Builder
     {
-        return Client::query()->withCount('projects');
+        return Client::query()
+            ->when($this->hidesArchived(), fn (Builder $query) => $query->where('is_active', true))
+            ->withCount('projects');
     }
 }

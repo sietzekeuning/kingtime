@@ -23,14 +23,14 @@ const props = defineProps<{
 }>();
 
 defineOptions({
-    layout: (page: { props: { invoice: InvoiceData } }) => ({
+    layout: ({ invoice }: { invoice: InvoiceData }) => ({
         breadcrumbs: [
             { title: 'Invoices', href: invoices.index() },
             {
-                title: page.props.invoice.number
-                    ? `Invoice ${page.props.invoice.number}`
-                    : `Draft invoice #${page.props.invoice.id}`,
-                href: invoices.show(page.props.invoice.id!),
+                title: invoice.number
+                    ? `Invoice ${invoice.number}`
+                    : `Draft invoice #${invoice.id}`,
+                href: invoices.show(invoice.id!),
             },
         ],
     }),

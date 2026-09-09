@@ -52,12 +52,6 @@ function destroy(event: Event) {
                 >
                     · {{ entry.client_name }}
                 </span>
-                <span
-                    v-if="entry.task_name"
-                    class="text-muted-foreground truncate"
-                >
-                    · {{ entry.task_name }}
-                </span>
             </div>
             <p
                 v-if="entry.notes"

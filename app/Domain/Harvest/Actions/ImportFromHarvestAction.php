@@ -17,7 +17,7 @@ use Carbon\CarbonInterface;
  */
 class ImportFromHarvestAction
 {
-    public const STEPS = ['users', 'clients', 'projects', 'tasks', 'task_assignments', 'time_entries'];
+    public const STEPS = ['users', 'clients', 'projects', 'time_entries'];
 
     public const DONE = 'done';
 
@@ -27,8 +27,6 @@ class ImportFromHarvestAction
         private readonly ImportHarvestUsersAction $users,
         private readonly ImportHarvestClientsAction $clients,
         private readonly ImportHarvestProjectsAction $projects,
-        private readonly ImportHarvestTasksAction $tasks,
-        private readonly ImportHarvestTaskAssignmentsAction $taskAssignments,
         private readonly ImportHarvestTimeEntriesAction $timeEntries,
     ) {}
 
@@ -40,8 +38,6 @@ class ImportFromHarvestAction
             'users' => $this->users,
             'clients' => $this->clients,
             'projects' => $this->projects,
-            'tasks' => $this->tasks,
-            'task_assignments' => $this->taskAssignments,
             'time_entries' => $this->timeEntries,
         ];
 

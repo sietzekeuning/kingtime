@@ -58,7 +58,7 @@ class ListTimeEntriesTool extends KingtimeTool
         $limit = $request->get('limit') !== null ? (int) $request->get('limit') : 200;
 
         $query = $user->timeEntries()
-            ->with(['project.client', 'task'])
+            ->with('project.client')
             ->whereBetween('spent_on', [$from->toDateString(), $to->toDateString()])
             ->when($request->get('project_id') !== null, fn (Builder $query) => $query->where('project_id', (int) $request->get('project_id')))
             ->when($request->get('client_id') !== null, fn (Builder $query) => $query->whereHas('project', fn (Builder $project) => $project->where('client_id', (int) $request->get('client_id'))))

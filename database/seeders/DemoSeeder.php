@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Domain\Client\Models\Client;
-use App\Domain\Project\Enums\BillBy;
 use App\Domain\Project\Models\Project;
-use App\Domain\Project\Models\Task;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
 use Illuminate\Database\Seeder;
@@ -15,7 +13,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * Demo data for a fresh install: one user (demo@kingtime.test / password),
- * three clients with projects and tasks, and six months of time entries.
+ * three clients with projects, and six months of time entries.
  */
 class DemoSeeder extends Seeder
 {
@@ -26,15 +24,12 @@ class DemoSeeder extends Seeder
             'email' => 'demo@kingtime.test',
         ]);
 
-        $tasks = collect(['Development', 'Design', 'Meetings', 'Support'])
-            ->map(fn (string $name) => Task::factory()->create(['name' => $name]));
-
         $projects = collect([
             ['Acme Corporation', 'Website redesign', 'ACME', '#F97316', '95.00'],
             ['Acme Corporation', 'Support retainer', 'ACME-S', '#F59E0B', '85.00'],
             ['Globex', 'Mobile app', 'GLX', '#3B82F6', '110.00'],
             ['Initech', 'TPS report automation', 'INT', '#10B981', '100.00'],
-        ])->map(function (array $row) use ($tasks): Project {
+        ])->map(function (array $row): Project {
             [$clientName, $name, $code, $color, $rate] = $row;
 
             $client = Client::query()->firstOrCreate(['name' => $clientName], [
@@ -44,18 +39,13 @@ class DemoSeeder extends Seeder
                 'is_active' => true,
             ]);
 
-            $project = Project::factory()->create([
+            return Project::factory()->create([
                 'client_id' => $client->id,
                 'name' => $name,
                 'code' => $code,
                 'color' => $color,
                 'hourly_rate' => $rate,
-                'bill_by' => BillBy::Project,
             ]);
-
-            $project->tasks()->attach($tasks->pluck('id')->all(), ['is_billable' => true, 'is_active' => true]);
-
-            return $project;
         });
 
         $day = Carbon::now()->subMonths(6)->startOfWeek();
@@ -71,7 +61,6 @@ class DemoSeeder extends Seeder
                     TimeEntry::factory()->create([
                         'user_id' => $user->id,
                         'project_id' => $project->id,
-                        'task_id' => $tasks->random()->id,
                         'spent_on' => $day->toDateString(),
                         'hours' => fake()->randomElement(['1.00', '1.50', '2.00', '2.50', '3.00', '4.00']),
                         'hourly_rate' => $project->hourly_rate,

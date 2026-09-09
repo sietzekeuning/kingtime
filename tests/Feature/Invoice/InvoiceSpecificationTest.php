@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Domain\Client\Models\Client;
 use App\Domain\Invoice\Actions\BuildInvoiceSpecificationAction;
 use App\Domain\Project\Models\Project;
-use App\Domain\Project\Models\Task;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
 use Illuminate\Support\Facades\Date;
@@ -17,35 +16,32 @@ beforeEach(function (): void {
     $this->to = Date::parse('2026-08-31');
 });
 
-it('groups entries per project, task and rate with summed hours', function (): void {
+it('groups entries per project and rate with summed hours', function (): void {
     $website = Project::factory()->for($this->client)->create(['name' => 'Website redesign']);
     $app = Project::factory()->for($this->client)->create(['name' => 'App']);
-    $development = Task::factory()->create(['name' => 'Development']);
-    $meeting = Task::factory()->create(['name' => 'Meeting']);
 
-    TimeEntry::factory()->for($this->user)->for($website)->for($development)->create(['spent_on' => '2026-08-03', 'hours' => '2.50', 'hourly_rate' => '95.00', 'notes' => 'Homepage']);
-    TimeEntry::factory()->for($this->user)->for($website)->for($development)->create(['spent_on' => '2026-08-04', 'hours' => '1.00', 'hourly_rate' => '95.00', 'notes' => 'Footer']);
-    TimeEntry::factory()->for($this->user)->for($website)->for($meeting)->create(['spent_on' => '2026-08-04', 'hours' => '0.50', 'hourly_rate' => '95.00']);
-    TimeEntry::factory()->for($this->user)->for($website)->for($development)->create(['spent_on' => '2026-08-10', 'hours' => '1.00', 'hourly_rate' => '110.00']);
-    TimeEntry::factory()->for($this->user)->for($app)->create(['task_id' => null, 'spent_on' => '2026-08-12', 'hours' => '4.00', 'hourly_rate' => '80.00']);
+    TimeEntry::factory()->for($this->user)->for($website)->create(['spent_on' => '2026-08-03', 'hours' => '2.50', 'hourly_rate' => '95.00', 'notes' => 'Homepage']);
+    TimeEntry::factory()->for($this->user)->for($website)->create(['spent_on' => '2026-08-04', 'hours' => '1.00', 'hourly_rate' => '95.00', 'notes' => 'Footer']);
+    TimeEntry::factory()->for($this->user)->for($website)->create(['spent_on' => '2026-08-04', 'hours' => '0.50', 'hourly_rate' => '95.00', 'notes' => null]);
+    TimeEntry::factory()->for($this->user)->for($website)->create(['spent_on' => '2026-08-10', 'hours' => '1.00', 'hourly_rate' => '110.00']);
+    TimeEntry::factory()->for($this->user)->for($app)->create(['spent_on' => '2026-08-12', 'hours' => '4.00', 'hourly_rate' => '80.00']);
 
     $specification = app(BuildInvoiceSpecificationAction::class)->handle($this->client, $this->from, $this->to);
 
-    expect($specification->lines)->toHaveCount(4)
+    expect($specification->lines)->toHaveCount(3)
         ->and($specification->lines->map(fn ($line) => [$line->description, $line->quantity, $line->unit_price, $line->amount])->all())->toBe([
             ['App', '4.00', '80.00', '320.00'],
-            ['Website redesign · Development', '1.00', '110.00', '110.00'],
-            ['Website redesign · Development', '3.50', '95.00', '332.50'],
-            ['Website redesign · Meeting', '0.50', '95.00', '47.50'],
+            ['Website redesign', '1.00', '110.00', '110.00'],
+            ['Website redesign', '4.00', '95.00', '380.00'],
         ])
-        ->and($specification->lines->pluck('sort_order')->all())->toBe([0, 1, 2, 3])
+        ->and($specification->lines->pluck('sort_order')->all())->toBe([0, 1, 2])
         ->and($specification->subtotal)->toBe('810.00')
         ->and($specification->total_hours)->toBe('9.00')
         ->and($specification->entries)->toHaveCount(5)
         ->and($specification->unpriced_entries)->toBe(0)
         ->and($specification->client->name)->toBe('Acme Corporation')
         ->and($specification->specification_text)->toContain('Period: August 2026')
-        ->toContain("## Website redesign\n03-08-2026    2.50 h  Development · Homepage")
+        ->toContain("## Website redesign\n03-08-2026    2.50 h  Homepage\n04-08-2026    1.00 h  Footer\n04-08-2026    0.50 h\n")
         ->toContain('Subtotal Website redesign: 5.00 h')
         ->toContain("## App\n12-08-2026    4.00 h")
         ->toContain('Total: 9.00 h');
@@ -53,8 +49,8 @@ it('groups entries per project, task and rate with summed hours', function (): v
 
 it('flags entries without a rate and still lists their hours', function (): void {
     $project = Project::factory()->for($this->client)->create(['name' => 'Support']);
-    TimeEntry::factory()->for($this->user)->for($project)->create(['task_id' => null, 'spent_on' => '2026-08-05', 'hours' => '2.00', 'hourly_rate' => null]);
-    TimeEntry::factory()->for($this->user)->for($project)->create(['task_id' => null, 'spent_on' => '2026-08-06', 'hours' => '1.00', 'hourly_rate' => '50.00']);
+    TimeEntry::factory()->for($this->user)->for($project)->create(['spent_on' => '2026-08-05', 'hours' => '2.00', 'hourly_rate' => null]);
+    TimeEntry::factory()->for($this->user)->for($project)->create(['spent_on' => '2026-08-06', 'hours' => '1.00', 'hourly_rate' => '50.00']);
 
     $specification = app(BuildInvoiceSpecificationAction::class)->handle($this->client, $this->from, $this->to);
 

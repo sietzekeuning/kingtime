@@ -7,10 +7,7 @@ use App\Domain\Harvest\Actions\ImportFromHarvestAction;
 use App\Domain\Harvest\Exceptions\HarvestException;
 use App\Domain\Harvest\Services\HarvestClient;
 use App\Domain\Invoice\Models\Invoice;
-use App\Domain\Project\Enums\BillBy;
 use App\Domain\Project\Models\Project;
-use App\Domain\Project\Models\ProjectTask;
-use App\Domain\Project\Models\Task;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
 use Illuminate\Http\Client\Request;
@@ -32,8 +29,6 @@ it('imports everything from harvest with the right mappings', function (): void 
         ->and($result->users->updated)->toBe(1)
         ->and($result->clients->created)->toBe(2)
         ->and($result->projects->created)->toBe(3)
-        ->and($result->tasks->created)->toBe(2)
-        ->and($result->task_assignments->created)->toBe(3)
         ->and($result->time_entries->created)->toBe(3);
 
     // Users: the existing account is adopted by email, the unknown one is created.
@@ -52,49 +47,32 @@ it('imports everything from harvest with the right mappings', function (): void 
         ->and($globex->is_active)->toBeFalse()
         ->and($globex->currency)->toBe('USD');
 
-    // Projects map bill_by, rates, budget and dates.
+    // Projects map billability, rates, budget and dates.
     $website = Project::query()->where('harvest_id', 3001)->firstOrFail();
     expect($website->client_id)->toBe($acme->id)
         ->and($website->code)->toBe('WEB')
-        ->and($website->bill_by)->toBe(BillBy::Project)
+        ->and($website->is_billable)->toBeTrue()
         ->and($website->hourly_rate)->toBe('95.00')
         ->and($website->budget_hours)->toBe('100.00')
-        ->and($website->is_billable)->toBeTrue()
         ->and($website->starts_on?->toDateString())->toBe('2026-01-01')
         ->and($website->ends_on)->toBeNull()
         ->and($website->notes)->toBe('Relaunch of the marketing site');
 
+    // A project Harvest billed per task keeps no rate of its own.
     $support = Project::query()->where('harvest_id', 3002)->firstOrFail();
     expect($support->client_id)->toBe($globex->id)
-        ->and($support->bill_by)->toBe(BillBy::Task)
+        ->and($support->is_billable)->toBeTrue()
         ->and($support->hourly_rate)->toBeNull()
         ->and($support->budget_hours)->toBeNull()
         ->and($support->is_active)->toBeFalse()
         ->and($support->ends_on?->toDateString())->toBe('2026-12-31');
 
-    expect(Project::query()->where('harvest_id', 3003)->firstOrFail()->bill_by)->toBe(BillBy::None);
-
-    // Tasks and task assignments.
-    $development = Task::query()->where('harvest_id', 4001)->firstOrFail();
-    $meeting = Task::query()->where('harvest_id', 4002)->firstOrFail();
-    expect($development->default_hourly_rate)->toBe('95.00')
-        ->and($development->is_billable_by_default)->toBeTrue()
-        ->and($meeting->is_billable_by_default)->toBeFalse();
-
-    $assignment = ProjectTask::query()->where('harvest_id', 5002)->firstOrFail();
-    expect($assignment->project_id)->toBe($support->id)
-        ->and($assignment->task_id)->toBe($development->id)
-        ->and($assignment->hourly_rate)->toBe('110.00')
-        ->and($assignment->is_billable)->toBeTrue();
-    $inactive = ProjectTask::query()->where('harvest_id', 5003)->firstOrFail();
-    expect($inactive->is_billable)->toBeFalse()
-        ->and($inactive->is_active)->toBeFalse();
+    expect(Project::query()->where('harvest_id', 3003)->firstOrFail()->is_billable)->toBeFalse();
 
     // Time entries, including a billed one and a running timer.
     $entry = TimeEntry::query()->where('harvest_id', 6001)->firstOrFail();
     expect($entry->user_id)->toBe($existing->id)
         ->and($entry->project_id)->toBe($website->id)
-        ->and($entry->task_id)->toBe($development->id)
         ->and($entry->spent_on->toDateString())->toBe('2026-09-01')
         ->and($entry->hours)->toBe('2.50')
         ->and($entry->hourly_rate)->toBe('95.00')
@@ -108,11 +86,14 @@ it('imports everything from harvest with the right mappings', function (): void 
         ->and($billed->is_billable)->toBeFalse()
         ->and($billed->is_billed)->toBeTrue()
         ->and($billed->is_locked)->toBeTrue()
-        ->and($billed->hourly_rate)->toBeNull();
+        ->and($billed->hourly_rate)->toBeNull()
+        ->and($billed->notes)->toBe('Weekly sync');
 
+    // Tasks are not imported; an entry without notes keeps the task name.
     $running = TimeEntry::query()->where('harvest_id', 6003)->firstOrFail();
     expect($running->is_running)->toBeTrue()
         ->and($running->hours)->toBe('0.50')
+        ->and($running->notes)->toBe('Development')
         ->and($running->timer_started_at?->toIso8601String())->toBe('2026-09-09T08:00:00+00:00');
 });
 
@@ -145,15 +126,11 @@ it('updates instead of duplicating on a second run and keeps local-only fields',
 
     expect($result->clients)->toMatchObject(['created' => 0, 'updated' => 2])
         ->and($result->projects)->toMatchObject(['created' => 0, 'updated' => 3])
-        ->and($result->tasks)->toMatchObject(['created' => 0, 'updated' => 2])
-        ->and($result->task_assignments)->toMatchObject(['created' => 0, 'updated' => 3])
         ->and($result->time_entries)->toMatchObject(['created' => 0, 'updated' => 3])
         ->and($result->users)->toMatchObject(['created' => 0, 'updated' => 2]);
 
     expect(Client::query()->count())->toBe(2)
         ->and(Project::query()->count())->toBe(3)
-        ->and(Task::query()->count())->toBe(2)
-        ->and(ProjectTask::query()->count())->toBe(3)
         ->and(TimeEntry::query()->count())->toBe(3)
         ->and(User::query()->count())->toBe(2);
 
@@ -189,10 +166,12 @@ it('passes updated_since to every list endpoint on an incremental import', funct
 
     app(ImportFromHarvestAction::class)->handle($since);
 
-    foreach (['/users', '/clients', '/projects', '/tasks', '/task_assignments', '/time_entries'] as $path) {
+    foreach (['/users', '/clients', '/projects', '/time_entries'] as $path) {
         Http::assertSent(fn (Request $request) => str_contains($request->url(), $path.'?')
             && (HarvestApi::query($request)['updated_since'] ?? null) === $since->toIso8601String());
     }
+
+    Http::assertNotSent(fn (Request $request) => str_contains($request->url(), '/tasks') || str_contains($request->url(), '/task_assignments'));
 });
 
 it('retries after a 429 and honours retry-after', function (): void {

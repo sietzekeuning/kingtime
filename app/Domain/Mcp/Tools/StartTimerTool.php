@@ -40,7 +40,7 @@ class StartTimerTool extends KingtimeTool
         $entry = $this->findEntry($user, (int) $request->get('time_entry_id'));
         $wasRunning = $entry->is_running;
 
-        $entry = $this->startTimer->handle($entry)->load(['project.client', 'task']);
+        $entry = $this->startTimer->handle($entry)->load('project.client');
 
         return Response::structured([
             'message' => $wasRunning ? 'Timer was already running.' : 'Timer started.',

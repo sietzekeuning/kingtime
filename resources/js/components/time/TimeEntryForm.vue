@@ -16,7 +16,6 @@ import type { ProjectOptionData } from '@/types/generated';
 
 export type TimeEntryFormData = {
     project_id: number | null;
-    task_id: number | null;
     spent_on: string;
     hours: string;
     notes: string | null;
@@ -24,9 +23,8 @@ export type TimeEntryFormData = {
 };
 
 /**
- * The fields of a time entry. Picking a project narrows the task select to
- * that project's assigned tasks and resets billability to what the
- * assignment says; the rate is derived server-side.
+ * The fields of a time entry. Picking a project resets billability to what
+ * the project says; the rate is derived server-side.
  */
 const props = defineProps<{
     form: InertiaForm<TimeEntryFormData>;
@@ -45,39 +43,10 @@ const selectedProject = computed(
         null,
 );
 
-const tasks = computed(() => selectedProject.value?.tasks ?? []);
-
-const selectedTask = computed(
-    () => tasks.value.find((task) => task.task_id === form.task_id) ?? null,
-);
-
-function defaultBillable(): boolean {
-    if (!selectedProject.value) {
-        return true;
-    }
-
-    if (!selectedProject.value.is_billable) {
-        return false;
-    }
-
-    return selectedTask.value ? selectedTask.value.is_billable : true;
-}
-
 watch(
     () => form.project_id,
     () => {
-        if (!tasks.value.some((task) => task.task_id === form.task_id)) {
-            form.task_id = tasks.value[0]?.task_id ?? null;
-        }
-
-        form.is_billable = defaultBillable();
-    },
-);
-
-watch(
-    () => form.task_id,
-    () => {
-        form.is_billable = defaultBillable();
+        form.is_billable = selectedProject.value?.is_billable ?? true;
     },
 );
 </script>
@@ -135,36 +104,6 @@ watch(
                                 </span>
                             </span>
                         </span>
-                    </SelectItem>
-                </SelectContent>
-            </Select>
-        </TimeEntryField>
-
-        <TimeEntryField label="Task" field="task_id" :stacked="stacked">
-            <Select
-                v-model="form.task_id"
-                :disabled="disabled || !selectedProject || tasks.length === 0"
-            >
-                <SelectTrigger class="w-full">
-                    <SelectValue
-                        :placeholder="
-                            selectedProject && tasks.length === 0
-                                ? 'No tasks assigned to this project'
-                                : 'Select task'
-                        "
-                    >
-                        <span v-if="selectedTask">{{
-                            selectedTask.task_name
-                        }}</span>
-                    </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem
-                        v-for="task in tasks"
-                        :key="task.task_id"
-                        :value="task.task_id"
-                    >
-                        {{ task.task_name }}
                     </SelectItem>
                 </SelectContent>
             </Select>

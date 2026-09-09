@@ -1,16 +1,17 @@
 # Kingtime
 
-Open-source time tracking for freelancers and small studios. Log hours per client, project and task, import your history from Harvest, prepare invoices as Moneybird drafts with a clean hour specification, and let your LLM do the bookkeeping through the built-in MCP server.
+Open-source time tracking for freelancers and small studios. Log hours per client and project, import your history from Harvest, prepare invoices as Moneybird drafts with a clean hour specification, and let your LLM do the bookkeeping through the built-in MCP server.
 
 Built with Laravel 13, Inertia v3, Vue 3, shadcn-vue and Tailwind v4. Live at [kingtime.nl](https://kingtime.nl).
 
 ## Features
 
 - **Timesheet** with a Monday to Sunday week strip, per-day totals, a running timer that is visible on every page, and a filterable table of every entry ever logged.
-- **Clients, projects and tasks** with per-project or per-task hourly rates, budgets and colours, the way Harvest models them.
-- **Harvest import**: one command (or a button on the integrations page) pulls users, clients, projects, tasks, task assignments and all time entries. Runs are idempotent and incremental, and can be scheduled hourly.
-- **Invoicing through Moneybird**: pick a client and a period, review the unbilled hours grouped per project and task, and create a draft sales invoice in Moneybird with the full specification attached as a note. Statuses sync back daily.
+- **Clients and projects** with hourly rates, budgets and colours, the way Harvest models them. Archive a project (or a client with all its projects) when the work is done: it disappears from the lists and selects, its hours stay.
+- **Harvest import**: one command (or a button on the integrations page) pulls users, clients, projects and all time entries (an entry without notes keeps its Harvest task name as notes). Runs are idempotent and incremental, and can be scheduled hourly.
+- **Invoicing through Moneybird**: pick a client and a period, review the unbilled hours grouped per project, and create a draft sales invoice in Moneybird with the full specification attached as a note. Statuses sync back daily.
 - **MCP server**: connect Claude Desktop, Claude Code, Cursor or any MCP client with a personal API token and say "log two hours of development on the Acme website for today" or "prepare the September invoice for Globex".
+- **Reports** with hours, billable hours, earned and invoiced amounts per week, month or year, with charts and a breakdown per client and project.
 - **Dashboard** with hours today, this week and this month against the previous period, a weekly hours chart, billable ratio and top projects.
 - Passkeys and two-factor authentication out of the box (Laravel Fortify). Sign-up closes automatically after the first user.
 
@@ -65,7 +66,7 @@ Every row keeps its `harvest_id`, so re-running never duplicates anything and lo
     MONEYBIRD_WORKFLOW_ID=
     ```
 
-2. Go to Invoices › Prepare invoice, pick a client and a period, uncheck any entries you want to leave out, and create the draft. With "Push to Moneybird" on, the contact is looked up (or created) by name and a **draft** sales invoice is created with one line per project and task and the specification (hours and notes per day) as a note. Nothing is ever sent to your customer from Kingtime; you review and send in Moneybird.
+2. Go to Invoices › Prepare invoice, pick a client and a period, uncheck any entries you want to leave out, and create the draft. With "Push to Moneybird" on, the contact is looked up (or created) by name and a **draft** sales invoice is created with one line per project and rate and the specification (hours and notes per day) as a note. Nothing is ever sent to your customer from Kingtime; you review and send in Moneybird.
 
 Invoiced entries are locked. Deleting a draft that was not pushed unlocks them again. `php artisan invoices:sync-statuses` (scheduled daily) pulls the paid/late/open state back from Moneybird.
 
@@ -93,7 +94,7 @@ Claude Desktop, Cursor and friends take the same thing as JSON:
 
 For a local install without HTTPS you can also run it over stdio: `php artisan mcp:start kingtime` (acts as the first user in the database).
 
-Tools: `list_clients`, `list_projects`, `list_tasks`, `list_time_entries`, `get_timesheet`, `log_time`, `update_time_entry`, `delete_time_entry`, `start_timer`, `stop_timer`, `get_running_timer`, `get_unbilled_summary`, `preview_invoice`, `prepare_invoice`, `moneybird_status`, `moneybird_list_contacts`, `moneybird_list_sales_invoices`, `moneybird_get_sales_invoice`, `moneybird_list_purchase_invoices`, `moneybird_list_receipts`, `moneybird_revenue_summary` and `moneybird_get`. Invoices prepared through MCP are drafts, exactly like the ones from the UI. The `moneybird_*` tools are read-only queries against your Moneybird administration (contacts, sales and purchase invoices, receipts, revenue per month and per contact, and a generic GET for any other endpoint); they never create or change anything.
+Tools: `list_clients`, `list_projects`, `list_time_entries`, `get_timesheet`, `log_time`, `update_time_entry`, `delete_time_entry`, `start_timer`, `stop_timer`, `get_running_timer`, `get_unbilled_summary`, `preview_invoice`, `prepare_invoice`, `moneybird_status`, `moneybird_list_contacts`, `moneybird_list_sales_invoices`, `moneybird_get_sales_invoice`, `moneybird_list_purchase_invoices`, `moneybird_list_receipts`, `moneybird_revenue_summary` and `moneybird_get`. Invoices prepared through MCP are drafts, exactly like the ones from the UI. The `moneybird_*` tools are read-only queries against your Moneybird administration (contacts, sales and purchase invoices, receipts, revenue per month and per contact, and a generic GET for any other endpoint); they never create or change anything.
 
 ## Development
 

@@ -6,7 +6,6 @@ namespace App\Domain\Time\Models;
 
 use App\Domain\Invoice\Models\Invoice;
 use App\Domain\Project\Models\Project;
-use App\Domain\Project\Models\Task;
 use App\Domain\User\Models\User;
 use Database\Factories\TimeEntryFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,7 +19,6 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property int $project_id
- * @property int|null $task_id
  * @property int|null $invoice_id
  * @property Carbon $spent_on
  * @property string $hours
@@ -37,7 +35,6 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $deleted_at
  * @property-read User $user
  * @property-read Project $project
- * @property-read Task|null $task
  * @property-read Invoice|null $invoice
  */
 class TimeEntry extends Model
@@ -71,12 +68,6 @@ class TimeEntry extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
-    }
-
-    /** @return BelongsTo<Task, $this> */
-    public function task(): BelongsTo
-    {
-        return $this->belongsTo(Task::class);
     }
 
     /** @return BelongsTo<Invoice, $this> */

@@ -62,7 +62,7 @@ abstract class KingtimeTool extends Tool
      */
     protected function findEntry(User $user, int $id): TimeEntry
     {
-        $entry = $user->timeEntries()->with(['project.client', 'task'])->find($id);
+        $entry = $user->timeEntries()->with('project.client')->find($id);
 
         if ($entry === null) {
             throw new McpToolException("No time entry with id {$id} exists for you. Use list_time_entries to find the right id.");
@@ -154,8 +154,6 @@ abstract class KingtimeTool extends Tool
             'project' => $entry->project_name,
             'client_id' => $entry->client_id,
             'client' => $entry->client_name,
-            'task_id' => $entry->task_id,
-            'task' => $entry->task_name,
             'notes' => $entry->notes,
             'is_billable' => $entry->is_billable,
             'is_billed' => $entry->is_billed,

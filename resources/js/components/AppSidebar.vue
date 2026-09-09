@@ -4,10 +4,10 @@ import {
     BookOpen,
     Briefcase,
     Building2,
+    ChartColumn,
     Clock,
     FolderGit2,
     LayoutGrid,
-    ListChecks,
     Plug,
     Receipt,
     Settings,
@@ -31,16 +31,16 @@ import { edit as editIntegrations } from '@/routes/integrations';
 import invoices from '@/routes/invoices';
 import { edit as editProfile } from '@/routes/profile';
 import projects from '@/routes/projects';
-import tasks from '@/routes/tasks';
+import reports from '@/routes/reports';
 import timeEntries from '@/routes/time-entries';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
     { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
+    { title: 'Reports', href: reports.index(), icon: ChartColumn },
     { title: 'Time entries', href: timeEntries.index(), icon: Clock },
     { title: 'Projects', href: projects.index(), icon: Briefcase },
     { title: 'Clients', href: clients.index(), icon: Building2 },
-    { title: 'Tasks', href: tasks.index(), icon: ListChecks },
     { title: 'Invoices', href: invoices.index(), icon: Receipt },
 ];
 

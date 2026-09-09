@@ -51,7 +51,7 @@ function stop() {
             <Link
                 :href="timeEntries.index({ query: { date: timer.spent_on } })"
                 class="hidden max-w-48 truncate text-sm font-medium hover:underline sm:inline"
-                :title="`${timer.project_name}${timer.task_name ? ` · ${timer.task_name}` : ''}`"
+                :title="timer.project_name ?? ''"
             >
                 {{ timer.project_name }}
             </Link>

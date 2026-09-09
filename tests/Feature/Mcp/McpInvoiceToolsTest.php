@@ -10,7 +10,6 @@ use App\Domain\Mcp\Tools\GetUnbilledSummaryTool;
 use App\Domain\Mcp\Tools\PrepareInvoiceTool;
 use App\Domain\Mcp\Tools\PreviewInvoiceTool;
 use App\Domain\Project\Models\Project;
-use App\Domain\Project\Models\Task;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -54,8 +53,7 @@ beforeEach(function (): void {
     $this->user = User::factory()->create();
     $this->client = Client::factory()->create(['name' => 'Acme Corporation', 'currency' => 'EUR', 'moneybird_contact_id' => '411000000000000001']);
     $this->project = Project::factory()->for($this->client)->create(['name' => 'Website redesign']);
-    $this->task = Task::factory()->create(['name' => 'Development']);
-    $this->entries = TimeEntry::factory()->count(2)->for($this->user)->for($this->project)->for($this->task)
+    $this->entries = TimeEntry::factory()->count(2)->for($this->user)->for($this->project)
         ->sequence(['spent_on' => '2026-08-03', 'hours' => '2.50', 'notes' => 'Homepage'], ['spent_on' => '2026-08-04', 'hours' => '1.00', 'notes' => 'Footer'])
         ->create(['hourly_rate' => '95.00']);
 });
@@ -110,7 +108,7 @@ it('previews the invoice for a client and the previous month by default', functi
             ->where('entry_count', 2)
             ->where('unpriced_entries', 0)
             ->has('lines', 1)
-            ->where('lines.0.description', 'Website redesign · Development')
+            ->where('lines.0.description', 'Website redesign')
             ->where('lines.0.quantity', '3.50')
             ->where('lines.0.unit_price', '95.00')
             ->where('lines.0.amount', '332.50')

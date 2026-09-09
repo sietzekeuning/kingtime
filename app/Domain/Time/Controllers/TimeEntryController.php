@@ -80,11 +80,11 @@ class TimeEntryController
     {
         abort_unless($timeEntry->user_id === $request->user()?->id, 403);
 
-        $timeEntry->load(['project.client', 'task']);
+        $timeEntry->load('project.client');
 
         return Inertia::render('time-entries/TimeEntryForm', [
             'entry' => TimeEntryData::fromModel($timeEntry),
-            'projects' => $listProjectOptions->handle(),
+            'projects' => $listProjectOptions->handle($timeEntry->project_id),
         ]);
     }
 

@@ -611,6 +611,7 @@ function onRowDragEnd(): void {
                                     "
                                 >
                                     <FlexRender
+                                        v-if="header.column.columnDef.header"
                                         :render="header.column.columnDef.header"
                                         :props="header.getContext()"
                                     />

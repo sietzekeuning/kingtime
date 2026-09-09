@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Domain\Project\Models\Project;
-use App\Domain\Project\Models\Task;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,7 +19,6 @@ class TimeEntryFactory extends Factory
         return [
             'user_id' => User::factory(),
             'project_id' => Project::factory(),
-            'task_id' => Task::factory(),
             'spent_on' => fake()->dateTimeBetween('-30 days', 'now')->format('Y-m-d'),
             'hours' => fake()->randomElement(['0.50', '1.00', '1.50', '2.00', '3.25', '4.00']),
             'notes' => fake()->sentence(),

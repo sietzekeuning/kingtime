@@ -30,8 +30,7 @@ class InvoiceController
         $invoice->load([
             'client',
             'lines.project',
-            'lines.task',
-            'timeEntries' => fn (HasMany $query) => $query->with(['project.client', 'task'])->orderBy('spent_on')->orderBy('id'),
+            'timeEntries' => fn (HasMany $query) => $query->with('project.client')->orderBy('spent_on')->orderBy('id'),
         ]);
 
         return Inertia::render('invoices/InvoiceShow', [

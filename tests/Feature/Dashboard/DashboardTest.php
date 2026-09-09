@@ -38,7 +38,6 @@ function dashboardUser(): User
 function dashboardEntry(Project $project, string $spentOn, string $hours, array $attributes = []): TimeEntry
 {
     return TimeEntry::factory()->for(dashboardUser())->for($project)->create([
-        'task_id' => null,
         'spent_on' => $spentOn,
         'hours' => $hours,
         'hourly_rate' => '100.00',

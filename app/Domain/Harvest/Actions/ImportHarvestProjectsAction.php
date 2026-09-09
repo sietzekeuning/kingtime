@@ -7,11 +7,15 @@ namespace App\Domain\Harvest\Actions;
 use App\Domain\Client\Models\Client;
 use App\Domain\Harvest\Data\HarvestImportResultData;
 use App\Domain\Harvest\Services\HarvestClient;
-use App\Domain\Project\Enums\BillBy;
 use App\Domain\Project\Models\Project;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Harvest can bill a project per task or per person; those rates are not
+ * modelled here, so a project only keeps its own `hourly_rate` (the rate of
+ * every imported entry comes from Harvest's `billable_rate` anyway).
+ */
 class ImportHarvestProjectsAction
 {
     /** Harvest `budget_by` values whose `budget` is expressed in hours. */
@@ -38,7 +42,6 @@ class ImportHarvestProjectsAction
                 'name' => (string) $record['name'],
                 'code' => $record['code'] ?? null,
                 'is_billable' => (bool) ($record['is_billable'] ?? true),
-                'bill_by' => self::mapBillBy($record['bill_by'] ?? null),
                 'hourly_rate' => $record['hourly_rate'] ?? null,
                 'budget_hours' => in_array($budgetBy, self::HOUR_BUDGETS, true) ? ($record['budget'] ?? null) : null,
                 'is_active' => (bool) ($record['is_active'] ?? true),
@@ -61,18 +64,5 @@ class ImportHarvestProjectsAction
                 $tick();
             }
         }
-    }
-
-    /**
-     * Harvest uses "Project", "Tasks", "People" and "none". Per-person rates
-     * are not modelled here, so they fall back to the project rate.
-     */
-    public static function mapBillBy(mixed $billBy): BillBy
-    {
-        return match (mb_strtolower((string) $billBy)) {
-            'task', 'tasks' => BillBy::Task,
-            'none', '' => BillBy::None,
-            default => BillBy::Project,
-        };
     }
 }

@@ -10,7 +10,6 @@ use App\Domain\Mcp\Tools\GetTimesheetTool;
 use App\Domain\Mcp\Tools\GetUnbilledSummaryTool;
 use App\Domain\Mcp\Tools\ListClientsTool;
 use App\Domain\Mcp\Tools\ListProjectsTool;
-use App\Domain\Mcp\Tools\ListTasksTool;
 use App\Domain\Mcp\Tools\ListTimeEntriesTool;
 use App\Domain\Mcp\Tools\LogTimeTool;
 use App\Domain\Mcp\Tools\MoneybirdGetSalesInvoiceTool;
@@ -50,8 +49,8 @@ class KingtimeServer extends Server
         Kingtime is the time tracker of a freelancer. These tools log hours, manage the timer and prepare invoices for the user you are authenticated as.
 
         Workflow:
-        1. Find the project first. Call list_projects (optionally with `search` or `client_id`); every project lists the tasks assigned to it, and those task ids are what log_time expects. list_clients helps when you only know the client.
-        2. Log hours with log_time. Hours are decimal (1.5 = one and a half hours, 0.25 = a quarter), dates are YYYY-MM-DD and default to today. Leave `is_billable` out to inherit the project/task default. Pass `start_timer: true` to start a running timer instead of logging a fixed number of hours.
+        1. Find the project first. Call list_projects (optionally with `search` or `client_id`); the project id is what log_time expects. list_clients helps when you only know the client.
+        2. Log hours with log_time. Hours are decimal (1.5 = one and a half hours, 0.25 = a quarter), dates are YYYY-MM-DD and default to today. Leave `is_billable` out to inherit the project default. Pass `start_timer: true` to start a running timer instead of logging a fixed number of hours.
         3. Timers: a user has one running timer at a time. Starting another stops the running one and keeps its time. stop_timer without an id stops whatever is running. Running entries report their live hours.
         4. Review with get_timesheet (the Monday to Sunday week around a date, with per-day totals) or list_time_entries (a date range with optional project, client and unbilled filters, plus totals).
         5. Entries that are billed or locked belong to an invoice and can no longer be changed or deleted; the tools say so when it happens.
@@ -67,7 +66,6 @@ class KingtimeServer extends Server
     protected array $tools = [
         ListClientsTool::class,
         ListProjectsTool::class,
-        ListTasksTool::class,
         ListTimeEntriesTool::class,
         GetTimesheetTool::class,
         LogTimeTool::class,

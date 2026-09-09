@@ -13,7 +13,7 @@ import { formatHours } from '@/lib/utils';
 import type { InvoiceLineData } from '@/types/generated';
 
 /**
- * The invoice specification lines: one row per project, task and rate.
+ * The invoice specification lines: one row per project and rate.
  * Shared by the prepare preview and the invoice detail page.
  */
 defineProps<{

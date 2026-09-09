@@ -7,7 +7,6 @@ namespace App\Domain\Harvest\Actions;
 use App\Domain\Harvest\Data\HarvestImportResultData;
 use App\Domain\Harvest\Services\HarvestClient;
 use App\Domain\Project\Models\Project;
-use App\Domain\Project\Models\Task;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
 use Carbon\CarbonInterface;
@@ -22,13 +21,11 @@ class ImportHarvestTimeEntriesAction
     {
         $userIds = User::query()->whereNotNull('harvest_id')->pluck('id', 'harvest_id');
         $projectIds = Project::withTrashed()->whereNotNull('harvest_id')->pluck('id', 'harvest_id');
-        $taskIds = Task::query()->whereNotNull('harvest_id')->pluck('id', 'harvest_id');
 
         foreach ($this->client->timeEntries($updatedSince) as $record) {
             $harvestId = (int) $record['id'];
             $userId = $userIds->get((int) ($record['user']['id'] ?? 0));
             $projectId = $projectIds->get((int) ($record['project']['id'] ?? 0));
-            $taskId = $taskIds->get((int) ($record['task']['id'] ?? 0));
 
             if ($userId === null || $projectId === null) {
                 Log::warning("Harvest import: skipping time entry {$harvestId}, user or project is unknown.");
@@ -47,10 +44,9 @@ class ImportHarvestTimeEntriesAction
             $attributes = [
                 'user_id' => $userId,
                 'project_id' => $projectId,
-                'task_id' => $taskId,
                 'spent_on' => (string) $record['spent_date'],
                 'hours' => $hours,
-                'notes' => $record['notes'] ?? null,
+                'notes' => self::notes($record),
                 'is_billable' => (bool) ($record['billable'] ?? true),
                 'hourly_rate' => $record['billable_rate'] ?? null,
                 'is_locked' => (bool) ($record['is_locked'] ?? false),
@@ -77,5 +73,25 @@ class ImportHarvestTimeEntriesAction
                 $tick();
             }
         }
+    }
+
+    /**
+     * Tasks are not modelled locally. An entry that has notes keeps them as
+     * they are; one without notes keeps the Harvest task name as its notes so
+     * that information is not lost.
+     *
+     * @param  array<string, mixed>  $record
+     */
+    private static function notes(array $record): ?string
+    {
+        $notes = $record['notes'] ?? null;
+
+        if (is_string($notes) && trim($notes) !== '') {
+            return $notes;
+        }
+
+        $taskName = $record['task']['name'] ?? null;
+
+        return is_string($taskName) && trim($taskName) !== '' ? trim($taskName) : null;
     }
 }

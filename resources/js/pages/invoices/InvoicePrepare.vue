@@ -359,8 +359,8 @@ function submit() {
                             </AlertTitle>
                             <AlertDescription class="text-amber-800">
                                 Their hours are on the invoice at 0,00. Give the
-                                project or task a rate, untick them here, or
-                                fill in the price in Moneybird.
+                                project a rate, untick them here, or fill in the
+                                price in Moneybird.
                             </AlertDescription>
                         </Alert>
 

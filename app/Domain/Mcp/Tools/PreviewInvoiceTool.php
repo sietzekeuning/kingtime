@@ -26,7 +26,7 @@ class PreviewInvoiceTool extends KingtimeTool
 
     protected string $title = 'Preview invoice';
 
-    protected string $description = 'Shows what an invoice for a client and period would contain without creating anything: the lines (one per project, task and rate), subtotal, total hours, the entries behind it, how many entries have no rate yet, and the plain-text hour specification. Identify the client by client_id or client_name. The period defaults to the previous calendar month. Use this before prepare_invoice.';
+    protected string $description = 'Shows what an invoice for a client and period would contain without creating anything: the lines (one per project and rate), subtotal, total hours, the entries behind it, how many entries have no rate yet, and the plain-text hour specification. Identify the client by client_id or client_name. The period defaults to the previous calendar month. Use this before prepare_invoice.';
 
     /**
      * @return array<string, mixed>

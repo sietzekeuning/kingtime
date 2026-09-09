@@ -24,7 +24,7 @@ class GetRunningTimerTool extends KingtimeTool
     {
         $entry = $user->timeEntries()
             ->where('is_running', true)
-            ->with(['project.client', 'task'])
+            ->with('project.client')
             ->latest('timer_started_at')
             ->first();
 
