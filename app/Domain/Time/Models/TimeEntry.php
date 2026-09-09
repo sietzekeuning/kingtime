@@ -97,18 +97,33 @@ class TimeEntry extends Model
     }
 
     /**
+     * Billed or locked entries back an invoice and are frozen: no edit, no
+     * delete, no timer.
+     */
+    public function isLocked(): bool
+    {
+        return $this->is_locked || $this->is_billed;
+    }
+
+    /**
+     * Seconds the running timer has been going; 0 when the entry is idle.
+     */
+    public function elapsedSeconds(): int
+    {
+        if (! $this->is_running || $this->timer_started_at === null) {
+            return 0;
+        }
+
+        return max(0, (int) $this->timer_started_at->diffInSeconds(now()));
+    }
+
+    /**
      * Hours including the running timer's elapsed time, so a live entry
      * shows its current total instead of the snapshot at the last stop.
      */
     public function currentHours(): float
     {
-        $hours = (float) $this->hours;
-
-        if ($this->is_running && $this->timer_started_at !== null) {
-            $hours += $this->timer_started_at->diffInSeconds(now()) / 3600;
-        }
-
-        return round($hours, 2);
+        return round((float) $this->hours + $this->elapsedSeconds() / 3600, 2);
     }
 
     public function billableAmount(): float

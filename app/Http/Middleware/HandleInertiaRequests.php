@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Time\Data\TimeEntryData;
+use App\Domain\Time\Models\TimeEntry;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -42,6 +44,23 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // The user's running timer, so the header can show it on every page.
+            'runningTimer' => function () use ($request): ?TimeEntryData {
+                $user = $request->user();
+
+                if ($user === null) {
+                    return null;
+                }
+
+                $entry = TimeEntry::query()
+                    ->where('user_id', $user->id)
+                    ->where('is_running', true)
+                    ->with(['project.client', 'task'])
+                    ->latest('timer_started_at')
+                    ->first();
+
+                return $entry !== null ? TimeEntryData::fromModel($entry) : null;
+            },
         ];
     }
 }

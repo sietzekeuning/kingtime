@@ -29,7 +29,8 @@ class TimeEntryData extends BaseData
         #[Required, Numeric, Min(0), Max(24)]
         public string $hours,
         public ?string $notes = null,
-        public bool $is_billable = true,
+        /** Null means "not given": the actions then take the project/task default. */
+        public ?bool $is_billable = null,
         public bool $is_billed = false,
         public bool $is_locked = false,
         public bool $is_running = false,
