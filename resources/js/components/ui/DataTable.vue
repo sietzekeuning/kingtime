@@ -83,13 +83,36 @@ const props = withDefaults(
          * for `@reorder` to persist the ids.
          */
         reorderable?: boolean;
+        /**
+         * Groups consecutive rows under a header row, the way Harvest lists
+         * projects per client. Return the group key and the label to show;
+         * a header is rendered whenever the key differs from the row above,
+         * so the data should already be sorted by that key.
+         */
+        groupBy?: (row: TData) => { key: string; label: string };
     }>(),
     {
         selectable: false,
         reorderable: false,
         rowId: (row: any) => String(row.id),
+        groupBy: undefined,
     },
 );
+
+/**
+ * The group label to print above a row, or null when the row belongs to
+ * the same group as the row before it.
+ */
+function groupLabelBefore(index: number): string | null {
+    if (!props.groupBy) return null;
+
+    const rows = table.getRowModel().rows;
+    const current = props.groupBy(rows[index]!.original);
+    const previous =
+        index > 0 ? props.groupBy(rows[index - 1]!.original) : null;
+
+    return previous?.key === current.key ? null : current.label;
+}
 
 const selected = defineModel<string[]>('selected', { default: () => [] });
 
@@ -750,9 +773,26 @@ function onRowDragEnd(): void {
                 </TableHeader>
                 <TableBody>
                     <template v-if="table.getRowModel().rows?.length">
-                        <TableRow
-                            v-for="row in table.getRowModel().rows"
+                        <template
+                            v-for="(row, index) in table.getRowModel().rows"
                             :key="row.id"
+                        >
+                        <TableRow
+                            v-if="groupLabelBefore(index) !== null"
+                            class="bg-muted/40 hover:bg-muted/40"
+                        >
+                            <TableCell
+                                :colspan="
+                                    columns.length +
+                                    (selectable ? 1 : 0) +
+                                    (reorderable ? 1 : 0)
+                                "
+                                class="text-muted-foreground py-1.5 text-xs font-semibold tracking-wide uppercase"
+                            >
+                                {{ groupLabelBefore(index) }}
+                            </TableCell>
+                        </TableRow>
+                        <TableRow
                             :class="[
                                 'transition-colors hover:bg-muted/50',
                                 rowIsClickable ? 'cursor-pointer' : '',
@@ -807,6 +847,7 @@ function onRowDragEnd(): void {
                                 />
                             </TableCell>
                         </TableRow>
+                        </template>
                     </template>
                     <template v-else>
                         <TableRow>

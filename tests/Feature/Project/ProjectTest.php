@@ -35,7 +35,7 @@ function projectPayload(Client $client, array $overrides = []): array
 }
 
 it('lists projects with the table payload, client name, hour totals and the amount spent', function (): void {
-    $project = Project::factory()->create(['name' => 'Aardvark', 'budget_amount' => '1000.00']);
+    $project = Project::factory()->for(Client::factory()->create(['name' => 'Aardvark Inc']))->create(['name' => 'Aardvark', 'budget_amount' => '1000.00']);
     TimeEntry::factory()->for($project)->create(['hours' => '2.50', 'hourly_rate' => '80.00', 'is_billable' => true, 'is_billed' => false]);
     TimeEntry::factory()->for($project)->billed()->create(['hours' => '1.25', 'hourly_rate' => '100.00']);
     TimeEntry::factory()->for($project)->billed()->create(['hours' => '4.00', 'hourly_rate' => null]);
@@ -55,6 +55,24 @@ it('lists projects with the table payload, client name, hour totals and the amou
             ->where('items.data.0.unbilled_hours', fn (string $hours) => (float) $hours === 2.5)
             ->where('items.data.0.budget_amount', '1000.00')
             ->where('items.data.0.spent_amount', fn (string $amount) => (float) $amount === 325.0));
+});
+
+it('orders projects by client name and then project name, so the list can group them per client', function (): void {
+    $zulu = Client::factory()->create(['name' => 'Zulu']);
+    $acme = Client::factory()->create(['name' => 'Acme']);
+    Project::factory()->for($zulu)->create(['name' => 'Alpha']);
+    Project::factory()->for($acme)->create(['name' => 'Zeta']);
+    Project::factory()->for($acme)->create(['name' => 'Beta']);
+
+    $this->get(route('projects.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('items.data.0.client.name', 'Acme')
+            ->where('items.data.0.name', 'Beta')
+            ->where('items.data.1.name', 'Zeta')
+            ->where('items.data.2.client.name', 'Zulu'));
+
+    $this->get(route('projects.index', ['sort' => '-client_name']))
+        ->assertInertia(fn ($page) => $page->where('items.data.0.client.name', 'Zulu'));
 });
 
 it('filters projects by client, active status and billability', function (): void {

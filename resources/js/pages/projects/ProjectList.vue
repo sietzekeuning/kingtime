@@ -33,6 +33,11 @@ const { confirmDelete } = useConfirmDelete();
 
 const rowUrl = (project: ProjectData) => projects.edit(project.id!);
 
+const groupByClient = (project: ProjectData) => ({
+    key: String(project.client_id),
+    label: project.client?.name ?? '',
+});
+
 const billableOptions = {
     Billable: { value: '1', label: 'Billable', colorClass: '' },
     NonBillable: { value: '0', label: 'Non-billable', colorClass: '' },
@@ -75,7 +80,12 @@ function deleteProject(event: Event, project: ProjectData) {
             </template>
         </PageHeader>
 
-        <DataTable :data="items" :row-url="rowUrl" label="projects">
+        <DataTable
+            :data="items"
+            :row-url="rowUrl"
+            :group-by="groupByClient"
+            label="projects"
+        >
             <template #buttons="{ filters }">
                 <ArchiveFilterTabs
                     :model-value="filters.get('is_active')"
