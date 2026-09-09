@@ -93,6 +93,73 @@ const user = computed(() => page.props.auth.user);
                 </div>
             </div>
 
+            <Heading
+                variant="small"
+                title="Invoice details"
+                description="Printed as the sender on the invoice PDF. Leave empty if you only invoice through Moneybird."
+            />
+
+            <div class="grid gap-2">
+                <Label for="company_name">Company name</Label>
+                <Input
+                    id="company_name"
+                    class="mt-1 block w-full"
+                    name="company_name"
+                    :default-value="user.company_name ?? ''"
+                    autocomplete="organization"
+                    placeholder="Your business name"
+                />
+                <InputError class="mt-2" :message="errors.company_name" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="company_address">Address</Label>
+                <textarea
+                    id="company_address"
+                    name="company_address"
+                    rows="3"
+                    class="border-input bg-background placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+                    placeholder="Street 1&#10;1234 AB City"
+                    >{{ user.company_address ?? '' }}</textarea>
+                <InputError class="mt-2" :message="errors.company_address" />
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-3">
+                <div class="grid gap-2">
+                    <Label for="vat_number">VAT number</Label>
+                    <Input
+                        id="vat_number"
+                        class="mt-1 block w-full"
+                        name="vat_number"
+                        :default-value="user.vat_number ?? ''"
+                        placeholder="NL123456789B01"
+                    />
+                    <InputError class="mt-2" :message="errors.vat_number" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="coc_number">Chamber of Commerce</Label>
+                    <Input
+                        id="coc_number"
+                        class="mt-1 block w-full"
+                        name="coc_number"
+                        :default-value="user.coc_number ?? ''"
+                        placeholder="12345678"
+                    />
+                    <InputError class="mt-2" :message="errors.coc_number" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="iban">IBAN</Label>
+                    <Input
+                        id="iban"
+                        class="mt-1 block w-full"
+                        name="iban"
+                        :default-value="user.iban ?? ''"
+                        placeholder="NL00 BANK 0123 4567 89"
+                    />
+                    <InputError class="mt-2" :message="errors.iban" />
+                </div>
+            </div>
+
             <div class="flex items-center gap-4">
                 <Button :disabled="processing" data-test="update-profile-button"
                     >Save</Button

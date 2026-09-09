@@ -7,6 +7,7 @@ use App\Domain\Harvest\Controllers\HarvestConnectionController;
 use App\Domain\Harvest\Controllers\HarvestImportController;
 use App\Domain\Harvest\Controllers\HarvestImportProgressController;
 use App\Domain\Invoice\Controllers\InvoiceController;
+use App\Domain\Invoice\Controllers\InvoicePdfController;
 use App\Domain\Invoice\Controllers\InvoicePrepareController;
 use App\Domain\Invoice\Controllers\InvoicePushController;
 use App\Domain\Invoice\Controllers\InvoiceSyncController;
@@ -53,6 +54,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::post('invoices/prepare', [InvoicePrepareController::class, 'store'])->name('invoices.prepare.store');
     Route::post('invoices/{invoice}/push', InvoicePushController::class)->name('invoices.push');
     Route::post('invoices/{invoice}/sync', InvoiceSyncController::class)->name('invoices.sync');
+    Route::get('invoices/{invoice}/pdf', InvoicePdfController::class)->name('invoices.pdf');
     Route::resource('invoices', InvoiceController::class)->only(['index', 'show', 'destroy']);
 
     // -- Integrations (Harvest, Moneybird) ---------------------------------

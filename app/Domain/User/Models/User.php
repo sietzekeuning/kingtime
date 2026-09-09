@@ -32,12 +32,17 @@ use Laravel\Sanctum\HasApiTokens;
  * @property Carbon|null $two_factor_confirmed_at
  * @property string|null $remember_token
  * @property int|null $harvest_id
+ * @property string|null $company_name
+ * @property string|null $company_address
+ * @property string|null $vat_number
+ * @property string|null $coc_number
+ * @property string|null $iban
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read HarvestConnection|null $harvestConnection
  * @property-read MoneybirdConnection|null $moneybirdConnection
  */
-#[Fillable(['name', 'email', 'password', 'harvest_id'])]
+#[Fillable(['name', 'email', 'password', 'harvest_id', 'company_name', 'company_address', 'vat_number', 'coc_number', 'iban'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {

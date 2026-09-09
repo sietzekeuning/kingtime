@@ -22,6 +22,22 @@ trait ProfileValidationRules
     }
 
     /**
+     * The business details printed on the invoice PDF; all optional.
+     *
+     * @return array<string, array<int, ValidationRule|array<mixed>|string>>
+     */
+    protected function invoiceDetailRules(): array
+    {
+        return [
+            'company_name' => ['nullable', 'string', 'max:255'],
+            'company_address' => ['nullable', 'string', 'max:1000'],
+            'vat_number' => ['nullable', 'string', 'max:50'],
+            'coc_number' => ['nullable', 'string', 'max:50'],
+            'iban' => ['nullable', 'string', 'max:50'],
+        ];
+    }
+
+    /**
      * Get the validation rules used to validate user names.
      *
      * @return array<int, ValidationRule|array<mixed>|string>

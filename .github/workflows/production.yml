@@ -42,12 +42,15 @@ jobs:
 
       # Font Awesome Pro lives on npm.fontawesome.com; the token is a repo
       # secret and only ever lands in the runner's workspace copy of .npmrc.
+      # Puppeteer (invoice PDFs) would download a Chrome build on install;
+      # the suite mocks the renderer, so CI skips it.
       - name: Install Node dependencies
         run: |
           echo "//npm.fontawesome.com/:_authToken=${FONTAWESOME_NPM_AUTH_TOKEN}" >> .npmrc
           npm ci
         env:
           FONTAWESOME_NPM_AUTH_TOKEN: ${{ secrets.FONTAWESOME_NPM_TOKEN }}
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader

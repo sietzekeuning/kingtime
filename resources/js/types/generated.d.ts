@@ -60,6 +60,11 @@ id: number,
 name: string,
 email: string,
 harvest_id: number | null,
+company_name: string | null,
+company_address: string | null,
+vat_number: string | null,
+coc_number: string | null,
+iban: string | null,
 };
 export type BaseData = object;
 export type TimesheetRowData = {
@@ -181,7 +186,6 @@ account_id: string,
 access_token: string,
 };
 export type HarvestImportResultData = {
-users: HarvestImportCountData,
 clients: HarvestImportCountData,
 projects: HarvestImportCountData,
 time_entries: HarvestImportCountData,

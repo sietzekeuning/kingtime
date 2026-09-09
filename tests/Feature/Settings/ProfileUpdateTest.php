@@ -43,6 +43,32 @@ class ProfileUpdateTest extends TestCase
         $this->assertNull($user->email_verified_at);
     }
 
+    public function test_invoice_details_can_be_updated()
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->patch(route('profile.update'), [
+                'name' => $user->name,
+                'email' => $user->email,
+                'company_name' => 'King Websites',
+                'company_address' => "Hoofdstraat 1\n9000 AA Groningen",
+                'vat_number' => 'NL123456789B01',
+                'coc_number' => '12345678',
+                'iban' => 'NL00BANK0123456789',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('profile.edit'));
+
+        $user->refresh();
+
+        $this->assertSame('King Websites', $user->company_name);
+        $this->assertSame("Hoofdstraat 1\n9000 AA Groningen", $user->company_address);
+        $this->assertSame('NL123456789B01', $user->vat_number);
+        $this->assertSame('12345678', $user->coc_number);
+        $this->assertSame('NL00BANK0123456789', $user->iban);
+    }
+
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
     {
         $user = User::factory()->create();

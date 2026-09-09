@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ExternalLink, RefreshCw, Send, Trash2 } from '@lucide/vue';
+import { ExternalLink, FileDown, RefreshCw, Send, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import InvoiceEntryList from '@/components/invoices/InvoiceEntryList.vue';
 import InvoiceLinesTable from '@/components/invoices/InvoiceLinesTable.vue';
@@ -110,6 +110,16 @@ function destroy() {
                         :class="{ 'animate-spin': busy }"
                     />
                     Refresh status
+                </Button>
+                <Button variant="outline" as-child>
+                    <a
+                        :href="invoices.pdf(invoice.id!).url"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        <FileDown class="size-4" />
+                        Download PDF
+                    </a>
                 </Button>
                 <Button v-if="invoice.moneybird_url" variant="outline" as-child>
                     <a
