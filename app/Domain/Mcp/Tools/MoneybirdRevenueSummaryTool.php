@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Mcp\Tools;
 
+use App\Domain\Moneybird\Services\MoneybirdClient;
 use App\Domain\User\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -47,7 +48,7 @@ class MoneybirdRevenueSummaryTool extends MoneybirdTool
         $request->validate(['period' => ['nullable', 'string', 'regex:'.self::PERIOD_PATTERN]]);
 
         $period = self::optionalString($request, 'period') ?? 'this_year';
-        [$invoices, $capped] = $this->fetchAll($period);
+        [$invoices, $capped] = $this->fetchAll($this->moneybird($user), $period);
 
         $months = [];
         $contacts = [];
@@ -113,12 +114,12 @@ class MoneybirdRevenueSummaryTool extends MoneybirdTool
      *
      * @return array{0: array<int, array<string, mixed>>, 1: bool}
      */
-    private function fetchAll(string $period): array
+    private function fetchAll(MoneybirdClient $moneybird, string $period): array
     {
         $all = [];
 
         for ($page = 1; $page <= self::MAX_PAGES; $page++) {
-            $invoices = $this->moneybird->salesInvoices(['period' => $period, 'state' => 'all'], $page, self::PER_PAGE);
+            $invoices = $moneybird->salesInvoices(['period' => $period, 'state' => 'all'], $page, self::PER_PAGE);
             $all = [...$all, ...$invoices];
 
             if (count($invoices) < self::PER_PAGE) {

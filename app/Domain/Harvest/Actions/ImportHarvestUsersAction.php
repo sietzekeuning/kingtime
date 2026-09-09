@@ -18,11 +18,9 @@ use Illuminate\Support\Str;
  */
 class ImportHarvestUsersAction
 {
-    public function __construct(private readonly HarvestClient $client) {}
-
-    public function handle(HarvestImportResultData $result, ?CarbonInterface $updatedSince = null, ?callable $tick = null): void
+    public function handle(HarvestClient $client, HarvestImportResultData $result, ?CarbonInterface $updatedSince = null, ?callable $tick = null): void
     {
-        foreach ($this->client->users($updatedSince) as $record) {
+        foreach ($client->users($updatedSince) as $record) {
             $harvestId = (int) $record['id'];
             $email = mb_strtolower(trim((string) ($record['email'] ?? '')));
 

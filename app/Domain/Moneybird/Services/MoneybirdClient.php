@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Moneybird\Services;
 
 use App\Domain\Moneybird\Exceptions\MoneybirdException;
+use App\Domain\Moneybird\Models\MoneybirdConnection;
+use App\Domain\User\Models\User;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -18,9 +20,30 @@ use Illuminate\Support\Facades\Http;
  */
 class MoneybirdClient
 {
-    public function isConfigured(): bool
+    public function __construct(private readonly MoneybirdConnection $connection) {}
+
+    /**
+     * The client for a user's own Moneybird connection, or null when the
+     * user has not connected Moneybird yet.
+     */
+    public static function forUser(User $user): ?self
     {
-        return $this->accessToken() !== '' && $this->administrationId() !== '';
+        $connection = $user->moneybirdConnection()->first();
+
+        return $connection === null ? null : new self($connection);
+    }
+
+    /**
+     * @throws MoneybirdException When the user has not connected Moneybird.
+     */
+    public static function forUserOrFail(User $user): self
+    {
+        return self::forUser($user) ?? throw MoneybirdException::notConfigured();
+    }
+
+    public function connection(): MoneybirdConnection
+    {
+        return $this->connection;
     }
 
     /**
@@ -210,10 +233,6 @@ class MoneybirdClient
      */
     public function administration(): ?array
     {
-        if (! $this->isConfigured()) {
-            throw MoneybirdException::notConfigured();
-        }
-
         $response = $this->http()->get(sprintf('%s/administrations.json', rtrim($this->baseUrl(), '/')));
 
         if ($response->failed()) {
@@ -300,10 +319,6 @@ class MoneybirdClient
      */
     protected function request(string $method, string $path, ?array $body = null, array $query = []): array
     {
-        if (! $this->isConfigured()) {
-            throw MoneybirdException::notConfigured();
-        }
-
         $url = sprintf('%s/%s/%s.json', rtrim($this->baseUrl(), '/'), $this->administrationId(), $path);
 
         $response = match ($method) {
@@ -374,11 +389,11 @@ class MoneybirdClient
 
     protected function administrationId(): string
     {
-        return (string) config('services.moneybird.administration_id', '');
+        return $this->connection->administration_id;
     }
 
     protected function accessToken(): string
     {
-        return (string) config('services.moneybird.access_token', '');
+        return $this->connection->access_token;
     }
 }

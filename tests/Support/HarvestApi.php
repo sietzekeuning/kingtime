@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use App\Domain\Harvest\Models\HarvestConnection;
+use App\Domain\User\Models\User;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -14,21 +16,17 @@ final class HarvestApi
 {
     public const BASE = 'api.harvestapp.com/api/v2';
 
-    public static function configure(): void
+    /**
+     * Connects Harvest for the given user (or a fresh one) with the account
+     * and token the fixtures and header assertions expect.
+     */
+    public static function connect(?User $user = null): HarvestConnection
     {
-        config([
-            'services.harvest.account_id' => '12345',
-            'services.harvest.access_token' => 'test-token',
-            'services.harvest.base_url' => 'https://api.harvestapp.com/api/v2',
-        ]);
-    }
+        config(['services.harvest.base_url' => 'https://api.harvestapp.com/api/v2']);
 
-    public static function unconfigure(): void
-    {
-        config([
-            'services.harvest.account_id' => null,
-            'services.harvest.access_token' => null,
-        ]);
+        return HarvestConnection::factory()
+            ->for($user ?? User::factory()->create())
+            ->create(['account_id' => '12345', 'access_token' => 'test-token']);
     }
 
     /**

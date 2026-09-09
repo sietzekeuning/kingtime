@@ -42,7 +42,7 @@ class MoneybirdListReceiptsTool extends MoneybirdTool
         $perPage = $this->perPage($request);
         $filters = $this->listFilters($request);
 
-        $receipts = $this->moneybird->receipts($filters, $page, $perPage);
+        $receipts = $this->moneybird($user)->receipts($filters, $page, $perPage);
 
         return Response::structured([
             'filters' => array_filter($filters, fn (?string $value) => $value !== null),

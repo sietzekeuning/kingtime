@@ -9,6 +9,7 @@ use App\Domain\Mcp\Servers\KingtimeServer;
 use App\Domain\Mcp\Tools\GetUnbilledSummaryTool;
 use App\Domain\Mcp\Tools\PrepareInvoiceTool;
 use App\Domain\Mcp\Tools\PreviewInvoiceTool;
+use App\Domain\Moneybird\Models\MoneybirdConnection;
 use App\Domain\Project\Models\Project;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
@@ -38,14 +39,7 @@ function mcpMoneybirdFixture(string $name, int $status = 200): PromiseInterface
 
 function mcpConfigureMoneybird(): void
 {
-    config()->set('services.moneybird', [
-        'access_token' => 'secret-token',
-        'administration_id' => '123456789',
-        'base_url' => 'https://moneybird.com/api/v2',
-        'tax_rate_id' => null,
-        'ledger_account_id' => null,
-        'workflow_id' => null,
-    ]);
+    MoneybirdConnection::factory()->for(test()->user)->create(['access_token' => 'secret-token', 'administration_id' => '123456789']);
 }
 
 beforeEach(function (): void {
@@ -235,15 +229,14 @@ it('keeps the local draft when the Moneybird push fails', function (): void {
     expect(Invoice::query()->count())->toBe(1);
 });
 
-it('reports a missing Moneybird configuration instead of failing', function (): void {
-    config()->set('services.moneybird.access_token', null);
+it('reports a missing Moneybird connection instead of failing', function (): void {
     Http::fake();
 
     mcpInvoiceTool(PrepareInvoiceTool::class, ['client_id' => $this->client->id, 'push_to_moneybird' => true])
         ->assertOk()
         ->assertStructuredContent(fn (AssertableJson $json) => $json
             ->where('pushed_to_moneybird', false)
-            ->where('moneybird_error', fn (string $error) => str_contains($error, 'not configured'))
+            ->where('moneybird_error', fn (string $error) => str_contains($error, 'not connected'))
             ->etc());
 
     Http::assertNothingSent();

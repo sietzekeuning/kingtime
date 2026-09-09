@@ -35,7 +35,7 @@ class MoneybirdGetSalesInvoiceTool extends MoneybirdTool
     {
         $request->validate(['id' => ['required', 'string', 'regex:/^[0-9]+$/']]);
 
-        $invoice = $this->moneybird->getSalesInvoice((string) $request->get('id'));
+        $invoice = $this->moneybird($user)->getSalesInvoice((string) $request->get('id'));
 
         /** @var array<string, mixed>|null $contact */
         $contact = is_array($invoice['contact'] ?? null) ? $invoice['contact'] : null;

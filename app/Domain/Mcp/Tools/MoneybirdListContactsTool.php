@@ -41,7 +41,7 @@ class MoneybirdListContactsTool extends MoneybirdTool
         ]);
 
         $page = $this->page($request);
-        $contacts = $this->moneybird->contacts(self::optionalString($request, 'query'), $page);
+        $contacts = $this->moneybird($user)->contacts(self::optionalString($request, 'query'), $page);
 
         $contactIds = array_values(array_filter(array_map(fn (array $contact): ?string => self::id($contact['id'] ?? null), $contacts)));
         $linkedClients = Client::query()

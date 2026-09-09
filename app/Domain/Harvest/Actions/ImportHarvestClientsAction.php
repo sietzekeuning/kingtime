@@ -11,11 +11,9 @@ use Carbon\CarbonInterface;
 
 class ImportHarvestClientsAction
 {
-    public function __construct(private readonly HarvestClient $client) {}
-
-    public function handle(HarvestImportResultData $result, ?CarbonInterface $updatedSince = null, ?callable $tick = null): void
+    public function handle(HarvestClient $client, HarvestImportResultData $result, ?CarbonInterface $updatedSince = null, ?callable $tick = null): void
     {
-        foreach ($this->client->clients($updatedSince) as $record) {
+        foreach ($client->clients($updatedSince) as $record) {
             $harvestId = (int) $record['id'];
             $attributes = [
                 'name' => (string) $record['name'],

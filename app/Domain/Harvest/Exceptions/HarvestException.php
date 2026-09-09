@@ -11,7 +11,7 @@ class HarvestException extends RuntimeException
 {
     public static function notConfigured(): self
     {
-        return new self('Harvest is not configured. Set HARVEST_ACCOUNT_ID and HARVEST_ACCESS_TOKEN in .env.');
+        return new self('Harvest is not connected. Connect your Harvest account under Settings, Integrations.');
     }
 
     public static function alreadyRunning(): self
@@ -26,8 +26,8 @@ class HarvestException extends RuntimeException
         $detail = is_string($detail) && $detail !== '' ? ': '.mb_substr($detail, 0, 300) : '';
 
         $hint = match (true) {
-            $status === 401 => ' Check HARVEST_ACCESS_TOKEN.',
-            $status === 403 => ' Check HARVEST_ACCOUNT_ID and the token permissions.',
+            $status === 401 => ' The Harvest access token is invalid or revoked; reconnect Harvest under Settings, Integrations.',
+            $status === 403 => ' Check the Harvest account id and the token permissions.',
             $status === 429 => ' Harvest rate limit exceeded, try again in a moment.',
             default => '',
         };

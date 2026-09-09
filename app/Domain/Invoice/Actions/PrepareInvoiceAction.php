@@ -11,6 +11,7 @@ use App\Domain\Invoice\Exceptions\NothingToInvoiceException;
 use App\Domain\Invoice\Models\Invoice;
 use App\Domain\Time\Data\TimeEntryData;
 use App\Domain\Time\Models\TimeEntry;
+use App\Domain\User\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
@@ -24,14 +25,15 @@ class PrepareInvoiceAction
     public function __construct(private BuildInvoiceSpecificationAction $buildSpecification) {}
 
     /**
+     * @param  User  $user  Who prepares the invoice; it is pushed with their Moneybird connection.
      * @param  array<int, int|string>|null  $timeEntryIds  Restrict to these entries; null takes every unbilled entry in the period.
      * @param  string|null  $notes  Free text kept on the local invoice (not sent to Moneybird).
      *
      * @throws NothingToInvoiceException
      */
-    public function handle(Client $client, CarbonInterface $from, CarbonInterface $to, ?array $timeEntryIds = null, ?string $notes = null): Invoice
+    public function handle(User $user, Client $client, CarbonInterface $from, CarbonInterface $to, ?array $timeEntryIds = null, ?string $notes = null): Invoice
     {
-        return DB::transaction(function () use ($client, $from, $to, $timeEntryIds, $notes): Invoice {
+        return DB::transaction(function () use ($user, $client, $from, $to, $timeEntryIds, $notes): Invoice {
             $specification = $this->buildSpecification->handle($client, $from, $to, $timeEntryIds);
 
             if ($specification->isEmpty()) {
@@ -39,6 +41,7 @@ class PrepareInvoiceAction
             }
 
             $invoice = Invoice::query()->create([
+                'user_id' => $user->id,
                 'client_id' => $client->id,
                 'status' => InvoiceStatus::Draft,
                 'period_starts_on' => $from->toDateString(),

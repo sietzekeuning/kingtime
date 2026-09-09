@@ -42,7 +42,7 @@ class MoneybirdListPurchaseInvoicesTool extends MoneybirdTool
         $perPage = $this->perPage($request);
         $filters = $this->listFilters($request);
 
-        $documents = $this->moneybird->purchaseInvoices($filters, $page, $perPage);
+        $documents = $this->moneybird($user)->purchaseInvoices($filters, $page, $perPage);
 
         return Response::structured([
             'filters' => array_filter($filters, fn (?string $value) => $value !== null),

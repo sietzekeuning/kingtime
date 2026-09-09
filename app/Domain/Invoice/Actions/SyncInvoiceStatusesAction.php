@@ -7,7 +7,6 @@ namespace App\Domain\Invoice\Actions;
 use App\Domain\Invoice\Enums\InvoiceStatus;
 use App\Domain\Invoice\Models\Invoice;
 use App\Domain\Moneybird\Exceptions\MoneybirdException;
-use App\Domain\Moneybird\Services\MoneybirdClient;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -16,24 +15,19 @@ use Illuminate\Support\Facades\Log;
  */
 class SyncInvoiceStatusesAction
 {
-    public function __construct(
-        private MoneybirdClient $moneybird,
-        private SyncInvoiceStatusAction $syncStatus,
-    ) {}
+    public function __construct(private SyncInvoiceStatusAction $syncStatus) {}
 
     /**
      * @return int The number of invoices that were refreshed.
      */
     public function handle(): int
     {
-        if (! $this->moneybird->isConfigured()) {
-            return 0;
-        }
-
         $synced = 0;
 
         $invoices = Invoice::query()
+            ->with('user.moneybirdConnection')
             ->whereNotNull('moneybird_invoice_id')
+            ->whereHas('user.moneybirdConnection')
             ->whereNotIn('status', [InvoiceStatus::Paid, InvoiceStatus::Uncollectible])
             ->orderBy('id')
             ->get();

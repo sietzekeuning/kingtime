@@ -89,22 +89,28 @@ class HarvestImportProgressData extends BaseData
         );
     }
 
-    public static function load(): ?self
+    /** Every user follows their own import, so the progress is cached per user. */
+    public static function cacheKey(int $userId): string
     {
-        $cached = Cache::get(self::CACHE_KEY);
+        return self::CACHE_KEY.':'.$userId;
+    }
+
+    public static function load(int $userId): ?self
+    {
+        $cached = Cache::get(self::cacheKey($userId));
 
         return is_array($cached) ? self::from($cached) : null;
     }
 
-    public function store(): self
+    public function store(int $userId): self
     {
-        Cache::put(self::CACHE_KEY, $this->toArray(), self::CACHE_TTL_SECONDS);
+        Cache::put(self::cacheKey($userId), $this->toArray(), self::CACHE_TTL_SECONDS);
 
         return $this;
     }
 
-    public static function clear(): void
+    public static function clear(int $userId): void
     {
-        Cache::forget(self::CACHE_KEY);
+        Cache::forget(self::cacheKey($userId));
     }
 }

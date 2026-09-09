@@ -14,10 +14,8 @@ use App\Domain\Moneybird\Services\MoneybirdClient;
  */
 class SyncInvoiceStatusAction
 {
-    public function __construct(private MoneybirdClient $moneybird) {}
-
     /**
-     * @throws MoneybirdException
+     * @throws MoneybirdException When the invoice has no owner with a Moneybird connection.
      */
     public function handle(Invoice $invoice): Invoice
     {
@@ -25,7 +23,14 @@ class SyncInvoiceStatusAction
             return $invoice;
         }
 
-        $payload = $this->moneybird->getSalesInvoice($invoice->moneybird_invoice_id);
+        $invoice->loadMissing('user');
+        $moneybird = $invoice->user === null ? null : MoneybirdClient::forUser($invoice->user);
+
+        if ($moneybird === null) {
+            throw MoneybirdException::notConfigured();
+        }
+
+        $payload = $moneybird->getSalesInvoice($invoice->moneybird_invoice_id);
 
         $invoice->fillFromMoneybird($payload)->save();
 

@@ -3,12 +3,16 @@
 namespace App\Domain\User\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Domain\Harvest\Models\HarvestConnection;
+use App\Domain\Invoice\Models\Invoice;
+use App\Domain\Moneybird\Models\MoneybirdConnection;
 use App\Domain\Time\Models\TimeEntry;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -30,6 +34,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property int|null $harvest_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read HarvestConnection|null $harvestConnection
+ * @property-read MoneybirdConnection|null $moneybirdConnection
  */
 #[Fillable(['name', 'email', 'password', 'harvest_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -56,5 +62,23 @@ class User extends Authenticatable implements PasskeyUser
     public function timeEntries(): HasMany
     {
         return $this->hasMany(TimeEntry::class);
+    }
+
+    /** @return HasMany<Invoice, $this> */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    /** @return HasOne<HarvestConnection, $this> */
+    public function harvestConnection(): HasOne
+    {
+        return $this->hasOne(HarvestConnection::class);
+    }
+
+    /** @return HasOne<MoneybirdConnection, $this> */
+    public function moneybirdConnection(): HasOne
+    {
+        return $this->hasOne(MoneybirdConnection::class);
     }
 }

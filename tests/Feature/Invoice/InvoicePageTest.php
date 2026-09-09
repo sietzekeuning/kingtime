@@ -14,8 +14,6 @@ use Illuminate\Support\Facades\Date;
 beforeEach(function (): void {
     $this->user = User::factory()->create();
     $this->actingAs($this->user);
-    config()->set('services.moneybird.access_token', null);
-    config()->set('services.moneybird.administration_id', null);
 });
 
 it('lists invoices with the table payload', function (): void {
@@ -38,7 +36,7 @@ it('shows an invoice with its lines, entries and specification', function (): vo
     $client = Client::factory()->create(['name' => 'Acme Corporation']);
     $project = Project::factory()->for($client)->create(['name' => 'Website redesign']);
     TimeEntry::factory()->for($this->user)->for($project)->create(['spent_on' => '2026-08-03', 'hours' => '2.00', 'hourly_rate' => '95.00']);
-    $invoice = app(PrepareInvoiceAction::class)->handle($client, Date::parse('2026-08-01'), Date::parse('2026-08-31'));
+    $invoice = app(PrepareInvoiceAction::class)->handle($this->user, $client, Date::parse('2026-08-01'), Date::parse('2026-08-31'));
 
     $this->get(route('invoices.show', $invoice))
         ->assertOk()

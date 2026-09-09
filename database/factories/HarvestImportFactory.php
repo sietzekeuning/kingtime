@@ -6,6 +6,7 @@ namespace Database\Factories;
 
 use App\Domain\Harvest\Enums\HarvestImportStatus;
 use App\Domain\Harvest\Models\HarvestImport;
+use App\Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<HarvestImport> */
@@ -18,6 +19,7 @@ class HarvestImportFactory extends Factory
         $startedAt = fake()->dateTimeBetween('-30 days', '-1 hour');
 
         return [
+            'user_id' => User::factory(),
             'status' => HarvestImportStatus::Finished,
             'started_at' => $startedAt,
             'finished_at' => (clone $startedAt)->modify('+2 minutes'),

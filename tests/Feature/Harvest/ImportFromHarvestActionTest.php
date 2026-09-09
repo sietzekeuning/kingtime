@@ -16,14 +16,15 @@ use Illuminate\Support\Sleep;
 use Tests\Support\HarvestApi;
 
 beforeEach(function (): void {
-    HarvestApi::configure();
+    $this->owner = User::factory()->create(['email' => 'sietze@example.test', 'name' => 'Local Sietze']);
+    $this->connection = HarvestApi::connect($this->owner);
 });
 
 it('imports everything from harvest with the right mappings', function (): void {
     HarvestApi::fake();
-    $existing = User::factory()->create(['email' => 'sietze@example.test', 'name' => 'Local Sietze']);
+    $existing = $this->owner;
 
-    $result = app(ImportFromHarvestAction::class)->handle();
+    $result = app(ImportFromHarvestAction::class)->handle($this->connection);
 
     expect($result->users->created)->toBe(1)
         ->and($result->users->updated)->toBe(1)
@@ -31,9 +32,11 @@ it('imports everything from harvest with the right mappings', function (): void 
         ->and($result->projects->created)->toBe(3)
         ->and($result->time_entries->created)->toBe(3);
 
-    // Users: the existing account is adopted by email, the unknown one is created.
+    // Users: the token owner becomes the Harvest user behind the token, the unknown one is created.
     expect($existing->fresh()->harvest_id)->toBe(1001)
-        ->and($existing->fresh()->name)->toBe('Local Sietze');
+        ->and($existing->fresh()->name)->toBe('Local Sietze')
+        ->and($this->connection->fresh()->harvest_user_id)->toBe(1001)
+        ->and($this->connection->fresh()->account_email)->toBe('sietze@example.test');
     $alex = User::query()->where('harvest_id', 1002)->firstOrFail();
     expect($alex->email)->toBe('alex@example.test')
         ->and($alex->name)->toBe('Alex Doe')
@@ -100,7 +103,7 @@ it('imports everything from harvest with the right mappings', function (): void 
 it('follows next_page pagination and sends the harvest headers', function (): void {
     HarvestApi::fake();
 
-    app(ImportFromHarvestAction::class)->handle();
+    app(ImportFromHarvestAction::class)->handle($this->connection);
 
     Http::assertSent(fn (Request $request) => str_contains($request->url(), '/clients')
         && HarvestApi::page($request) === 1
@@ -115,14 +118,14 @@ it('updates instead of duplicating on a second run and keeps local-only fields',
     HarvestApi::fake();
     $importer = app(ImportFromHarvestAction::class);
 
-    $importer->handle();
+    $importer->handle($this->connection);
 
     $acme = Client::query()->where('harvest_id', 2001)->firstOrFail();
     $acme->update(['email' => 'billing@acme.test', 'moneybird_contact_id' => 'mb-1', 'notes' => 'Local note']);
     $website = Project::query()->where('harvest_id', 3001)->firstOrFail();
     $website->update(['color' => '#ff6600', 'name' => 'Renamed locally']);
 
-    $result = $importer->handle();
+    $result = $importer->handle($this->connection);
 
     expect($result->clients)->toMatchObject(['created' => 0, 'updated' => 2])
         ->and($result->projects)->toMatchObject(['created' => 0, 'updated' => 3])
@@ -147,16 +150,16 @@ it('updates instead of duplicating on a second run and keeps local-only fields',
 it('keeps the billed flag of entries that are on a local invoice', function (): void {
     HarvestApi::fake();
     $importer = app(ImportFromHarvestAction::class);
-    $importer->handle();
+    $importer->handle($this->connection);
 
     $entry = TimeEntry::query()->where('harvest_id', 6001)->firstOrFail();
     $entry->update(['is_billed' => true, 'invoice_id' => null]);
-    $importer->handle();
+    $importer->handle($this->connection);
     expect($entry->fresh()->is_billed)->toBeFalse();
 
     $invoice = Invoice::factory()->create();
     $entry->refresh()->update(['is_billed' => true, 'invoice_id' => $invoice->id]);
-    $importer->handle();
+    $importer->handle($this->connection);
     expect($entry->fresh()->is_billed)->toBeTrue();
 });
 
@@ -164,7 +167,7 @@ it('passes updated_since to every list endpoint on an incremental import', funct
     HarvestApi::fake();
     $since = now()->subDay();
 
-    app(ImportFromHarvestAction::class)->handle($since);
+    app(ImportFromHarvestAction::class)->handle($this->connection, $since);
 
     foreach (['/users', '/clients', '/projects', '/time_entries'] as $path) {
         Http::assertSent(fn (Request $request) => str_contains($request->url(), $path.'?')
@@ -182,7 +185,7 @@ it('retries after a 429 and honours retry-after', function (): void {
             ->push(HarvestApi::fixture('me')),
     ]);
 
-    $me = app(HarvestClient::class)->me();
+    $me = (new HarvestClient($this->connection))->me();
 
     expect($me['email'])->toBe('sietze@example.test');
     Sleep::assertSleptTimes(1);
@@ -194,17 +197,29 @@ it('throws a helpful exception on an error response', function (): void {
         HarvestApi::BASE.'/users/me*' => Http::response(['message' => 'Invalid token'], 401),
     ]);
 
-    expect(fn () => app(HarvestClient::class)->me())
-        ->toThrow(HarvestException::class, 'GET /users/me failed with status 401: Invalid token. Check HARVEST_ACCESS_TOKEN.');
+    expect(fn () => (new HarvestClient($this->connection))->me())
+        ->toThrow(HarvestException::class, 'GET /users/me failed with status 401: Invalid token. The Harvest access token is invalid or revoked');
 });
 
-it('refuses to run when harvest is not configured', function (): void {
-    HarvestApi::unconfigure();
+it('has no client for a user without a harvest connection', function (): void {
     HarvestApi::fake();
+    $other = User::factory()->create();
 
-    expect(app(HarvestClient::class)->isConfigured())->toBeFalse()
-        ->and(fn () => app(ImportFromHarvestAction::class)->handle())
-        ->toThrow(HarvestException::class, 'HARVEST_ACCOUNT_ID');
+    expect(HarvestClient::forUser($other))->toBeNull()
+        ->and(HarvestClient::forUser($this->owner))->toBeInstanceOf(HarvestClient::class)
+        ->and(fn () => HarvestClient::forUserOrFail($other))
+        ->toThrow(HarvestException::class, 'not connected');
 
     Http::assertNothingSent();
+});
+
+it('does not steal a harvest id that another local user already carries', function (): void {
+    HarvestApi::fake();
+    $alreadyLinked = User::factory()->create(['email' => 'other@example.test', 'harvest_id' => 1001]);
+
+    app(ImportFromHarvestAction::class)->handle($this->connection);
+
+    expect($this->owner->fresh()->harvest_id)->toBeNull()
+        ->and($alreadyLinked->fresh()->harvest_id)->toBe(1001)
+        ->and($this->connection->fresh()->harvest_user_id)->toBe(1001);
 });

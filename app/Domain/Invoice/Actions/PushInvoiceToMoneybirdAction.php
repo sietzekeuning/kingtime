@@ -8,6 +8,7 @@ use App\Domain\Client\Models\Client;
 use App\Domain\Invoice\Models\Invoice;
 use App\Domain\Invoice\Models\InvoiceLine;
 use App\Domain\Moneybird\Exceptions\MoneybirdException;
+use App\Domain\Moneybird\Models\MoneybirdConnection;
 use App\Domain\Moneybird\Services\MoneybirdClient;
 
 /**
@@ -17,10 +18,8 @@ use App\Domain\Moneybird\Services\MoneybirdClient;
  */
 class PushInvoiceToMoneybirdAction
 {
-    public function __construct(private MoneybirdClient $moneybird) {}
-
     /**
-     * @throws MoneybirdException
+     * @throws MoneybirdException When the invoice has no owner with a Moneybird connection.
      */
     public function handle(Invoice $invoice): Invoice
     {
@@ -28,33 +27,35 @@ class PushInvoiceToMoneybirdAction
             return $invoice;
         }
 
-        if (! $this->moneybird->isConfigured()) {
+        $invoice->loadMissing(['client', 'lines', 'user']);
+
+        $moneybird = $invoice->user === null ? null : MoneybirdClient::forUser($invoice->user);
+
+        if ($moneybird === null) {
             throw MoneybirdException::notConfigured();
         }
 
-        $invoice->loadMissing(['client', 'lines']);
+        $contactId = $this->ensureContact($moneybird, $invoice->client);
 
-        $contactId = $this->ensureContact($invoice->client);
-
-        $payload = $this->moneybird->createSalesInvoice($this->salesInvoiceAttributes($invoice, $contactId));
+        $payload = $moneybird->createSalesInvoice($this->salesInvoiceAttributes($moneybird, $invoice, $contactId));
 
         $invoice->fillFromMoneybird($payload)->save();
 
         if ($invoice->specification !== null && $invoice->moneybird_invoice_id !== null) {
-            $this->moneybird->createSalesInvoiceNote($invoice->moneybird_invoice_id, $invoice->specification);
+            $moneybird->createSalesInvoiceNote($invoice->moneybird_invoice_id, $invoice->specification);
         }
 
         return $invoice;
     }
 
-    private function ensureContact(Client $client): string
+    private function ensureContact(MoneybirdClient $moneybird, Client $client): string
     {
         if ($client->moneybird_contact_id !== null) {
             return $client->moneybird_contact_id;
         }
 
-        $contact = $this->moneybird->findContactByName($client->name)
-            ?? $this->moneybird->createContact($this->contactAttributes($client));
+        $contact = $moneybird->findContactByName($client->name)
+            ?? $moneybird->createContact($this->contactAttributes($client));
 
         $client->moneybird_contact_id = (string) $contact['id'];
         $client->save();
@@ -93,21 +94,21 @@ class PushInvoiceToMoneybirdAction
     /**
      * @return array<string, mixed>
      */
-    private function salesInvoiceAttributes(Invoice $invoice, string $contactId): array
+    private function salesInvoiceAttributes(MoneybirdClient $moneybird, Invoice $invoice, string $contactId): array
     {
+        $connection = $moneybird->connection();
+
         $attributes = [
             'contact_id' => $contactId,
             'invoice_date' => now()->toDateString(),
             'reference' => $invoice->periodLabel(),
             'currency' => $invoice->currency,
             'prices_are_incl_tax' => false,
-            'details_attributes' => $invoice->lines->map(fn (InvoiceLine $line) => $this->detailAttributes($line))->values()->all(),
+            'details_attributes' => $invoice->lines->map(fn (InvoiceLine $line) => $this->detailAttributes($connection, $line))->values()->all(),
         ];
 
-        $workflowId = config('services.moneybird.workflow_id');
-
-        if (is_string($workflowId) && $workflowId !== '') {
-            $attributes['workflow_id'] = $workflowId;
+        if ($connection->workflow_id !== null && $connection->workflow_id !== '') {
+            $attributes['workflow_id'] = $connection->workflow_id;
         }
 
         return $attributes;
@@ -116,7 +117,7 @@ class PushInvoiceToMoneybirdAction
     /**
      * @return array<string, mixed>
      */
-    private function detailAttributes(InvoiceLine $line): array
+    private function detailAttributes(MoneybirdConnection $connection, InvoiceLine $line): array
     {
         $detail = [
             'description' => $line->description,
@@ -125,7 +126,7 @@ class PushInvoiceToMoneybirdAction
         ];
 
         foreach (['tax_rate_id', 'ledger_account_id'] as $key) {
-            $value = config("services.moneybird.{$key}");
+            $value = $connection->{$key};
 
             if (is_string($value) && $value !== '') {
                 $detail[$key] = $value;

@@ -45,7 +45,7 @@ class MoneybirdGetTool extends MoneybirdTool
         $path = self::cleanPath((string) $request->get('path'));
         $query = self::cleanQuery($request->get('query'));
 
-        $result = $this->moneybird->get($path, $query);
+        $result = $this->moneybird($user)->get($path, $query);
 
         return Response::structured([
             'path' => $path,

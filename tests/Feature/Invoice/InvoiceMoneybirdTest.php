@@ -10,6 +10,7 @@ use App\Domain\Invoice\Enums\InvoiceStatus;
 use App\Domain\Invoice\Models\Invoice;
 use App\Domain\Invoice\Models\InvoiceLine;
 use App\Domain\Moneybird\Exceptions\MoneybirdException;
+use App\Domain\Moneybird\Models\MoneybirdConnection;
 use App\Domain\Moneybird\Services\MoneybirdClient;
 use App\Domain\User\Models\User;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -26,6 +27,7 @@ function invoiceMoneybirdFixture(string $name, int $status = 200): PromiseInterf
 function invoiceMoneybirdInvoice(array $attributes = []): Invoice
 {
     $invoice = Invoice::factory()->create([
+        'user_id' => auth()->id(),
         'client_id' => Client::factory()->create(['name' => 'Acme Corporation', 'email' => 'billing@acme.test', 'address' => "Main Street 1\n1234 AB Amsterdam", 'moneybird_contact_id' => null]),
         'period_starts_on' => '2026-08-01',
         'period_ends_on' => '2026-08-31',
@@ -48,11 +50,11 @@ function invoiceMoneybirdInvoice(array $attributes = []): Invoice
 }
 
 beforeEach(function (): void {
-    $this->actingAs(User::factory()->create());
-    config()->set('services.moneybird', [
+    $this->user = User::factory()->create();
+    $this->actingAs($this->user);
+    $this->connection = MoneybirdConnection::factory()->for($this->user)->create([
         'access_token' => 'secret-token',
         'administration_id' => '123456789',
-        'base_url' => 'https://moneybird.com/api/v2',
         'tax_rate_id' => '433000000000000001',
         'ledger_account_id' => '434000000000000001',
         'workflow_id' => '435000000000000001',
@@ -149,12 +151,11 @@ it('pushes through the controller and reports Moneybird errors as a toast', func
     expect($invoice->fresh()?->moneybird_invoice_id)->toBeNull();
 });
 
-it('refuses to push when Moneybird is not configured', function (): void {
-    config()->set('services.moneybird.access_token', null);
+it('refuses to push when the invoice owner has not connected Moneybird', function (): void {
     Http::fake();
 
-    app(PushInvoiceToMoneybirdAction::class)->handle(invoiceMoneybirdInvoice());
-})->throws(MoneybirdException::class, 'not configured');
+    app(PushInvoiceToMoneybirdAction::class)->handle(invoiceMoneybirdInvoice(['user_id' => User::factory()->create()->id]));
+})->throws(MoneybirdException::class, 'not connected');
 
 it('syncs status, number and dates from Moneybird', function (string $fixture, InvoiceStatus $expected): void {
     Http::fake([INVOICE_MONEYBIRD_API.'/sales_invoices/422000000000000001.json' => invoiceMoneybirdFixture($fixture)]);
@@ -186,20 +187,22 @@ it('syncs through the controller', function (): void {
 
 it('refreshes every pushed invoice that is not settled yet', function (): void {
     Http::fake([INVOICE_MONEYBIRD_API.'/sales_invoices/*.json' => invoiceMoneybirdFixture('sales_invoice_open')]);
-    $open = Invoice::factory()->create(['moneybird_invoice_id' => '422000000000000001', 'status' => InvoiceStatus::Draft]);
-    Invoice::factory()->create(['moneybird_invoice_id' => '422000000000000009', 'status' => InvoiceStatus::Paid]);
-    Invoice::factory()->create(['moneybird_invoice_id' => null]);
+    $open = Invoice::factory()->for($this->user)->create(['moneybird_invoice_id' => '422000000000000001', 'status' => InvoiceStatus::Draft]);
+    Invoice::factory()->for($this->user)->create(['moneybird_invoice_id' => '422000000000000009', 'status' => InvoiceStatus::Paid]);
+    Invoice::factory()->for($this->user)->create(['moneybird_invoice_id' => null]);
+    $orphan = Invoice::factory()->create(['moneybird_invoice_id' => '422000000000000002', 'status' => InvoiceStatus::Open]); // owner without a connection
 
     $synced = app(SyncInvoiceStatusesAction::class)->handle();
 
     expect($synced)->toBe(1)
-        ->and($open->fresh()?->status)->toBe(InvoiceStatus::Open);
+        ->and($open->fresh()?->status)->toBe(InvoiceStatus::Open)
+        ->and($orphan->fresh()?->number)->toBeNull();
     Http::assertSentCount(1);
 });
 
 it('runs the sync as a scheduled artisan command', function (): void {
     Http::fake([INVOICE_MONEYBIRD_API.'/sales_invoices/*.json' => invoiceMoneybirdFixture('sales_invoice_open')]);
-    Invoice::factory()->create(['moneybird_invoice_id' => '422000000000000001']);
+    Invoice::factory()->for($this->user)->create(['moneybird_invoice_id' => '422000000000000001']);
 
     $this->artisan('invoices:sync-statuses')->expectsOutputToContain('Refreshed 1 invoice(s)')->assertSuccessful();
 });
@@ -210,10 +213,9 @@ it('exposes the lookup lists for the integrations page', function (): void {
         INVOICE_MONEYBIRD_API.'/ledger_accounts.json' => Http::response([['id' => '2', 'name' => 'Omzet']]),
         INVOICE_MONEYBIRD_API.'/workflows.json' => Http::response([['id' => '3', 'name' => 'Standaard']]),
     ]);
-    $client = app(MoneybirdClient::class);
+    $client = MoneybirdClient::forUserOrFail($this->user);
 
-    expect($client->isConfigured())->toBeTrue()
-        ->and($client->taxRates())->toBe([['id' => '1', 'name' => '21% BTW']])
+    expect($client->taxRates())->toBe([['id' => '1', 'name' => '21% BTW']])
         ->and($client->ledgerAccounts())->toBe([['id' => '2', 'name' => 'Omzet']])
         ->and($client->workflows())->toBe([['id' => '3', 'name' => 'Standaard']]);
 });

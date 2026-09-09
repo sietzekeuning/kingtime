@@ -62,6 +62,7 @@ class PrepareInvoiceTool extends KingtimeTool
         $timeEntryIds = $request->get('time_entry_ids');
 
         $invoice = $this->prepareInvoice->handle(
+            $user,
             $client,
             $from,
             $to,

@@ -15,14 +15,12 @@ use Illuminate\Support\Facades\Log;
 
 class ImportHarvestTimeEntriesAction
 {
-    public function __construct(private readonly HarvestClient $client) {}
-
-    public function handle(HarvestImportResultData $result, ?CarbonInterface $updatedSince = null, ?callable $tick = null): void
+    public function handle(HarvestClient $client, HarvestImportResultData $result, ?CarbonInterface $updatedSince = null, ?callable $tick = null): void
     {
         $userIds = User::query()->whereNotNull('harvest_id')->pluck('id', 'harvest_id');
         $projectIds = Project::withTrashed()->whereNotNull('harvest_id')->pluck('id', 'harvest_id');
 
-        foreach ($this->client->timeEntries($updatedSince) as $record) {
+        foreach ($client->timeEntries($updatedSince) as $record) {
             $harvestId = (int) $record['id'];
             $userId = $userIds->get((int) ($record['user']['id'] ?? 0));
             $projectId = $projectIds->get((int) ($record['project']['id'] ?? 0));

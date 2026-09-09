@@ -11,7 +11,7 @@ use App\Domain\Invoice\Actions\PushInvoiceToMoneybirdAction;
 use App\Domain\Invoice\Data\PrepareInvoiceData;
 use App\Domain\Invoice\Exceptions\NothingToInvoiceException;
 use App\Domain\Moneybird\Exceptions\MoneybirdException;
-use App\Domain\Moneybird\Services\MoneybirdClient;
+use App\Domain\User\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
@@ -25,8 +25,11 @@ use Inertia\Response;
  */
 class InvoicePrepareController
 {
-    public function create(Request $request, BuildInvoiceSpecificationAction $buildSpecification, MoneybirdClient $moneybird): Response
+    public function create(Request $request, BuildInvoiceSpecificationAction $buildSpecification): Response
     {
+        /** @var User $user */
+        $user = $request->user();
+
         $lastMonth = now()->subMonthNoOverflow();
 
         $filters = [
@@ -58,17 +61,20 @@ class InvoicePrepareController
             'filters' => $filters,
             'specification' => $specification,
             'available_entries' => $availableEntries,
-            'moneybird_configured' => $moneybird->isConfigured(),
+            'moneybird_configured' => $user->moneybirdConnection()->exists(),
         ]);
     }
 
     public function store(Request $request, PrepareInvoiceAction $prepareInvoice, PushInvoiceToMoneybirdAction $pushInvoice): RedirectResponse
     {
+        /** @var User $user */
+        $user = $request->user();
         $data = PrepareInvoiceData::validateAndCreate($request->all());
         $client = Client::query()->findOrFail($data->client_id);
 
         try {
             $invoice = $prepareInvoice->handle(
+                $user,
                 $client,
                 Date::parse($data->period_starts_on),
                 Date::parse($data->period_ends_on),

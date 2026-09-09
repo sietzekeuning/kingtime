@@ -8,6 +8,8 @@ export interface ConfirmDeleteOptions {
     description?: string;
     /** Pass the click event to stop propagation on DataTable row buttons. */
     event?: Event;
+    /** Button label; "Delete" unless the DELETE means something else, such as "Disconnect". */
+    confirmLabel?: string;
     onSuccess?: () => void;
 }
 
@@ -29,7 +31,7 @@ export function useConfirmDelete() {
         const confirmed = await confirm({
             title: options.title,
             description: options.description,
-            confirmLabel: 'Delete',
+            confirmLabel: options.confirmLabel ?? 'Delete',
             variant: 'destructive',
         });
 

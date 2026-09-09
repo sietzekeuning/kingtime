@@ -1,7 +1,7 @@
 <?php
 
-use App\Domain\Harvest\Commands\ImportFromHarvestCommand;
-use App\Domain\Harvest\Services\HarvestClient;
+use App\Domain\Harvest\Jobs\ImportFromHarvestJob;
+use App\Domain\Harvest\Models\HarvestConnection;
 use App\Domain\Invoice\Actions\SyncInvoiceStatusesAction;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -20,11 +20,10 @@ Artisan::command('invoices:sync-statuses', function (SyncInvoiceStatusesAction $
 
 Schedule::command('invoices:sync-statuses')->daily();
 
-// -- Harvest: incremental import every hour once credentials are set -------
-Schedule::command(ImportFromHarvestCommand::class)
-    ->hourly()
-    ->withoutOverlapping()
-    ->when(fn (): bool => app(HarvestClient::class)->isConfigured());
+// -- Harvest: incremental import every hour for every connected user -------
+Schedule::call(function (): void {
+    HarvestConnection::query()->each(fn (HarvestConnection $connection) => ImportFromHarvestJob::dispatch($connection));
+})->hourly()->name('harvest:import-all')->withoutOverlapping();
 
 // Spatie backup to S3. Clean first so a fresh archive is never pushed only to
 // be deleted minutes later, then dump the database plus storage/app. The

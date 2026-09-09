@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\Harvest\Actions;
 
 use App\Domain\Harvest\Data\HarvestImportResultData;
+use App\Domain\Harvest\Models\HarvestConnection;
+use App\Domain\Harvest\Services\HarvestClient;
+use App\Domain\User\Models\User;
 use Carbon\CarbonInterface;
 
 /**
@@ -30,9 +33,12 @@ class ImportFromHarvestAction
         private readonly ImportHarvestTimeEntriesAction $timeEntries,
     ) {}
 
-    public function handle(?CarbonInterface $updatedSince = null, ?callable $progress = null): HarvestImportResultData
+    public function handle(HarvestConnection $connection, ?CarbonInterface $updatedSince = null, ?callable $progress = null): HarvestImportResultData
     {
+        $client = new HarvestClient($connection);
         $result = new HarvestImportResultData;
+
+        $this->linkTokenOwner($client);
 
         $steps = [
             'users' => $this->users,
@@ -52,7 +58,7 @@ class ImportFromHarvestAction
 
             $report();
 
-            $action->handle($result, $updatedSince, function () use (&$processed, $report): void {
+            $action->handle($client, $result, $updatedSince, function () use (&$processed, $report): void {
                 if (++$processed % self::REPORT_EVERY === 0) {
                     $report();
                 }
@@ -64,5 +70,36 @@ class ImportFromHarvestAction
         }
 
         return $result;
+    }
+
+    /**
+     * The Harvest user behind the token is the Kingtime user who connected
+     * it, whatever email either side uses. Their hours land on their own
+     * account, unless another local user already carries that Harvest id.
+     */
+    private function linkTokenOwner(HarvestClient $client): void
+    {
+        $me = $client->me();
+        $harvestUserId = (int) ($me['id'] ?? 0);
+        $connection = $client->connection();
+        $owner = $connection->user;
+
+        $name = trim((string) ($me['first_name'] ?? '').' '.(string) ($me['last_name'] ?? ''));
+        $connection->forceFill([
+            'harvest_user_id' => $harvestUserId > 0 ? $harvestUserId : null,
+            'account_name' => $name !== '' ? $name : null,
+            'account_email' => isset($me['email']) ? (string) $me['email'] : null,
+        ])->save();
+
+        if ($harvestUserId <= 0 || $owner->harvest_id === $harvestUserId) {
+            return;
+        }
+
+        $taken = User::query()->where('harvest_id', $harvestUserId)->whereKeyNot($owner->id)->exists();
+
+        if (! $taken) {
+            $owner->harvest_id = $harvestUserId;
+            $owner->save();
+        }
     }
 }

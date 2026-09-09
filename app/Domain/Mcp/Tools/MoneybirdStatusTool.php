@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Mcp\Tools;
 
 use App\Domain\Moneybird\Exceptions\MoneybirdException;
+use App\Domain\Moneybird\Services\MoneybirdClient;
 use App\Domain\User\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -32,21 +33,23 @@ class MoneybirdStatusTool extends MoneybirdTool
 
     protected function execute(Request $request, User $user): Response|ResponseFactory
     {
-        if (! $this->moneybird->isConfigured()) {
+        $moneybird = MoneybirdClient::forUser($user);
+
+        if ($moneybird === null) {
             return Response::structured([
                 'configured' => false,
                 'message' => MoneybirdException::notConfigured()->getMessage(),
             ]);
         }
 
-        $administration = $this->moneybird->administration();
+        $administration = $moneybird->administration();
 
         if ($administration === null) {
             return Response::structured([
                 'configured' => true,
-                'administration_id' => config('services.moneybird.administration_id'),
+                'administration_id' => $moneybird->connection()->administration_id,
                 'reachable' => false,
-                'message' => 'The token works but MONEYBIRD_ADMINISTRATION_ID is not one of the administrations it can access.',
+                'message' => 'The token works but the administration id is not one of the administrations it can access. Reconnect Moneybird under Settings, Integrations.',
             ]);
         }
 

@@ -11,7 +11,7 @@ class MoneybirdException extends RuntimeException
 {
     public static function notConfigured(): self
     {
-        return new self('Moneybird is not configured. Set MONEYBIRD_ACCESS_TOKEN and MONEYBIRD_ADMINISTRATION_ID in the environment.');
+        return new self('Moneybird is not connected. Connect your Moneybird administration under Settings, Integrations.');
     }
 
     public static function fromResponse(string $method, string $path, Response $response): self

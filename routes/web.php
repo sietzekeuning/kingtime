@@ -3,12 +3,14 @@
 use App\Domain\Client\Controllers\ClientArchiveController;
 use App\Domain\Client\Controllers\ClientController;
 use App\Domain\Dashboard\Controllers\DashboardController;
+use App\Domain\Harvest\Controllers\HarvestConnectionController;
 use App\Domain\Harvest\Controllers\HarvestImportController;
 use App\Domain\Harvest\Controllers\HarvestImportProgressController;
 use App\Domain\Invoice\Controllers\InvoiceController;
 use App\Domain\Invoice\Controllers\InvoicePrepareController;
 use App\Domain\Invoice\Controllers\InvoicePushController;
 use App\Domain\Invoice\Controllers\InvoiceSyncController;
+use App\Domain\Moneybird\Controllers\MoneybirdConnectionController;
 use App\Domain\Project\Controllers\ProjectArchiveController;
 use App\Domain\Project\Controllers\ProjectController;
 use App\Domain\Reports\Controllers\ReportsController;
@@ -51,6 +53,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
     // -- Integrations (Harvest, Moneybird) ---------------------------------
     Route::get('settings/integrations', [IntegrationsController::class, 'edit'])->name('integrations.edit');
+    Route::post('settings/integrations/harvest', [HarvestConnectionController::class, 'store'])->name('integrations.harvest.store');
+    Route::delete('settings/integrations/harvest', [HarvestConnectionController::class, 'destroy'])->name('integrations.harvest.destroy');
+    Route::post('settings/integrations/moneybird', [MoneybirdConnectionController::class, 'store'])->name('integrations.moneybird.store');
+    Route::delete('settings/integrations/moneybird', [MoneybirdConnectionController::class, 'destroy'])->name('integrations.moneybird.destroy');
     Route::post('settings/integrations/harvest/import', [HarvestImportController::class, 'store'])->name('integrations.harvest.import');
     Route::get('settings/integrations/harvest/progress', HarvestImportProgressController::class)->name('integrations.harvest.progress');
 });

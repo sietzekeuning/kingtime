@@ -12,6 +12,7 @@ use App\Domain\Mcp\Tools\MoneybirdListReceiptsTool;
 use App\Domain\Mcp\Tools\MoneybirdListSalesInvoicesTool;
 use App\Domain\Mcp\Tools\MoneybirdRevenueSummaryTool;
 use App\Domain\Mcp\Tools\MoneybirdStatusTool;
+use App\Domain\Moneybird\Models\MoneybirdConnection;
 use App\Domain\User\Models\User;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\Request;
@@ -51,14 +52,7 @@ function mcpMbQuery(Request $request): array
 
 beforeEach(function (): void {
     $this->user = User::factory()->create();
-    config()->set('services.moneybird', [
-        'access_token' => 'secret-token',
-        'administration_id' => '123456789',
-        'base_url' => 'https://moneybird.com/api/v2',
-        'tax_rate_id' => null,
-        'ledger_account_id' => null,
-        'workflow_id' => null,
-    ]);
+    $this->connection = MoneybirdConnection::factory()->for($this->user)->create(['access_token' => 'secret-token', 'administration_id' => '123456789']);
 });
 
 it('reports the configured administration', function (): void {
@@ -76,28 +70,28 @@ it('reports the configured administration', function (): void {
             ->etc());
 });
 
-it('reports a missing configuration in the status and as an error in the other tools', function (): void {
-    config()->set('services.moneybird.access_token', null);
+it('reports a missing connection in the status and as an error in the other tools', function (): void {
+    $this->connection->delete();
     Http::fake();
 
     mcpMbTool(MoneybirdStatusTool::class)
         ->assertOk()
         ->assertStructuredContent(fn (AssertableJson $json) => $json
             ->where('configured', false)
-            ->where('message', fn (string $message) => str_contains($message, 'MONEYBIRD_ACCESS_TOKEN and MONEYBIRD_ADMINISTRATION_ID'))
+            ->where('message', fn (string $message) => str_contains($message, 'Settings, Integrations'))
             ->etc());
 
     mcpMbTool(MoneybirdListSalesInvoicesTool::class)
-        ->assertHasErrors(['Moneybird is not configured', 'MONEYBIRD_ACCESS_TOKEN']);
+        ->assertHasErrors(['Moneybird is not connected', 'Settings, Integrations']);
 
     mcpMbTool(MoneybirdGetTool::class, ['path' => 'contacts'])
-        ->assertHasErrors(['Moneybird is not configured']);
+        ->assertHasErrors(['Moneybird is not connected']);
 
     Http::assertNothingSent();
 });
 
 it('says when the token cannot see the configured administration', function (): void {
-    config()->set('services.moneybird.administration_id', '42');
+    $this->connection->update(['administration_id' => '42']);
     Http::fake(['moneybird.com/api/v2/administrations.json' => mcpMbFixture('administrations')]);
 
     mcpMbTool(MoneybirdStatusTool::class)

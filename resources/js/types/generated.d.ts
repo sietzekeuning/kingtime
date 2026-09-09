@@ -39,6 +39,22 @@ prev_page_url: string | null,
 export type CursorPaginatorInterface<TKey, TValue> = CursorPaginator<TKey, TValue>;
 export type PaginatedDataCollection<TKey, TValue> = LengthAwarePaginator<TKey, TValue>;
 export type CursorPaginatedDataCollection<TKey, TValue> = CursorPaginator<TKey, TValue>;
+export type MoneybirdConnectionData = {
+access_token: string | null,
+administration_id: string,
+tax_rate_id: string | null,
+ledger_account_id: string | null,
+workflow_id: string | null,
+};
+export type MoneybirdIntegrationData = {
+configured: boolean,
+administration_id: string | null,
+administration_name: string | null,
+administration_error: string | null,
+tax_rate_id: string | null,
+ledger_account_id: string | null,
+workflow_id: string | null,
+};
 export type UserData = {
 id: number,
 name: string,
@@ -120,12 +136,17 @@ updated: number,
 };
 export type HarvestIntegrationData = {
 configured: boolean,
+account_id: string | null,
 account_name: string | null,
 account_email: string | null,
 account_error: string | null,
 last_import: HarvestImportData | null,
 imports: HarvestImportData[],
 progress: HarvestImportProgressData | null,
+};
+export type HarvestConnectionData = {
+account_id: string,
+access_token: string,
 };
 export type HarvestImportResultData = {
 users: HarvestImportCountData,

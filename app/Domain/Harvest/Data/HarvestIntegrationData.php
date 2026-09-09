@@ -20,6 +20,7 @@ class HarvestIntegrationData extends BaseData
      */
     public function __construct(
         public bool $configured,
+        public ?string $account_id,
         public ?string $account_name,
         public ?string $account_email,
         public ?string $account_error,

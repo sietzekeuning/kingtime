@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Harvest\Services;
 
 use App\Domain\Harvest\Exceptions\HarvestException;
+use App\Domain\Harvest\Models\HarvestConnection;
+use App\Domain\User\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
@@ -32,26 +34,37 @@ class HarvestClient
     /** @var array<int, float> Unix timestamps of the requests made in the current window. */
     private array $requestTimes = [];
 
-    private readonly ?string $accountId;
-
-    private readonly ?string $accessToken;
-
     private readonly string $baseUrl;
 
-    public function __construct()
+    public function __construct(private readonly HarvestConnection $connection)
     {
-        $accountId = config('services.harvest.account_id');
-        $accessToken = config('services.harvest.access_token');
         $baseUrl = config('services.harvest.base_url');
 
-        $this->accountId = is_scalar($accountId) && (string) $accountId !== '' ? (string) $accountId : null;
-        $this->accessToken = is_string($accessToken) && $accessToken !== '' ? $accessToken : null;
         $this->baseUrl = rtrim(is_string($baseUrl) && $baseUrl !== '' ? $baseUrl : 'https://api.harvestapp.com/api/v2', '/');
     }
 
-    public function isConfigured(): bool
+    /**
+     * The client for a user's own Harvest connection, or null when the user
+     * has not connected Harvest yet.
+     */
+    public static function forUser(User $user): ?self
     {
-        return $this->accountId !== null && $this->accessToken !== null;
+        $connection = $user->harvestConnection()->first();
+
+        return $connection === null ? null : new self($connection);
+    }
+
+    /**
+     * @throws HarvestException When the user has not connected Harvest.
+     */
+    public static function forUserOrFail(User $user): self
+    {
+        return self::forUser($user) ?? throw HarvestException::notConfigured();
+    }
+
+    public function connection(): HarvestConnection
+    {
+        return $this->connection;
     }
 
     /**
@@ -138,10 +151,6 @@ class HarvestClient
      */
     private function get(string $path, array $query = []): array
     {
-        if (! $this->isConfigured()) {
-            throw HarvestException::notConfigured();
-        }
-
         $response = null;
 
         for ($attempt = 1; $attempt <= self::MAX_ATTEMPTS; $attempt++) {
@@ -170,9 +179,9 @@ class HarvestClient
 
     private function request(): PendingRequest
     {
-        return Http::withToken((string) $this->accessToken)
+        return Http::withToken($this->connection->access_token)
             ->withHeaders([
-                'Harvest-Account-Id' => (string) $this->accountId,
+                'Harvest-Account-Id' => $this->connection->account_id,
                 'User-Agent' => 'Kingtime (https://kingtime.nl)',
             ])
             ->acceptJson()

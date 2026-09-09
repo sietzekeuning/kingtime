@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace App\Domain\Harvest\Models;
 
 use App\Domain\Harvest\Enums\HarvestImportStatus;
+use App\Domain\User\Models\User;
 use Database\Factories\HarvestImportFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
  * One run of the Harvest import, successful or not.
  *
  * @property int $id
+ * @property int|null $user_id
  * @property HarvestImportStatus $status
  * @property Carbon $started_at
  * @property Carbon|null $finished_at
@@ -23,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $error
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read User|null $user
  */
 class HarvestImport extends Model
 {
@@ -40,6 +44,12 @@ class HarvestImport extends Model
         ];
     }
 
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     /**
      * @param  Builder<HarvestImport>  $query
      * @return Builder<HarvestImport>
@@ -49,8 +59,8 @@ class HarvestImport extends Model
         return $query->where('status', HarvestImportStatus::Finished);
     }
 
-    public static function lastSuccessful(): ?self
+    public static function lastSuccessfulFor(User $user): ?self
     {
-        return self::query()->finished()->latest('started_at')->first();
+        return self::query()->where('user_id', $user->id)->finished()->latest('started_at')->first();
     }
 }

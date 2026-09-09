@@ -21,11 +21,9 @@ class ImportHarvestProjectsAction
     /** Harvest `budget_by` values whose `budget` is expressed in hours. */
     private const HOUR_BUDGETS = ['project', 'task', 'person'];
 
-    public function __construct(private readonly HarvestClient $client) {}
-
-    public function handle(HarvestImportResultData $result, ?CarbonInterface $updatedSince = null, ?callable $tick = null): void
+    public function handle(HarvestClient $client, HarvestImportResultData $result, ?CarbonInterface $updatedSince = null, ?callable $tick = null): void
     {
-        foreach ($this->client->projects($updatedSince) as $record) {
+        foreach ($client->projects($updatedSince) as $record) {
             $harvestId = (int) $record['id'];
             $clientHarvestId = (int) ($record['client']['id'] ?? 0);
             $clientId = Client::withTrashed()->where('harvest_id', $clientHarvestId)->value('id');

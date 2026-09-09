@@ -1,20 +1,25 @@
 <script setup lang="ts">
-import { Head, router, useHttp } from '@inertiajs/vue3';
+import { Head, router, useForm, useHttp } from '@inertiajs/vue3';
 import {
     CircleCheck,
     CircleX,
     Clock,
+    Link2,
     LoaderCircle,
     RefreshCw,
     TriangleAlert,
+    Unlink2,
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import HarvestImportController from '@/actions/App/Domain/Harvest/Controllers/HarvestImportController';
 import HarvestImportProgressController from '@/actions/App/Domain/Harvest/Controllers/HarvestImportProgressController';
+import Form from '@/components/Form.vue';
+import FormRow from '@/components/FormRow.vue';
 import Heading from '@/components/Heading.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import type { StatusBadgeTone } from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
     Card,
     CardContent,
@@ -30,19 +35,72 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useConfirmDelete } from '@/composables/useConfirmDelete';
 import { HarvestImportStatus, HarvestImportStatusOptions } from '@/lib/enums';
 import { edit } from '@/routes/integrations';
+import harvestRoutes from '@/routes/integrations/harvest';
+import moneybirdRoutes from '@/routes/integrations/moneybird';
 import type {
+    HarvestConnectionData,
     HarvestImportData,
     HarvestImportProgressData,
     HarvestImportResultData,
     HarvestIntegrationData,
+    MoneybirdConnectionData,
+    MoneybirdIntegrationData,
 } from '@/types/generated';
 
 const props = defineProps<{
     harvest: HarvestIntegrationData;
-    moneybird: { configured: boolean };
+    moneybird: MoneybirdIntegrationData;
 }>();
+
+const { confirmDelete } = useConfirmDelete();
+
+const harvestForm = useForm<HarvestConnectionData>({
+    account_id: '',
+    access_token: '',
+});
+
+function connectHarvest(): void {
+    harvestForm.post(harvestRoutes.store().url, {
+        preserveScroll: true,
+        onSuccess: () => harvestForm.reset(),
+    });
+}
+
+function disconnectHarvest(): void {
+    void confirmDelete(harvestRoutes.destroy().url, {
+        title: 'Disconnect Harvest?',
+        description:
+            'The token is forgotten. Everything imported so far stays in Kingtime.',
+        confirmLabel: 'Disconnect',
+    });
+}
+
+const moneybirdForm = useForm<MoneybirdConnectionData>({
+    access_token: '',
+    administration_id: props.moneybird.administration_id ?? '',
+    tax_rate_id: props.moneybird.tax_rate_id,
+    ledger_account_id: props.moneybird.ledger_account_id,
+    workflow_id: props.moneybird.workflow_id,
+});
+
+function connectMoneybird(): void {
+    moneybirdForm.post(moneybirdRoutes.store().url, {
+        preserveScroll: true,
+        onSuccess: () => moneybirdForm.reset('access_token'),
+    });
+}
+
+function disconnectMoneybird(): void {
+    void confirmDelete(moneybirdRoutes.destroy().url, {
+        title: 'Disconnect Moneybird?',
+        description:
+            'The token is forgotten. Invoices already in Moneybird keep their link.',
+        confirmLabel: 'Disconnect',
+    });
+}
 
 defineOptions({
     layout: {
@@ -255,45 +313,105 @@ function importTitle(item: HarvestImportData): string {
             </CardHeader>
 
             <CardContent class="space-y-6">
-                <p
-                    v-if="!harvest.configured"
-                    class="text-muted-foreground text-sm"
-                >
-                    Add
-                    <code class="bg-muted rounded px-1 py-0.5 text-xs"
-                        >HARVEST_ACCOUNT_ID</code
+                <template v-if="!harvest.configured">
+                    <p class="text-muted-foreground text-sm">
+                        Create a personal access token on the
+                        <a
+                            href="https://id.getharvest.com/developers"
+                            target="_blank"
+                            rel="noopener"
+                            class="text-foreground underline underline-offset-4"
+                            >developers page of your Harvest ID account</a
+                        >
+                        and paste it here together with the account id shown
+                        next to it. The token is stored encrypted and only you
+                        use it: your hours are imported to your own account.
+                    </p>
+
+                    <Form
+                        id="harvest-form"
+                        :form="harvestForm"
+                        @submit="connectHarvest"
                     >
-                    and
-                    <code class="bg-muted rounded px-1 py-0.5 text-xs"
-                        >HARVEST_ACCESS_TOKEN</code
-                    >
-                    to your <code class="text-xs">.env</code> file. Both come
-                    from the developers page of your Harvest ID account.
-                </p>
+                        <div class="max-w-xl space-y-4">
+                            <FormRow
+                                label="Account id"
+                                field="account_id"
+                                required
+                            >
+                                <Input
+                                    v-model="harvestForm.account_id"
+                                    inputmode="numeric"
+                                    placeholder="123456"
+                                    class="w-40"
+                                />
+                            </FormRow>
+                            <FormRow
+                                label="Access token"
+                                field="access_token"
+                                required
+                            >
+                                <Input
+                                    v-model="harvestForm.access_token"
+                                    type="password"
+                                    autocomplete="off"
+                                />
+                            </FormRow>
+                            <div class="flex justify-end">
+                                <Button
+                                    type="submit"
+                                    :disabled="harvestForm.processing"
+                                >
+                                    <LoaderCircle
+                                        v-if="harvestForm.processing"
+                                        class="size-4 animate-spin"
+                                    />
+                                    <Link2 v-else class="size-4" />
+                                    Connect Harvest
+                                </Button>
+                            </div>
+                        </div>
+                    </Form>
+                </template>
 
                 <template v-else>
-                    <div class="text-sm">
-                        <p
-                            v-if="harvest.account_error"
-                            class="text-destructive flex items-start gap-2"
-                        >
-                            <TriangleAlert class="mt-0.5 size-4 shrink-0" />
-                            <span>{{ harvest.account_error }}</span>
-                        </p>
-                        <p v-else class="text-muted-foreground">
-                            Connected as
-                            <span class="text-foreground font-medium">{{
-                                harvest.account_name ?? harvest.account_email
-                            }}</span>
-                            <span
-                                v-if="
-                                    harvest.account_email &&
-                                    harvest.account_name
-                                "
+                    <div
+                        class="flex flex-wrap items-start justify-between gap-4 text-sm"
+                    >
+                        <div>
+                            <p
+                                v-if="harvest.account_error"
+                                class="text-destructive flex items-start gap-2"
                             >
-                                ({{ harvest.account_email }})</span
-                            >.
-                        </p>
+                                <TriangleAlert class="mt-0.5 size-4 shrink-0" />
+                                <span>{{ harvest.account_error }}</span>
+                            </p>
+                            <p v-else class="text-muted-foreground">
+                                Connected as
+                                <span class="text-foreground font-medium">{{
+                                    harvest.account_name ??
+                                    harvest.account_email
+                                }}</span>
+                                <span
+                                    v-if="
+                                        harvest.account_email &&
+                                        harvest.account_name
+                                    "
+                                >
+                                    ({{ harvest.account_email }})</span
+                                >
+                                on account {{ harvest.account_id }}.
+                            </p>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            :disabled="isImporting"
+                            @click="disconnectHarvest"
+                        >
+                            <Unlink2 class="size-4" />
+                            Disconnect
+                        </Button>
                     </div>
 
                     <div class="space-y-3">
@@ -471,45 +589,157 @@ function importTitle(item: HarvestImportData): string {
                     <div class="space-y-1">
                         <CardTitle>Moneybird</CardTitle>
                         <CardDescription>
-                            Invoices prepared here are pushed to Moneybird as
-                            drafts.
+                            Invoices you prepare here are pushed to your
+                            Moneybird administration as drafts.
                         </CardDescription>
                     </div>
                     <StatusBadge
                         v-if="moneybird.configured"
                         tone="green"
                         :icon="CircleCheck"
-                        label="Configured"
+                        label="Connected"
                     />
                     <StatusBadge
                         v-else
                         tone="gray"
                         :icon="CircleX"
-                        label="Not configured"
+                        label="Not connected"
                     />
                 </div>
             </CardHeader>
-            <CardContent>
-                <p
-                    v-if="!moneybird.configured"
-                    class="text-muted-foreground text-sm"
+            <CardContent class="space-y-6">
+                <div
+                    v-if="moneybird.configured"
+                    class="flex flex-wrap items-start justify-between gap-4 text-sm"
                 >
-                    Add
-                    <code class="bg-muted rounded px-1 py-0.5 text-xs"
-                        >MONEYBIRD_ACCESS_TOKEN</code
+                    <div>
+                        <p
+                            v-if="moneybird.administration_error"
+                            class="text-destructive flex items-start gap-2"
+                        >
+                            <TriangleAlert class="mt-0.5 size-4 shrink-0" />
+                            <span>{{ moneybird.administration_error }}</span>
+                        </p>
+                        <p v-else class="text-muted-foreground">
+                            Connected to
+                            <span class="text-foreground font-medium">{{
+                                moneybird.administration_name ??
+                                moneybird.administration_id
+                            }}</span>
+                            <span v-if="moneybird.administration_name">
+                                ({{ moneybird.administration_id }})</span
+                            >.
+                        </p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        @click="disconnectMoneybird"
                     >
-                    and
-                    <code class="bg-muted rounded px-1 py-0.5 text-xs"
-                        >MONEYBIRD_ADMINISTRATION_ID</code
-                    >
-                    to your <code class="text-xs">.env</code> file. Create a
-                    personal token under Applications in your Moneybird user
-                    settings.
-                </p>
+                        <Unlink2 class="size-4" />
+                        Disconnect
+                    </Button>
+                </div>
                 <p v-else class="text-muted-foreground text-sm">
-                    Moneybird is connected. Invoices can be sent as drafts from
-                    the invoices page.
+                    Create a personal API token under
+                    <a
+                        href="https://moneybird.com/user/applications"
+                        target="_blank"
+                        rel="noopener"
+                        class="text-foreground underline underline-offset-4"
+                        >Applications in your Moneybird user settings</a
+                    >
+                    and paste it here with the administration id from the
+                    Moneybird URL. The token is stored encrypted and only used
+                    for invoices you prepare.
                 </p>
+
+                <Form
+                    id="moneybird-form"
+                    :form="moneybirdForm"
+                    @submit="connectMoneybird"
+                >
+                    <div class="max-w-xl space-y-4">
+                        <FormRow
+                            label="API token"
+                            field="access_token"
+                            :required="!moneybird.configured"
+                        >
+                            <Input
+                                v-model="moneybirdForm.access_token"
+                                type="password"
+                                autocomplete="off"
+                                :placeholder="
+                                    moneybird.configured
+                                        ? 'Leave empty to keep the current token'
+                                        : ''
+                                "
+                            />
+                        </FormRow>
+                        <FormRow
+                            label="Administration id"
+                            field="administration_id"
+                            required
+                        >
+                            <Input
+                                v-model="moneybirdForm.administration_id"
+                                inputmode="numeric"
+                                class="w-56"
+                            />
+                        </FormRow>
+                        <FormRow label="Tax rate id" field="tax_rate_id">
+                            <Input
+                                v-model="moneybirdForm.tax_rate_id"
+                                inputmode="numeric"
+                                class="w-56"
+                                placeholder="Optional"
+                            />
+                        </FormRow>
+                        <FormRow
+                            label="Ledger account id"
+                            field="ledger_account_id"
+                        >
+                            <Input
+                                v-model="moneybirdForm.ledger_account_id"
+                                inputmode="numeric"
+                                class="w-56"
+                                placeholder="Optional"
+                            />
+                        </FormRow>
+                        <FormRow label="Workflow id" field="workflow_id">
+                            <Input
+                                v-model="moneybirdForm.workflow_id"
+                                inputmode="numeric"
+                                class="w-56"
+                                placeholder="Optional"
+                            />
+                        </FormRow>
+                        <p class="text-muted-foreground text-xs">
+                            The optional ids are applied to every invoice line
+                            and invoice pushed to Moneybird. Find them in the
+                            Moneybird URL of the tax rate, ledger account or
+                            workflow, or through the moneybird_get MCP tool
+                            (tax_rates, ledger_accounts, workflows).
+                        </p>
+                        <div class="flex justify-end">
+                            <Button
+                                type="submit"
+                                :disabled="moneybirdForm.processing"
+                            >
+                                <LoaderCircle
+                                    v-if="moneybirdForm.processing"
+                                    class="size-4 animate-spin"
+                                />
+                                <Link2 v-else class="size-4" />
+                                {{
+                                    moneybird.configured
+                                        ? 'Save settings'
+                                        : 'Connect Moneybird'
+                                }}
+                            </Button>
+                        </div>
+                    </div>
+                </Form>
             </CardContent>
         </Card>
     </div>

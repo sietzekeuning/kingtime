@@ -9,7 +9,7 @@ use App\Domain\Invoice\Data\InvoiceData;
 use App\Domain\Invoice\Exceptions\InvoiceLockedException;
 use App\Domain\Invoice\Models\Invoice;
 use App\Domain\Invoice\Tables\InvoiceTable;
-use App\Domain\Moneybird\Services\MoneybirdClient;
+use App\Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,8 +25,11 @@ class InvoiceController
         ]);
     }
 
-    public function show(Invoice $invoice, MoneybirdClient $moneybird): Response
+    public function show(Request $request, Invoice $invoice): Response
     {
+        /** @var User $user */
+        $user = $request->user();
+
         $invoice->load([
             'client',
             'lines.project',
@@ -35,7 +38,7 @@ class InvoiceController
 
         return Inertia::render('invoices/InvoiceShow', [
             'invoice' => InvoiceData::fromModel($invoice),
-            'moneybird_configured' => $moneybird->isConfigured(),
+            'moneybird_configured' => $user->moneybirdConnection()->exists(),
         ]);
     }
 

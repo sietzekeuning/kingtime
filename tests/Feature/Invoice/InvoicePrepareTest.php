@@ -9,6 +9,7 @@ use App\Domain\Invoice\Enums\InvoiceStatus;
 use App\Domain\Invoice\Exceptions\InvoiceLockedException;
 use App\Domain\Invoice\Exceptions\NothingToInvoiceException;
 use App\Domain\Invoice\Models\Invoice;
+use App\Domain\Moneybird\Models\MoneybirdConnection;
 use App\Domain\Project\Models\Project;
 use App\Domain\Time\Models\TimeEntry;
 use App\Domain\User\Models\User;
@@ -27,7 +28,7 @@ it('prepares a draft invoice and locks the entries to it', function (): void {
         ->sequence(['spent_on' => '2026-08-03', 'hours' => '2.50'], ['spent_on' => '2026-08-04', 'hours' => '1.00'])
         ->create(['hourly_rate' => '95.00']);
 
-    $invoice = app(PrepareInvoiceAction::class)->handle($this->client, Date::parse('2026-08-01'), Date::parse('2026-08-31'), null, '  Thanks!  ');
+    $invoice = app(PrepareInvoiceAction::class)->handle($this->user, $this->client, Date::parse('2026-08-01'), Date::parse('2026-08-31'), null, '  Thanks!  ');
 
     expect($invoice->status)->toBe(InvoiceStatus::Draft)
         ->and($invoice->currency)->toBe('EUR')
@@ -51,12 +52,12 @@ it('prepares a draft invoice and locks the entries to it', function (): void {
 });
 
 it('refuses to prepare an invoice without hours', function (): void {
-    app(PrepareInvoiceAction::class)->handle($this->client, Date::parse('2026-08-01'), Date::parse('2026-08-31'));
+    app(PrepareInvoiceAction::class)->handle($this->user, $this->client, Date::parse('2026-08-01'), Date::parse('2026-08-31'));
 })->throws(NothingToInvoiceException::class);
 
 it('deletes a draft and unlocks its entries', function (): void {
     TimeEntry::factory()->for($this->user)->for($this->project)->create(['spent_on' => '2026-08-03']);
-    $invoice = app(PrepareInvoiceAction::class)->handle($this->client, Date::parse('2026-08-01'), Date::parse('2026-08-31'));
+    $invoice = app(PrepareInvoiceAction::class)->handle($this->user, $this->client, Date::parse('2026-08-01'), Date::parse('2026-08-31'));
     $entry = TimeEntry::query()->firstOrFail();
 
     $this->delete(route('invoices.destroy', $invoice))->assertRedirect(route('invoices.index'));
@@ -154,7 +155,7 @@ it('creates the draft from the form and redirects to it', function (): void {
 });
 
 it('pushes the fresh draft to Moneybird when asked', function (): void {
-    config()->set('services.moneybird', ['access_token' => 'token', 'administration_id' => '123456789', 'base_url' => 'https://moneybird.com/api/v2', 'tax_rate_id' => null, 'ledger_account_id' => null, 'workflow_id' => null]);
+    MoneybirdConnection::factory()->for($this->user)->create(['administration_id' => '123456789']);
     Http::fake([
         'moneybird.com/api/v2/123456789/contacts.json*' => Http::response(file_get_contents(base_path('tests/Fixtures/moneybird/contacts_found.json')), 200),
         'moneybird.com/api/v2/123456789/sales_invoices.json' => Http::response(file_get_contents(base_path('tests/Fixtures/moneybird/sales_invoice_draft.json')), 201),

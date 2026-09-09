@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Mcp\Tools;
 
+use App\Domain\Moneybird\Exceptions\MoneybirdException;
 use App\Domain\Moneybird\Services\MoneybirdClient;
+use App\Domain\User\Models\User;
 use Laravel\Mcp\Request;
 
 /**
@@ -24,7 +26,15 @@ abstract class MoneybirdTool extends KingtimeTool
 
     protected const string PERIOD_DESCRIPTION = 'Moneybird period filter: this_month, prev_month, next_month, this_quarter, prev_quarter, this_year, prev_year, or a range such as 202601..202603 (months) or 20260101..20260131 (days).';
 
-    public function __construct(protected MoneybirdClient $moneybird) {}
+    /**
+     * The acting user's own Moneybird connection.
+     *
+     * @throws MoneybirdException When the user has not connected Moneybird.
+     */
+    protected function moneybird(User $user): MoneybirdClient
+    {
+        return MoneybirdClient::forUserOrFail($user);
+    }
 
     /**
      * @return array<string, array<int, string>>

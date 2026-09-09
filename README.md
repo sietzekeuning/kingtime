@@ -34,41 +34,29 @@ Open the app, register the first account (registration closes afterwards), and y
 
 ## Harvest import
 
-1. Create a personal access token at <https://id.getharvest.com/developers> and put it in `.env`:
+Every user connects their own Harvest account under Settings › Integrations:
 
-    ```dotenv
-    HARVEST_ACCOUNT_ID=123456
-    HARVEST_ACCESS_TOKEN=your-token
-    ```
-
-2. Register your Kingtime account with the **same email address as your Harvest user** before the first import: entries are matched to users by email, and a Harvest user without a matching account is created as an inactive user.
-
-3. Run the import:
+1. Create a personal access token at <https://id.getharvest.com/developers> and paste it together with the account id shown next to it. Kingtime checks the token against the API before storing it (encrypted, never shown again).
+2. The Harvest user behind the token becomes you: their entries land on your Kingtime account, whatever email either side uses. Other Harvest users are matched by email and created as inactive users when unknown.
+3. Click "Run import now", or use the command line:
 
     ```bash
-    php artisan harvest:import --full     # everything, the first time
-    php artisan harvest:import            # only what changed since the last run
-    php artisan harvest:import --since=2026-01-01
+    php artisan harvest:import --full             # everything, the first time
+    php artisan harvest:import                    # only what changed, for every connected user
+    php artisan harvest:import --user=you@example.com --since=2026-01-01
     ```
 
-Every row keeps its `harvest_id`, so re-running never duplicates anything and local edits to fields Harvest does not know about (project colours, Moneybird contact ids, notes) survive. The scheduler runs the incremental import every hour once the token is configured; Settings › Integrations shows the last runs and has a "Run import now" button.
+Every row keeps its `harvest_id`, so re-running never duplicates anything and local edits to fields Harvest does not know about (project colours, Moneybird contact ids, notes) survive. The scheduler runs the incremental import every hour for every connected user; Settings › Integrations shows your last runs. Disconnecting forgets the token and keeps everything that was imported.
 
 ## Moneybird invoicing
 
-1. Create an API token at <https://moneybird.com/user/applications> and add it together with your administration id:
+Every user connects their own Moneybird administration under Settings › Integrations:
 
-    ```dotenv
-    MONEYBIRD_ACCESS_TOKEN=your-token
-    MONEYBIRD_ADMINISTRATION_ID=123456789
-    # optional, applied to every invoice line
-    MONEYBIRD_TAX_RATE_ID=
-    MONEYBIRD_LEDGER_ACCOUNT_ID=
-    MONEYBIRD_WORKFLOW_ID=
-    ```
+1. Create an API token at <https://moneybird.com/user/applications> and paste it with the administration id from the Moneybird URL. Optionally add a tax rate id, ledger account id and workflow id; they are applied to every invoice line and invoice you push. Kingtime checks that the token can see the administration before storing it (encrypted, never shown again).
 
 2. Go to Invoices › Prepare invoice, pick a client and a period, uncheck any entries you want to leave out, and create the draft. With "Push to Moneybird" on, the contact is looked up (or created) by name and a **draft** sales invoice is created with one line per project and rate and the specification (hours and notes per day) as a note. Nothing is ever sent to your customer from Kingtime; you review and send in Moneybird.
 
-Invoiced entries are locked. Deleting a draft that was not pushed unlocks them again. `php artisan invoices:sync-statuses` (scheduled daily) pulls the paid/late/open state back from Moneybird.
+An invoice belongs to the user who prepared it and is pushed and synced with that user's connection. Invoiced entries are locked. Deleting a draft that was not pushed unlocks them again. `php artisan invoices:sync-statuses` (scheduled daily) pulls the paid/late/open state back from Moneybird for every invoice whose owner is connected.
 
 ## Connect your LLM (MCP)
 
@@ -94,7 +82,7 @@ Claude Desktop, Cursor and friends take the same thing as JSON:
 
 For a local install without HTTPS you can also run it over stdio: `php artisan mcp:start kingtime` (acts as the first user in the database).
 
-Tools: `list_clients`, `list_projects`, `list_time_entries`, `get_timesheet`, `log_time`, `update_time_entry`, `delete_time_entry`, `start_timer`, `stop_timer`, `get_running_timer`, `get_unbilled_summary`, `preview_invoice`, `prepare_invoice`, `moneybird_status`, `moneybird_list_contacts`, `moneybird_list_sales_invoices`, `moneybird_get_sales_invoice`, `moneybird_list_purchase_invoices`, `moneybird_list_receipts`, `moneybird_revenue_summary` and `moneybird_get`. Invoices prepared through MCP are drafts, exactly like the ones from the UI. The `moneybird_*` tools are read-only queries against your Moneybird administration (contacts, sales and purchase invoices, receipts, revenue per month and per contact, and a generic GET for any other endpoint); they never create or change anything.
+Tools: `list_clients`, `list_projects`, `list_time_entries`, `get_timesheet`, `log_time`, `update_time_entry`, `delete_time_entry`, `start_timer`, `stop_timer`, `get_running_timer`, `get_unbilled_summary`, `preview_invoice`, `prepare_invoice`, `moneybird_status`, `moneybird_list_contacts`, `moneybird_list_sales_invoices`, `moneybird_get_sales_invoice`, `moneybird_list_purchase_invoices`, `moneybird_list_receipts`, `moneybird_revenue_summary` and `moneybird_get`. Invoices prepared through MCP are drafts, exactly like the ones from the UI. The `moneybird_*` tools are read-only queries against your Moneybird administration (contacts, sales and purchase invoices, receipts, revenue per month and per contact, and a generic GET for any other endpoint); they never create or change anything. All tools use the connections of the user behind the API token.
 
 ## Development
 

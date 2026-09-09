@@ -7,6 +7,7 @@ namespace Database\Factories;
 use App\Domain\Client\Models\Client;
 use App\Domain\Invoice\Enums\InvoiceStatus;
 use App\Domain\Invoice\Models\Invoice;
+use App\Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<Invoice> */
@@ -17,6 +18,7 @@ class InvoiceFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => User::factory(),
             'client_id' => Client::factory(),
             'status' => InvoiceStatus::Draft,
             'period_starts_on' => now()->startOfMonth()->toDateString(),

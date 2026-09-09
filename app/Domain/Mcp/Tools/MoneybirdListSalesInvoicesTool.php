@@ -50,7 +50,7 @@ class MoneybirdListSalesInvoicesTool extends MoneybirdTool
         $perPage = $this->perPage($request);
         $filters = $this->listFilters($request) + ['state' => self::optionalString($request, 'state')];
 
-        $invoices = $this->moneybird->salesInvoices($filters, $page, $perPage);
+        $invoices = $this->moneybird($user)->salesInvoices($filters, $page, $perPage);
 
         return Response::structured([
             'filters' => array_filter($filters, fn (?string $value) => $value !== null),

@@ -10,12 +10,13 @@ use App\Domain\Harvest\Data\HarvestIntegrationData;
 use App\Domain\Harvest\Exceptions\HarvestException;
 use App\Domain\Harvest\Models\HarvestImport;
 use App\Domain\Harvest\Services\HarvestClient;
+use App\Domain\User\Models\User;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Status block for the integrations settings page: configuration, the
- * connected Harvest account and the recent import history.
+ * Status block for the integrations settings page: the user's connection,
+ * the Harvest account behind it and their recent import history.
  */
 class GetHarvestIntegrationAction
 {
@@ -23,22 +24,20 @@ class GetHarvestIntegrationAction
 
     private const RECENT_IMPORTS = 10;
 
-    public function __construct(private readonly HarvestClient $client) {}
-
-    public function handle(): HarvestIntegrationData
+    public function handle(User $user): HarvestIntegrationData
     {
-        $configured = $this->client->isConfigured();
-        $accountName = null;
-        $accountEmail = null;
+        $connection = $user->harvestConnection()->first();
+        $accountName = $connection?->account_name;
+        $accountEmail = $connection?->account_email;
         $accountError = null;
 
-        if ($configured) {
+        if ($connection !== null) {
             try {
                 /** @var array<string, mixed> $account */
                 $account = Cache::remember(
-                    'harvest:account:'.md5((string) config('services.harvest.account_id').(string) config('services.harvest.access_token')),
+                    'harvest:account:'.$connection->id.':'.md5($connection->account_id.$connection->access_token),
                     self::ACCOUNT_CACHE_SECONDS,
-                    fn (): array => $this->client->me(),
+                    fn (): array => (new HarvestClient($connection))->me(),
                 );
 
                 $name = trim((string) ($account['first_name'] ?? '').' '.(string) ($account['last_name'] ?? ''));
@@ -50,6 +49,7 @@ class GetHarvestIntegrationAction
         }
 
         $imports = HarvestImport::query()
+            ->where('user_id', $user->id)
             ->latest('started_at')
             ->latest('id')
             ->limit(self::RECENT_IMPORTS)
@@ -57,13 +57,14 @@ class GetHarvestIntegrationAction
             ->map(fn (HarvestImport $import) => HarvestImportData::fromModel($import));
 
         return new HarvestIntegrationData(
-            configured: $configured,
+            configured: $connection !== null,
+            account_id: $connection?->account_id,
             account_name: $accountName,
             account_email: $accountEmail,
             account_error: $accountError,
             last_import: $imports->first(),
             imports: $imports,
-            progress: HarvestImportProgressData::load(),
+            progress: HarvestImportProgressData::load($user->id),
         );
     }
 }

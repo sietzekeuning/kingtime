@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Domain\Moneybird\Exceptions\MoneybirdException;
+use App\Domain\Moneybird\Models\MoneybirdConnection;
 use App\Domain\Moneybird\Services\MoneybirdClient;
+use App\Domain\User\Models\User;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -16,15 +18,8 @@ function moneybirdClientFixture(string $name, int $status = 200): PromiseInterfa
 }
 
 beforeEach(function (): void {
-    config()->set('services.moneybird', [
-        'access_token' => 'secret-token',
-        'administration_id' => '123456789',
-        'base_url' => 'https://moneybird.com/api/v2',
-        'tax_rate_id' => null,
-        'ledger_account_id' => null,
-        'workflow_id' => null,
-    ]);
-    $this->client = app(MoneybirdClient::class);
+    $this->connection = MoneybirdConnection::factory()->create(['access_token' => 'secret-token', 'administration_id' => '123456789']);
+    $this->client = new MoneybirdClient($this->connection);
 });
 
 it('reads any path under the administration with query parameters', function (): void {
@@ -64,8 +59,8 @@ it('finds the configured administration', function (): void {
 
     expect($this->client->administration())->toMatchArray(['id' => '123456789', 'name' => 'King Websites', 'currency' => 'EUR']);
 
-    config()->set('services.moneybird.administration_id', '42');
-    expect($this->client->administration())->toBeNull();
+    $this->connection->update(['administration_id' => '42']);
+    expect((new MoneybirdClient($this->connection))->administration())->toBeNull();
 });
 
 it('searches contacts with the query parameter only when given', function (): void {
@@ -84,12 +79,13 @@ it('throws a MoneybirdException with the API error on failure', function (): voi
     $this->client->products();
 })->throws(MoneybirdException::class, 'Moneybird GET products failed with HTTP 422');
 
-it('refuses to read when not configured', function (): void {
-    config()->set('services.moneybird.administration_id', null);
+it('has no client for a user without a moneybird connection', function (): void {
     Http::fake();
+    $other = User::factory()->create();
 
-    expect(fn () => $this->client->get('contacts'))->toThrow(MoneybirdException::class, 'not configured')
-        ->and(fn () => $this->client->administration())->toThrow(MoneybirdException::class, 'not configured');
+    expect(MoneybirdClient::forUser($other))->toBeNull()
+        ->and(MoneybirdClient::forUser($this->connection->user)?->connection()->is($this->connection))->toBeTrue()
+        ->and(fn () => MoneybirdClient::forUserOrFail($other))->toThrow(MoneybirdException::class, 'not connected');
 
     Http::assertNothingSent();
 });
