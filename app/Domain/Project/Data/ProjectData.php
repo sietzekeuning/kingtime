@@ -81,8 +81,24 @@ class ProjectData extends BaseData
             tasks: $project->relationLoaded('taskAssignments')
                 ? $project->taskAssignments->map(fn ($assignment) => ProjectTaskData::fromModel($assignment))
                 : null,
-            total_hours: $project->getAttribute('total_hours') !== null ? (string) $project->getAttribute('total_hours') : null,
-            unbilled_hours: $project->getAttribute('unbilled_hours') !== null ? (string) $project->getAttribute('unbilled_hours') : null,
+            total_hours: self::aggregate($project, 'total_hours'),
+            unbilled_hours: self::aggregate($project, 'unbilled_hours'),
         );
+    }
+
+    /**
+     * Reads a `withSum` aggregate when the query added it. Strict mode throws
+     * on attributes that were never selected, so a project loaded for its
+     * form (without the sums) must not touch them.
+     */
+    private static function aggregate(Project $project, string $attribute): ?string
+    {
+        if (! $project->hasAttribute($attribute)) {
+            return null;
+        }
+
+        $value = $project->getAttribute($attribute);
+
+        return $value !== null ? (string) $value : null;
     }
 }

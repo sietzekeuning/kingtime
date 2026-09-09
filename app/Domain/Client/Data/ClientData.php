@@ -44,7 +44,7 @@ class ClientData extends BaseData
             harvest_id: $client->harvest_id,
             moneybird_contact_id: $client->moneybird_contact_id,
             notes: $client->notes,
-            projects_count: $client->getAttribute('projects_count'),
+            projects_count: $client->hasAttribute('projects_count') ? $client->getAttribute('projects_count') : null,
         );
     }
 }
