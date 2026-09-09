@@ -1,0 +1,150 @@
+name: production
+
+on:
+  push:
+    branches:
+      - main
+  # Manual escape hatch: `gh workflow run production --ref main` re-fires CI
+  # without an empty commit when GitHub skips a push event.
+  workflow_dispatch:
+
+# Main is linear, so a newer commit always contains the older one: cancelling
+# a superseded run loses no coverage, and the deploy job only pushes built
+# assets, so the run that superseded it simply redoes the deploy.
+concurrency:
+  group: production-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_ENV: testing
+  DB_CONNECTION: sqlite
+  DB_DATABASE: ':memory:'
+  CACHE_STORE: array
+  SESSION_DRIVER: array
+  QUEUE_CONNECTION: sync
+  BROADCAST_CONNECTION: log
+
+jobs:
+  # Everything that only needs to happen once: static checks, a migration
+  # sanity check from zero, and the single Vite build the deploy consumes.
+  build:
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # PHP 8.5 and Node are installed on the runner; the shim puts the right
+      # php binary first in PATH. Composer and npm caches live on the box.
+      - name: Select PHP 8.5
+        run: echo "/opt/php-shims/8.5" >> $GITHUB_PATH
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare environment
+        run: cp .env.example .env && php artisan key:generate
+
+      # Not a test-suite requirement (the suite migrates its own in-memory
+      # database): this checks the migrations still run cleanly from zero.
+      - name: Run migrations
+        env:
+          DB_DATABASE: database/testing.sqlite
+        run: touch database/testing.sqlite && php artisan migrate --force
+
+      - name: Generate Wayfinder routes and TypeScript types
+        run: php artisan wayfinder:generate --with-form && php artisan typescript:transform
+
+      - name: Check formatting and lint
+        run: vendor/bin/pint --test && npx vp check
+
+      - name: Type check
+        run: npx vue-tsc --noEmit
+
+      - name: Static analysis
+        run: vendor/bin/phpstan analyse --memory-limit=2G --no-progress
+
+      - name: Build assets
+        run: npm run build
+
+      # The deploy job pushes exactly these files; nothing is built twice.
+      - name: Upload built assets
+        uses: actions/upload-artifact@v7
+        with:
+          name: built-assets
+          path: |
+            public/build
+            resources/js/types/generated.d.ts
+            resources/js/lib/enums.ts
+          retention-days: 1
+
+  pest:
+    runs-on: [self-hosted, linux, x64]
+    needs: [build]
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Select PHP 8.5
+        run: echo "/opt/php-shims/8.5" >> $GITHUB_PATH
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare environment
+        run: cp .env.example .env && php artisan key:generate
+
+      # The runner has two cores; four workers cost nothing extra because the
+      # suite is I/O-bound on an in-memory database.
+      - name: Run Pest
+        run: ./vendor/bin/pest --parallel --processes=4 --colors=always
+
+  deploy:
+    runs-on: [self-hosted, linux, x64]
+    needs: [build, pest]
+    timeout-minutes: 10
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download built assets
+        uses: actions/download-artifact@v8
+        with:
+          name: built-assets
+          path: .
+
+      # A deploy replaces public/build wholesale, so a tab opened before the
+      # deploy would 404 on the hashed chunk it still dynamic-imports. Carry
+      # the previous build's chunks forward and prune back to two builds.
+      - name: Retain previous build's chunks
+        run: |
+          set -uo pipefail
+          find public/build/assets -type f -printf '%f\n' | sort -u > /tmp/current-assets.txt
+          git fetch --no-tags --depth=1 origin deploy 2>/dev/null || true
+          if git cat-file -e FETCH_HEAD:public/build/manifest.json 2>/dev/null; then
+            git archive FETCH_HEAD -- public/build/assets 2>/dev/null | tar -x --skip-old-files 2>/dev/null || true
+            git show FETCH_HEAD:public/build/manifest.json > /tmp/prev-manifest.json 2>/dev/null || true
+          fi
+          node .github/scripts/prune-build-assets.mjs /tmp/current-assets.txt /tmp/prev-manifest.json
+
+      # Forge auto-deploys the `deploy` branch (zero downtime, see CLAUDE.md).
+      - name: Push built assets to the deploy branch
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git checkout -B deploy
+          git add -f public/build resources/js/types/generated.d.ts resources/js/lib/enums.ts
+          git commit -m "Build front-end assets" || echo "Nothing to commit"
+          git push -f origin deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
