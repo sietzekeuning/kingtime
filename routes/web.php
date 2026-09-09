@@ -12,14 +12,23 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/dashboard')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
+    // -- Dashboard ---------------------------------------------------------
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
+    // -- Time entries ------------------------------------------------------
     Route::resource('time-entries', TimeEntryController::class)->except(['show']);
+
+    // -- Projects & tasks --------------------------------------------------
     Route::resource('projects', ProjectController::class)->except(['show']);
-    Route::resource('clients', ClientController::class)->except(['show']);
     Route::resource('tasks', TaskController::class)->except(['show']);
+
+    // -- Clients -----------------------------------------------------------
+    Route::resource('clients', ClientController::class)->except(['show']);
+
+    // -- Invoices ----------------------------------------------------------
     Route::resource('invoices', InvoiceController::class)->only(['index', 'show', 'destroy']);
 
+    // -- Integrations (Harvest, Moneybird) ---------------------------------
     Route::get('settings/integrations', [IntegrationsController::class, 'edit'])->name('integrations.edit');
 });
 
