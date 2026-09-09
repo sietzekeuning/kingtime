@@ -55,3 +55,35 @@ export function formatEuro(value: string | number | null | undefined): string {
 
     return euroCents.format(amount);
 }
+
+const dateFormatter = new Intl.DateTimeFormat('nl-NL', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+});
+
+/**
+ * "2026-08-03" → "3 aug 2026". Takes the Y-m-d strings our DTOs put on the
+ * wire; null/undefined/invalid render as an empty string.
+ */
+export function formatDate(value: string | null | undefined): string {
+    if (!value) {
+        return '';
+    }
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime()) ? '' : dateFormatter.format(date);
+}
+
+/** "3 aug 2026 to 31 aug 2026" for an invoice period; empty when unset. */
+export function formatPeriod(
+    from: string | null | undefined,
+    to: string | null | undefined,
+): string {
+    if (!from || !to) {
+        return '';
+    }
+
+    return `${formatDate(from)} to ${formatDate(to)}`;
+}

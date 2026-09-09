@@ -1,0 +1,16 @@
+{
+    "id": "422000000000000001",
+    "administration_id": "123456789",
+    "contact_id": "411000000000000002",
+    "invoice_id": "2026-0042",
+    "draft_id": null,
+    "state": "late",
+    "invoice_date": "2026-09-10",
+    "due_date": "2026-09-24",
+    "reference": "August 2026",
+    "currency": "EUR",
+    "prices_are_incl_tax": false,
+    "total_price_excl_tax": "332.50",
+    "total_price_incl_tax": "402.33",
+    "details": []
+}

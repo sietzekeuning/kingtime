@@ -9,6 +9,8 @@ use App\Domain\Invoice\Enums\InvoiceStatus;
 use App\Domain\Invoice\Models\Invoice;
 use App\Domain\Shared\Data\Attributes\Derived;
 use App\Domain\Shared\Data\BaseData;
+use App\Domain\Time\Data\TimeEntryData;
+use App\Domain\Time\Models\TimeEntry;
 use Illuminate\Support\Collection;
 use Spatie\LaravelData\Attributes\DataCollectionOf;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -18,6 +20,7 @@ class InvoiceData extends BaseData
 {
     /**
      * @param  Collection<int, InvoiceLineData>|null  $lines
+     * @param  Collection<int, TimeEntryData>|null  $time_entries
      */
     public function __construct(
         public ?int $id,
@@ -32,6 +35,7 @@ class InvoiceData extends BaseData
         public string $total,
         public string $currency,
         public ?string $notes = null,
+        public ?string $specification = null,
         public ?string $moneybird_invoice_id = null,
         public ?string $moneybird_url = null,
         #[Derived]
@@ -48,12 +52,17 @@ class InvoiceData extends BaseData
         public ?string $total_hours = null,
         #[Derived]
         public ?int $time_entries_count = null,
+        /** @var Collection<int, TimeEntryData>|null */
+        #[DataCollectionOf(TimeEntryData::class)]
+        #[Derived]
+        public ?Collection $time_entries = null,
     ) {}
 
     public static function fromModel(Invoice $invoice): self
     {
         $client = $invoice->relationLoaded('client') ? $invoice->client : null;
         $lines = $invoice->relationLoaded('lines') ? $invoice->lines : null;
+        $timeEntries = $invoice->relationLoaded('timeEntries') ? $invoice->timeEntries : null;
 
         return new self(
             id: $invoice->id,
@@ -68,6 +77,7 @@ class InvoiceData extends BaseData
             total: $invoice->total,
             currency: $invoice->currency,
             notes: $invoice->notes,
+            specification: $invoice->specification,
             moneybird_invoice_id: $invoice->moneybird_invoice_id,
             moneybird_url: $invoice->moneybird_url,
             created_at: $invoice->created_at?->toIso8601String(),
@@ -75,7 +85,8 @@ class InvoiceData extends BaseData
             client_name: $client?->name,
             lines: $lines?->map(fn ($line) => InvoiceLineData::fromModel($line)),
             total_hours: $lines !== null ? number_format((float) $lines->sum('quantity'), 2, '.', '') : null,
-            time_entries_count: $invoice->getAttribute('time_entries_count'),
+            time_entries_count: $invoice->hasAttribute('time_entries_count') ? $invoice->getAttribute('time_entries_count') : $timeEntries?->count(),
+            time_entries: $timeEntries?->map(fn (TimeEntry $entry) => TimeEntryData::fromModel($entry)),
         );
     }
 }

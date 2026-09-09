@@ -1,0 +1,12 @@
+{
+    "id": "411000000000000002",
+    "administration_id": "123456789",
+    "company_name": "Acme Corporation",
+    "firstname": "",
+    "lastname": "",
+    "address1": "Main Street 1",
+    "zipcode": "1234AB",
+    "city": "Amsterdam",
+    "country": "NL",
+    "send_invoices_to_email": "billing@acme.test"
+}
