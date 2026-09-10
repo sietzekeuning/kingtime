@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+    <channel>
+        <title>Kingtime for Mac</title>
+        <link>https://kingtime.nl/download</link>
+        <description>Updates for the Kingtime menu bar app. Served through https://kingtime.nl/download/appcast.xml; newest release first.</description>
+        <language>en</language>
+        <!-- releases -->
+    </channel>
+</rss>
