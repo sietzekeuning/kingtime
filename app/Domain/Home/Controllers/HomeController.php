@@ -21,7 +21,7 @@ class HomeController
             'canRegister' => $registrationIsOpen->handle(),
             'macRelease' => $latestMacRelease->handle(),
             'repositoryUrl' => 'https://github.com/sietzekeuning/kingtime',
-            'macRepositoryUrl' => sprintf('https://github.com/%s', config('kingtime.mac.repository')),
+            'macRepositoryUrl' => sprintf('https://github.com/%s/tree/master/mac', config('kingtime.mac.repository')),
         ]);
     }
 }

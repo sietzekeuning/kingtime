@@ -55,7 +55,7 @@ class GetLatestMacReleaseAction
         }
 
         return new MacReleaseData(
-            version: ltrim($release['tag_name'], 'v'),
+            version: (string) preg_replace('/^.*?v/', '', $release['tag_name']),
             download_url: $asset['browser_download_url'],
             release_url: $release['html_url'],
             published_on: Carbon::parse($release['published_at'])->toDateString(),

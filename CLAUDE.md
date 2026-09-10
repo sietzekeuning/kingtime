@@ -270,7 +270,7 @@ Every list is a `Table` class (`App\Domain\{Domain}\Tables\{Resource}Table exten
 
 ## Kingtime for Mac
 
-The menu bar app lives in its own repository, `sietzekeuning/kingtime-mac` (Swift, SwiftUI `MenuBarExtra`, Sparkle). It talks to `/api/desktop/*` (`App\Domain\Desktop`), signs in with email + password (+ two-factor code) for a Sanctum token, and polls `GET /api/desktop/state`. `GET /download/mac` redirects to the newest DMG on GitHub (cached an hour), `GET /download/appcast.xml` redirects to the appcast in that repository; the appcast URL is baked into every installed copy, so the route must stay. Panel screenshots on the homepage come from the app's `KINGTIME_SNAPSHOT` mode (see its README) and live in `public/images/mac/`.
+The menu bar app lives in `mac/` (Swift, AppKit status item + SwiftUI panel, Sparkle updates, xcodegen; see `mac/README.md`). It talks to `/api/desktop/*` (`App\Domain\Desktop`), signs in with email + password (+ two-factor code) for a Sanctum token, and polls `GET /api/desktop/state`. Releases are GitHub releases of this repository tagged `mac-vX.Y.Z`, cut with `mac/scripts/release.sh`; that commit only touches `mac/`, which `production.yml` ignores. `GET /download/mac` redirects to the newest DMG (cached an hour), `GET /download/appcast.xml` redirects to `mac/appcast.xml` on `master`; the appcast URL is baked into every installed copy, so the route must stay. Panel screenshots on the homepage come from the app's `KINGTIME_SNAPSHOT` mode and live in `public/images/mac/`. Pint, PHPStan, `vp check` and Vite ignore `mac/`.
 
 ## Testing and tooling
 

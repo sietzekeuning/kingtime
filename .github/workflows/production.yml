@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - master
+    # A Mac release only commits mac/project.yml and mac/appcast.xml; the
+    # website does not need a redeploy for that.
+    paths-ignore:
+      - 'mac/**'
   # Manual escape hatch: `gh workflow run production --ref master` re-fires CI
   # without an empty commit when GitHub skips a push event.
   workflow_dispatch:

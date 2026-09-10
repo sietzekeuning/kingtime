@@ -13,8 +13,8 @@
             <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <link>https://kingtime.nl/download</link>
-            <sparkle:releaseNotesLink>https://github.com/sietzekeuning/kingtime-mac/releases/tag/v1.1.0</sparkle:releaseNotesLink>
-            <enclosure url="https://github.com/sietzekeuning/kingtime-mac/releases/download/v1.1.0/Kingtime-1.1.0.zip" length="1568362" type="application/octet-stream" sparkle:edSignature="al6a6O9R2LfMH2ACbXqb3WkrpsjOjd+r2YpGMWMuo/r73FlhB7RIC4t6Cb8Muk+ynJCnrKt3WmzSAnxuPJiACw==" />
+            <sparkle:releaseNotesLink>https://github.com/sietzekeuning/kingtime/releases/tag/mac-v1.1.0</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/sietzekeuning/kingtime/releases/download/mac-v1.1.0/Kingtime-1.1.0.zip" length="1568362" type="application/octet-stream" sparkle:edSignature="al6a6O9R2LfMH2ACbXqb3WkrpsjOjd+r2YpGMWMuo/r73FlhB7RIC4t6Cb8Muk+ynJCnrKt3WmzSAnxuPJiACw==" />
         </item>
         <item>
             <title>Kingtime 1.0.0</title>
@@ -23,8 +23,8 @@
             <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <link>https://kingtime.nl/download</link>
-            <sparkle:releaseNotesLink>https://github.com/sietzekeuning/kingtime-mac/releases/tag/v1.0.0</sparkle:releaseNotesLink>
-            <enclosure url="https://github.com/sietzekeuning/kingtime-mac/releases/download/v1.0.0/Kingtime-1.0.0.zip" length="1534144" type="application/octet-stream" sparkle:edSignature="vT3HW5b3aGZcJ8y041mXcuaEOZ/ChIgAy86wvoWfvYX7wrl6LEePmMxdHiUmRdJMuebqWNdcX7Z9FbMvWuDoAA==" />
+            <sparkle:releaseNotesLink>https://github.com/sietzekeuning/kingtime/releases/tag/mac-v1.0.0</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/sietzekeuning/kingtime/releases/download/mac-v1.0.0/Kingtime-1.0.0.zip" length="1534144" type="application/octet-stream" sparkle:edSignature="vT3HW5b3aGZcJ8y041mXcuaEOZ/ChIgAy86wvoWfvYX7wrl6LEePmMxdHiUmRdJMuebqWNdcX7Z9FbMvWuDoAA==" />
         </item>
     </channel>
 </rss>

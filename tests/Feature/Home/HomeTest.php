@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia;
 
-const HOME_GITHUB_LATEST = 'api.github.com/repos/sietzekeuning/kingtime-mac/releases/latest';
+const HOME_GITHUB_LATEST = 'api.github.com/repos/sietzekeuning/kingtime/releases/latest';
 
 /**
  * @return array<string, mixed>
@@ -15,12 +15,12 @@ const HOME_GITHUB_LATEST = 'api.github.com/repos/sietzekeuning/kingtime-mac/rele
 function homeReleasePayload(): array
 {
     return [
-        'tag_name' => 'v1.2.0',
-        'html_url' => 'https://github.com/sietzekeuning/kingtime-mac/releases/tag/v1.2.0',
+        'tag_name' => 'mac-v1.2.0',
+        'html_url' => 'https://github.com/sietzekeuning/kingtime/releases/tag/mac-v1.2.0',
         'published_at' => '2026-09-10T09:00:00Z',
         'assets' => [
-            ['name' => 'Kingtime-1.2.0.zip', 'browser_download_url' => 'https://github.com/sietzekeuning/kingtime-mac/releases/download/v1.2.0/Kingtime-1.2.0.zip', 'size' => 3_000_000],
-            ['name' => 'Kingtime-1.2.0.dmg', 'browser_download_url' => 'https://github.com/sietzekeuning/kingtime-mac/releases/download/v1.2.0/Kingtime-1.2.0.dmg', 'size' => 4_200_000],
+            ['name' => 'Kingtime-1.2.0.zip', 'browser_download_url' => 'https://github.com/sietzekeuning/kingtime/releases/download/mac-v1.2.0/Kingtime-1.2.0.zip', 'size' => 3_000_000],
+            ['name' => 'Kingtime-1.2.0.dmg', 'browser_download_url' => 'https://github.com/sietzekeuning/kingtime/releases/download/mac-v1.2.0/Kingtime-1.2.0.dmg', 'size' => 4_200_000],
         ],
     ];
 }
@@ -38,7 +38,7 @@ it('shows visitors the product page with the newest Mac release', function (): v
             ->component('marketing/Home')
             ->where('canRegister', true)
             ->where('macRelease.version', '1.2.0')
-            ->where('macRelease.download_url', 'https://github.com/sietzekeuning/kingtime-mac/releases/download/v1.2.0/Kingtime-1.2.0.dmg')
+            ->where('macRelease.download_url', 'https://github.com/sietzekeuning/kingtime/releases/download/mac-v1.2.0/Kingtime-1.2.0.dmg')
             ->where('macRelease.published_on', '2026-09-10')
             ->where('macRelease.size_bytes', 4_200_000)
             ->where('repositoryUrl', 'https://github.com/sietzekeuning/kingtime'));
@@ -94,17 +94,17 @@ it('redirects the Mac download link to the newest disk image', function (): void
     Http::fake([HOME_GITHUB_LATEST => Http::response(homeReleasePayload())]);
 
     $this->get(route('download.mac'))
-        ->assertRedirect('https://github.com/sietzekeuning/kingtime-mac/releases/download/v1.2.0/Kingtime-1.2.0.dmg');
+        ->assertRedirect('https://github.com/sietzekeuning/kingtime/releases/download/mac-v1.2.0/Kingtime-1.2.0.dmg');
 });
 
 it('falls back to the releases page when there is no release to link', function (): void {
     Http::fake([HOME_GITHUB_LATEST => Http::response(['tag_name' => 'v1.0.0', 'assets' => []])]);
 
     $this->get(route('download.mac'))
-        ->assertRedirect('https://github.com/sietzekeuning/kingtime-mac/releases/latest');
+        ->assertRedirect('https://github.com/sietzekeuning/kingtime/releases/latest');
 });
 
 it('serves the Sparkle appcast from the app repository', function (): void {
     $this->get(route('download.appcast'))
-        ->assertRedirect('https://raw.githubusercontent.com/sietzekeuning/kingtime-mac/main/appcast.xml');
+        ->assertRedirect('https://raw.githubusercontent.com/sietzekeuning/kingtime/master/mac/appcast.xml');
 });

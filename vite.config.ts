@@ -39,6 +39,7 @@ export default defineConfig({
     server: {
         watch: {
             ignored: [
+                '**/mac/**',
                 '**/.agents/**',
                 '**/.claude/**',
                 '**/.cursor/**',
@@ -49,6 +50,7 @@ export default defineConfig({
     },
     lint: {
         ignorePatterns: [
+            'mac/**',
             'vendor/**',
             'node_modules/**',
             'public/**',
@@ -75,6 +77,7 @@ export default defineConfig({
         htmlWhitespaceSensitivity: 'css',
         ignorePatterns: [
             '.github/**',
+            'mac/**',
             'composer.json',
             'resources/js/components/ui/*',
             'resources/js/lib/enums.ts',

@@ -12,8 +12,10 @@
 # release with both files attached.
 #
 # The appcast is served through https://kingtime.nl/download/appcast.xml,
-# which redirects to the appcast.xml on the main branch of this repository.
-# A release is invisible to installed copies until that commit is pushed.
+# which redirects to mac/appcast.xml on the master branch of the Kingtime
+# repository. A release is invisible to installed copies until that commit
+# is pushed. Releases are tagged mac-vX.Y.Z so they stay apart from the
+# website's history.
 #
 # Needs: xcodegen, the Sparkle tools (bin/ of the Sparkle release, see
 # SPARKLE_BIN), a Developer ID Application certificate in the keychain and
@@ -24,6 +26,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+MAC_DIR=$(pwd)
 
 VERSION="${1:-}"
 LIVE=0
@@ -61,8 +64,8 @@ notarize() {
     fi
 }
 
-if [ -n "$(git status --porcelain)" ]; then
-    echo "The working tree has uncommitted changes. Commit or stash them first." >&2
+if [ -n "$(git status --porcelain -- .)" ]; then
+    echo "mac/ has uncommitted changes. Commit or stash them first." >&2
     exit 1
 fi
 
@@ -140,7 +143,8 @@ echo "==> Signing the update"
 SIGNATURE=$("$SPARKLE_BIN/sign_update" --account kingtime -p "$ZIP")
 LENGTH=$(stat -f %z "$ZIP")
 DATE=$(LC_ALL=C date -u +"%a, %d %b %Y %H:%M:%S +0000")
-URL="https://github.com/sietzekeuning/kingtime-mac/releases/download/v$VERSION/Kingtime-$VERSION.zip"
+TAG="mac-v$VERSION"
+URL="https://github.com/sietzekeuning/kingtime/releases/download/$TAG/Kingtime-$VERSION.zip"
 MIN_OS=$(sed -nE 's/^ *macOS: "([0-9.]+)"/\1/p' project.yml)
 
 ITEM=$(cat <<ITEM
@@ -151,7 +155,7 @@ ITEM=$(cat <<ITEM
             <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>$MIN_OS</sparkle:minimumSystemVersion>
             <link>https://kingtime.nl/download</link>
-            <sparkle:releaseNotesLink>https://github.com/sietzekeuning/kingtime-mac/releases/tag/v$VERSION</sparkle:releaseNotesLink>
+            <sparkle:releaseNotesLink>https://github.com/sietzekeuning/kingtime/releases/tag/$TAG</sparkle:releaseNotesLink>
             <enclosure url="$URL" length="$LENGTH" type="application/octet-stream" sparkle:edSignature="$SIGNATURE" />
         </item>
 ITEM
@@ -171,9 +175,9 @@ PY
 # -- Publish ----------------------------------------------------------------
 
 echo "==> Committing and tagging"
-git add project.yml appcast.xml
-git commit -q -m "Release $VERSION"
-git tag "v$VERSION"
+git add "$MAC_DIR/project.yml" "$MAC_DIR/appcast.xml"
+git commit -q -m "Kingtime for Mac $VERSION"
+git tag "$TAG"
 
 DRAFT=(--draft)
 if [ "$LIVE" = "1" ]; then
@@ -181,11 +185,12 @@ if [ "$LIVE" = "1" ]; then
 fi
 
 echo "==> Creating the GitHub release"
-git push -q origin HEAD "v$VERSION"
-gh release create "v$VERSION" "$DMG" "$ZIP" --title "Kingtime $VERSION" --generate-notes "${DRAFT[@]}"
+git push -q origin HEAD "$TAG"
+gh release create "$TAG" "$DMG" "$ZIP" --title "Kingtime for Mac $VERSION" \
+    --notes "The macOS menu bar app, version $VERSION. Download the .dmg; the .zip is what installed copies fetch through Sparkle." "${DRAFT[@]}"
 
 if [ "$LIVE" = "1" ]; then
-    echo "OK - v$VERSION is live. Installed copies pick it up within six hours."
+    echo "OK - $TAG is live. Installed copies pick it up within six hours."
 else
-    echo "OK - v$VERSION is a draft. Publish it on GitHub; the appcast already points at its files."
+    echo "OK - $TAG is a draft. Publish it on GitHub; the appcast already points at its files."
 fi

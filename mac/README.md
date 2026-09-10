@@ -23,13 +23,15 @@
 
 ## Install
 
-1. Download the newest `Kingtime-x.y.z.dmg` from [kingtime.nl/download/mac](https://kingtime.nl/download/mac) (or the [releases](../../releases)).
+1. Download the newest `Kingtime-x.y.z.dmg` from [kingtime.nl/download/mac](https://kingtime.nl/download/mac) (or the [releases](../../../releases), tagged `mac-vX.Y.Z`).
 2. Open it and drag **Kingtime** into **Applications**. The app is signed with a Developer ID and notarised by Apple, so it opens with a plain double-click.
 3. Kingtime has no dock icon: look for the crown clock in the menu bar. Turn on **Launch at login** in its gear menu if you want it around every day.
 
 Requires macOS 14 Sonoma or later. Universal binary (Apple silicon and Intel).
 
 ## Building
+
+The app lives in `mac/` of the Kingtime repository; run everything below from that directory.
 
 ```bash
 brew install xcodegen
@@ -64,10 +66,10 @@ scripts/release.sh 1.1.0                 # draft release on GitHub
 scripts/release.sh 1.1.0 --live          # published straight away
 ```
 
-The script bumps the version in `project.yml`, builds a universal Release build, signs the app and Sparkle's helpers with the Developer ID certificate, notarises and staples the app, wraps it in a disk image (notarised and stapled as well), signs the update zip with the EdDSA key in the keychain (account `kingtime`, made with Sparkle's `generate_keys`), adds the release to `appcast.xml`, commits, tags and creates the GitHub release with the `.dmg` and the `.zip` attached.
+The script bumps the version in `project.yml`, builds a universal Release build, signs the app and Sparkle's helpers with the Developer ID certificate, notarises and staples the app, wraps it in a disk image (notarised and stapled as well), signs the update zip with the EdDSA key in the keychain (account `kingtime`, made with Sparkle's `generate_keys`), adds the release to `appcast.xml`, commits, tags `mac-vX.Y.Z` and creates the GitHub release with the `.dmg` and the `.zip` attached. The commit only touches `mac/`, which the production workflow ignores, so a Mac release does not redeploy the website.
 
-Installed copies read the appcast through `https://kingtime.nl/download/appcast.xml`, which redirects to `appcast.xml` on the `main` branch here. So a release only reaches them once that commit is pushed, which the script does.
+Installed copies read the appcast through `https://kingtime.nl/download/appcast.xml`, which redirects to `mac/appcast.xml` on the `master` branch. So a release only reaches them once that commit is pushed, which the script does.
 
 ## How it talks to Kingtime
 
-Everything goes through the desktop API of the Kingtime web app (`/api/desktop/*`): sign in for a token, one call for the state (user, projects, running timer), start, stop, and deduct idle time. See `app/Domain/Desktop` in the [Kingtime repository](https://github.com/sietzekeuning/kingtime).
+Everything goes through the desktop API of the Kingtime web app (`/api/desktop/*`): sign in for a token, one call for the state (user, projects, running timer), start, stop, and deduct idle time. See `app/Domain/Desktop` at the root of this repository.

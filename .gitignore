@@ -33,3 +33,10 @@ yarn-error.log
 .envrc
 /db.sql
 /db.sql.gz
+
+# Kingtime for Mac (mac/): generated project and build output
+mac/build/
+mac/release/
+mac/*.xcodeproj
+mac/*.xcworkspace
+mac/**/xcuserdata/

@@ -97,7 +97,7 @@ const year = new Date().getFullYear();
                     Source
                 </a>
                 <a
-                    href="https://github.com/sietzekeuning/kingtime-mac"
+                    href="https://github.com/sietzekeuning/kingtime/tree/master/mac"
                     class="hover:text-foreground inline-flex items-center gap-1.5"
                 >
                     <FaIcon icon="apple" weight="brands" />
