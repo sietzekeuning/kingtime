@@ -16,7 +16,18 @@ final class TimerStore {
 
     static let idleThreshold: TimeInterval = 15 * 60
 
-    private(set) var phase: Phase = .loading
+    private(set) var phase: Phase = .loading {
+        didSet {
+            if phase != oldValue {
+                onPhaseChange?(phase)
+            }
+        }
+    }
+
+    /// Hooks for the app delegate: the panel opens itself the first time
+    /// there is no account, and a fresh sign-in offers launch at login.
+    var onPhaseChange: ((Phase) -> Void)?
+    var onSignedIn: (() -> Void)?
     private(set) var user: DesktopUser?
     private(set) var projects: [ProjectOption] = []
     private(set) var timer: DesktopTimer?
@@ -164,6 +175,7 @@ final class TimerStore {
             client.token = response.token
             needsTwoFactorCode = false
             await refresh()
+            onSignedIn?()
         } catch let error as KingtimeError {
             if error.message(for: "code") != nil {
                 needsTwoFactorCode = true

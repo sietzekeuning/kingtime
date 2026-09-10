@@ -6,6 +6,7 @@ struct TimerView: View {
     let updater: SPUUpdater
 
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
+    @State private var appearance = AppearanceSetting.current
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -52,6 +53,16 @@ struct TimerView: View {
                         try? LaunchAtLogin.set(enabled)
                         launchAtLogin = LaunchAtLogin.isEnabled
                     }
+                Picker(selection: $appearance) {
+                    ForEach(AppearanceSetting.allCases) { setting in
+                        Label(setting.title, systemImage: setting.symbol).tag(setting)
+                    }
+                } label: {
+                    Label("Appearance", systemImage: appearance.symbol)
+                }
+                .onChange(of: appearance) { _, setting in
+                    AppearanceSetting.current = setting
+                }
                 Button("Check for updates…") {
                     updater.checkForUpdates()
                 }
