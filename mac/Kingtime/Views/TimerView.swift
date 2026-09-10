@@ -34,7 +34,7 @@ struct TimerView: View {
 
     private var header: some View {
         HStack {
-            Image(nsImage: NSApp.applicationIconImage)
+            Image("PanelIcon")
                 .resizable()
                 .frame(width: 22, height: 22)
             Text("Kingtime")

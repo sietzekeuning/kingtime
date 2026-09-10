@@ -15,7 +15,7 @@ struct LoginView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                Image(nsImage: NSApp.applicationIconImage)
+                Image("PanelIcon")
                     .resizable()
                     .frame(width: 36, height: 36)
 

@@ -52,7 +52,7 @@ To talk to a local Kingtime instead of kingtime.nl:
 defaults write nl.kingtime.mac serverURL http://kingtime.test
 ```
 
-`KINGTIME_SNAPSHOT=/tmp/panel.png build/Build/Products/Debug/Kingtime.app/Contents/MacOS/Kingtime` renders the panel to a PNG and quits (add `KINGTIME_APPEARANCE=light` or `dark`, `KINGTIME_SIGNED_OUT=1`), which is how the screenshots in this README and on kingtime.nl are made.
+`KINGTIME_SNAPSHOT=/tmp/panel.png build/Build/Products/Debug/Kingtime.app/Contents/MacOS/Kingtime` renders the panel to a PNG and quits (add `KINGTIME_APPEARANCE=light` or `dark`, `KINGTIME_SIGNED_OUT=1` for the sign-in form, `KINGTIME_DEMO=1` for a made-up running timer without a token or a server), which is how the screenshots in this README and on kingtime.nl are made.
 
 ## Releasing
 

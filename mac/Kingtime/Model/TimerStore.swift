@@ -28,6 +28,12 @@ final class TimerStore {
     /// there is no account, and a fresh sign-in offers launch at login.
     var onPhaseChange: ((Phase) -> Void)?
     var onSignedIn: (() -> Void)?
+
+    /// Screenshot aid: behave as if no token were stored.
+    var forceSignedOut = false
+
+    /// Screenshot aid: made-up data, no server (see loadDemo).
+    private var isDemo = false
     private(set) var user: DesktopUser?
     private(set) var projects: [ProjectOption] = []
     private(set) var timer: DesktopTimer?
@@ -131,7 +137,12 @@ final class TimerStore {
     // MARK: - Lifecycle
 
     func start() {
-        client.token = Keychain.read("token")
+        if ProcessInfo.processInfo.environment["KINGTIME_DEMO"] != nil {
+            loadDemo()
+            return
+        }
+
+        client.token = forceSignedOut ? nil : Keychain.read("token")
 
         idleMonitor.threshold = Self.idleThreshold
         idleMonitor.isArmed = { [weak self] in self?.isRunning ?? false }
@@ -154,6 +165,30 @@ final class TimerStore {
         Task {
             await refresh(quietly: true)
         }
+    }
+
+    /// Fixed, made-up data for the screenshots on kingtime.nl, so they show
+    /// no real client and need neither a token nor a server.
+    private func loadDemo() {
+        isDemo = true
+
+        let projects = [
+            ProjectOption(id: 1, name: "Website redesign", code: "ACME-1", color: "#F2622A", clientId: 1, clientName: "Acme", isBillable: true),
+            ProjectOption(id: 2, name: "Support", code: nil, color: "#3B82F6", clientId: 1, clientName: "Acme", isBillable: true),
+            ProjectOption(id: 3, name: "Brand identity", code: nil, color: "#10B981", clientId: 2, clientName: "Globex", isBillable: true),
+        ]
+
+        apply(DesktopState(
+            user: DesktopUser(id: 1, name: "Sietze", email: "sietze@example.com"),
+            projects: projects,
+            timer: DesktopTimer(
+                id: 1, projectId: 1, projectName: "Website redesign", projectColor: "#F2622A",
+                clientId: 1, clientName: "Acme", spentOn: "2026-09-10", notes: "Homepage hero",
+                secondsBeforeTimer: 0, timerStartedAt: Date().addingTimeInterval(-(1 * 3600 + 23 * 60 + 45))
+            ),
+            serverTime: Date()
+        ))
+        phase = .signedIn
     }
 
     // MARK: - Session
@@ -209,6 +244,10 @@ final class TimerStore {
     // MARK: - Timer
 
     func refresh(quietly: Bool = false) async {
+        guard !isDemo else {
+            return
+        }
+
         guard client.token != nil else {
             phase = .signedOut
             return

@@ -34,8 +34,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppearanceSetting.current.apply()
 
+        // Screenshot aids. KINGTIME_SIGNED_OUT shows the sign-in form without
+        // touching the keychain; KINGTIME_DEMO shows a made-up running timer.
         if ProcessInfo.processInfo.environment["KINGTIME_SIGNED_OUT"] != nil {
-            Keychain.delete("token")
+            store.forceSignedOut = true
         }
 
         installStatusItem()
@@ -59,7 +61,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if ProcessInfo.processInfo.environment["KINGTIME_DEBUG"] != nil {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [self] in
                 let frame = statusItem.button?.window?.frame ?? .zero
-                FileHandle.standardError.write(Data("status item frame: \(frame) visible: \(statusItem.isVisible)\n".utf8))
+                FileHandle.standardError.write(Data("status item frame: \(frame) visible: \(statusItem.isVisible) notes: \(store.notes) project: \(String(describing: store.selectedProjectId))\n".utf8))
             }
         }
     }
@@ -186,14 +188,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// the panel into a window, writes it to that path and quits. Screen
     /// recording permission is not needed, which a screenshot would be.
     private func snapshotPanel(to path: String) {
-        let view = NSHostingView(rootView: MenuBarView(store: store, updater: updaterController.updater))
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 10), styleMask: [.titled], backing: .buffered, defer: false)
+        // The window is shown but never made key: a key window would take
+        // the keyboard away from whoever is typing elsewhere, and select
+        // the first text field. Controls are told to draw as active instead.
+        let root = MenuBarView(store: store, updater: updaterController.updater)
+            .environment(\.controlActiveState, .key)
+        let view = NSHostingView(rootView: root)
+        let window = SnapshotWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 10), styleMask: [.titled], backing: .buffered, defer: false)
         window.contentView = view
         window.setContentSize(view.fittingSize)
         window.center()
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        window.orderFront(nil)
         snapshotWindow = window
+
+        // AppKit still hands the first text field a field editor; drop it,
+        // or the notes show up with a grey selection.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            window.makeFirstResponder(nil)
+        }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             window.setContentSize(view.fittingSize)
@@ -209,4 +221,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
         }
     }
+}
+
+/// A window that can never take the keyboard, so rendering a snapshot
+/// does not swallow whatever someone is typing in another app.
+private final class SnapshotWindow: NSWindow {
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
 }

@@ -5,10 +5,11 @@
       <stop offset="1" stop-color="#E9521A"/>
     </linearGradient>
   </defs>
+  <!-- Same artwork as public/favicon.svg, inset the way macOS icons are. -->
   <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#bg)"/>
-  <g fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" transform="translate(100 100) scale(12.875)">
-    <circle cx="32" cy="36" r="17"/>
-    <path d="M32 26v10l7 6"/>
-    <path d="M20 12l5 4 7-8 7 8 5-4"/>
+  <g transform="translate(100 100) scale(12.875) translate(8 8) scale(2)" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m6 3.25 3.25 2L12 1.75l2.75 3.5 3.25-2-1.25 4.5h-9.5Z" fill="#FFFFFF" stroke="none"/>
+    <path d="M6.25 9.5a7.5 7.5 0 1 0 11.5 0"/>
+    <path d="M12 10.75v4l3 1.75"/>
   </g>
 </svg>

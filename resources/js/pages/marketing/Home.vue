@@ -184,17 +184,21 @@ const macPoints = [
                             class="ml-auto flex items-center gap-1.5 rounded-md bg-white/15 px-2 py-0.5"
                         >
                             <svg
-                                viewBox="0 0 64 64"
+                                viewBox="0 0 24 24"
                                 class="size-3.5"
                                 fill="none"
                                 stroke="currentColor"
-                                stroke-width="6"
+                                stroke-width="2.2"
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                             >
-                                <circle cx="32" cy="38" r="18" />
-                                <path d="M32 28v10l7 6" />
-                                <path d="M19 12l5.5 4.5 7.5-9 7.5 9 5.5-4.5" />
+                                <path
+                                    d="m6 3.25 3.25 2L12 1.75l2.75 3.5 3.25-2-1.25 4.5h-9.5Z"
+                                    fill="currentColor"
+                                    stroke="none"
+                                />
+                                <path d="M6.25 9.5a7.5 7.5 0 1 0 11.5 0" />
+                                <path d="M12 10.75v4l3 1.75" />
                             </svg>
                             <span class="tabular-nums">1:23</span>
                         </span>
