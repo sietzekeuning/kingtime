@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import FaIcon from '@/components/FaIcon.vue';
+import ThemeToggle from '@/components/ThemeToggle.vue';
 import RunningTimerWidget from '@/components/time/RunningTimerWidget.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,8 @@ const { getInitials } = useInitials();
                     Log time
                 </Link>
             </Button>
+            <ThemeToggle />
+
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                     <button

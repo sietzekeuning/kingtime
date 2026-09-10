@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import FaIcon from '@/components/FaIcon.vue';
+import ThemeToggle from '@/components/ThemeToggle.vue';
 import { dashboard, home, login, register } from '@/routes';
 
 /**
@@ -50,6 +51,7 @@ const year = new Date().getFullYear();
                     <FaIcon icon="github" weight="brands" />
                     GitHub
                 </a>
+                <ThemeToggle />
                 <Link
                     v-if="isSignedIn"
                     :href="dashboard()"
