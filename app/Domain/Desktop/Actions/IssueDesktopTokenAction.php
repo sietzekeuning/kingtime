@@ -30,10 +30,6 @@ class IssueDesktopTokenAction
             throw ValidationException::withMessages(['email' => __('auth.failed')]);
         }
 
-        if ($user->email_verified_at === null) {
-            throw ValidationException::withMessages(['email' => 'Verify your email address in the web app first.']);
-        }
-
         if ($user->hasEnabledTwoFactorAuthentication()) {
             $this->verifyTwoFactorCode($user, $code);
         }

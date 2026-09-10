@@ -53,10 +53,10 @@ it('rejects a wrong password without leaking whether the account exists', functi
     expect($this->user->tokens()->count())->toBe(0);
 });
 
-it('refuses an account whose email is not verified yet', function (): void {
+it('signs in an account whose email is not verified yet', function (): void {
     $this->user->forceFill(['email_verified_at' => null])->save();
 
-    desktopSignIn()->assertUnprocessable()->assertJsonValidationErrors('email');
+    desktopSignIn()->assertCreated();
 });
 
 it('asks for the two-factor code and accepts a valid one or a recovery code', function (): void {
