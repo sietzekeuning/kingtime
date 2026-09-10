@@ -1,0 +1,68 @@
+name: Kingtime
+options:
+  bundleIdPrefix: nl.kingtime
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.9.0
+settings:
+  base:
+    MARKETING_VERSION: "1.1.0"
+    CURRENT_PROJECT_VERSION: 3
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: 7Q6S4366TL
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "Developer ID Application"
+    ENABLE_HARDENED_RUNTIME: YES
+    ARCHS: "arm64 x86_64"
+    ONLY_ACTIVE_ARCH: NO
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    SWIFT_STRICT_CONCURRENCY: minimal
+targets:
+  Kingtime:
+    type: application
+    platform: macOS
+    sources:
+      - path: Kingtime
+    dependencies:
+      - package: Sparkle
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: nl.kingtime.mac
+        PRODUCT_NAME: Kingtime
+        INFOPLIST_KEY_LSUIElement: YES
+    info:
+      path: Kingtime/Info.plist
+      properties:
+        CFBundleName: Kingtime
+        CFBundleDisplayName: Kingtime
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSUIElement: true
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        LSApplicationCategoryType: public.app-category.productivity
+        NSHumanReadableCopyright: "© Sietze Keuning. MIT licensed."
+        SUFeedURL: https://kingtime.nl/download/appcast.xml
+        SUPublicEDKey: Z6TPIQAnAQSZZzZjI39mVH3ZTyN/h4e3J6IEE3FAUvk=
+        SUEnableAutomaticChecks: true
+        SUAutomaticallyUpdate: true
+        SUScheduledCheckInterval: 21600
+        # A development build may talk to a Herd site over plain http.
+        NSAppTransportSecurity:
+          NSExceptionDomains:
+            kingtime.test:
+              NSExceptionAllowsInsecureHTTPLoads: true
+schemes:
+  Kingtime:
+    build:
+      targets:
+        Kingtime: all
+    run:
+      config: Debug
+    archive:
+      config: Release
