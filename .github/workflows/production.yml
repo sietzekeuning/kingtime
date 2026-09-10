@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # PHP 8.5 and Node are installed on the runner; the shim puts the right
       # php binary first in PATH. Composer and npm caches live on the box.
@@ -102,7 +102,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Select PHP 8.5
         run: echo "/opt/php-shims/8.5" >> $GITHUB_PATH
@@ -131,7 +131,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Select PHP 8.5
         run: echo "/opt/php-shims/8.5" >> $GITHUB_PATH
@@ -180,7 +180,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download built assets
         uses: actions/download-artifact@v8
