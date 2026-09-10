@@ -15,6 +15,11 @@ export default defineConfig({
                 bunny('Instrument Sans', {
                     weights: [400, 500, 600, 700],
                 }),
+                // Display face of the product page (pairs with Instrument Sans).
+                bunny('Instrument Serif', {
+                    weights: [400],
+                    styles: ['normal', 'italic'],
+                }),
             ],
         }),
         inertia(),

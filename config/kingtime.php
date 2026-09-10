@@ -15,4 +15,20 @@ return [
 
     'allow_registration' => (bool) env('KINGTIME_ALLOW_REGISTRATION', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Kingtime for Mac
+    |--------------------------------------------------------------------------
+    |
+    | The menu bar app lives in its own repository and is published as GitHub
+    | releases. The homepage links the newest disk image, and the app's
+    | updater (Sparkle) reads the appcast through kingtime.nl/download.
+    |
+    */
+
+    'mac' => [
+        'repository' => env('KINGTIME_MAC_REPOSITORY', 'sietzekeuning/kingtime-mac'),
+        'appcast_url' => env('KINGTIME_MAC_APPCAST_URL', 'https://raw.githubusercontent.com/sietzekeuning/kingtime-mac/main/appcast.xml'),
+    ],
+
 ];

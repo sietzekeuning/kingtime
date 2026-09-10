@@ -55,6 +55,40 @@ tax_rate_id: string | null,
 ledger_account_id: string | null,
 workflow_id: string | null,
 };
+export type MacReleaseData = {
+version: string,
+download_url: string,
+release_url: string,
+published_on: string,
+size_bytes: number,
+};
+export type DesktopStateData = {
+user: DesktopUserData,
+projects: ProjectOptionData[],
+timer: DesktopTimerData | null,
+server_time: string,
+};
+export type DesktopTokenData = {
+token: string,
+user: DesktopUserData,
+};
+export type DesktopTimerData = {
+id: number,
+project_id: number,
+project_name: string,
+project_color: string | null,
+client_id: number,
+client_name: string,
+spent_on: string,
+notes: string | null,
+seconds_before_timer: number,
+timer_started_at: string,
+};
+export type DesktopUserData = {
+id: number,
+name: string,
+email: string,
+};
 export type UserData = {
 id: number,
 name: string,

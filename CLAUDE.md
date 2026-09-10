@@ -231,7 +231,7 @@ Kingtime is an open-source time tracker for freelancers: a Harvest-style hour re
 
 All PHP lives in `app/Domain/{Domain}/`. Never add files to `app/` root (`app/Providers` and `app/Http/Middleware` are the only framework exceptions).
 
-Domains: `Client`, `Project` (projects), `Time` (time entries, timer), `Invoice`, `Harvest`, `Moneybird`, `Mcp`, `Dashboard`, `User`, `Shared`.
+Domains: `Client`, `Project` (projects), `Time` (time entries, timer), `Invoice`, `Harvest`, `Moneybird`, `Mcp`, `Dashboard`, `Reports`, `Desktop` (the JSON API behind the Mac menu bar app, the download links and the release lookup), `Home` (the public product page), `User`, `Shared`.
 
 Per domain: `Models`, `Data` (DTOs), `Tables`, `Controllers`, `Actions`, `Services`, `Enums`, `Commands`, `Jobs`, `Requests`. If unsure, use `Shared`.
 
@@ -267,6 +267,10 @@ Every list is a `Table` class (`App\Domain\{Domain}\Tables\{Resource}Table exten
 - Non-Inertia requests (polling, JSON endpoints) use `useHttp` from `@inertiajs/vue3`, never `fetch`/`axios`.
 - Shared primitives first: `PageHeader`, `StatusBadge`, `MetricCard`, `EmptyState`, `EnumSelect`, `formatEuro`, `formatHours`, `formatDate`. Extract on the second copy.
 - Light theme is the design (see the dashboard mock: warm off-white page, white cards with `border-border`, orange primary). Dark mode tokens exist and must keep working, so use theme tokens (`bg-card`, `text-muted-foreground`), never raw grays.
+
+## Kingtime for Mac
+
+The menu bar app lives in its own repository, `sietzekeuning/kingtime-mac` (Swift, SwiftUI `MenuBarExtra`, Sparkle). It talks to `/api/desktop/*` (`App\Domain\Desktop`), signs in with email + password (+ two-factor code) for a Sanctum token, and polls `GET /api/desktop/state`. `GET /download/mac` redirects to the newest DMG on GitHub (cached an hour), `GET /download/appcast.xml` redirects to the appcast in that repository; the appcast URL is baked into every installed copy, so the route must stay. Panel screenshots on the homepage come from the app's `KINGTIME_SNAPSHOT` mode (see its README) and live in `public/images/mac/`.
 
 ## Testing and tooling
 

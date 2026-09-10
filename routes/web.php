@@ -3,9 +3,11 @@
 use App\Domain\Client\Controllers\ClientArchiveController;
 use App\Domain\Client\Controllers\ClientController;
 use App\Domain\Dashboard\Controllers\DashboardController;
+use App\Domain\Desktop\Controllers\MacDownloadController;
 use App\Domain\Harvest\Controllers\HarvestConnectionController;
 use App\Domain\Harvest\Controllers\HarvestImportController;
 use App\Domain\Harvest\Controllers\HarvestImportProgressController;
+use App\Domain\Home\Controllers\HomeController;
 use App\Domain\Invoice\Controllers\InvoiceController;
 use App\Domain\Invoice\Controllers\InvoicePdfController;
 use App\Domain\Invoice\Controllers\InvoicePrepareController;
@@ -23,7 +25,14 @@ use App\Domain\Time\Controllers\TimesheetRowController;
 use App\Domain\User\Controllers\Settings\IntegrationsController;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/dashboard')->name('home');
+Route::get('/', HomeController::class)->name('home');
+
+// -- Kingtime for Mac ------------------------------------------------------
+// The download link always points at the newest release; the appcast is
+// what installed copies poll for updates (Sparkle), so its address is
+// baked into the app and must stay.
+Route::get('download/mac', MacDownloadController::class)->name('download.mac');
+Route::redirect('download/appcast.xml', config('kingtime.mac.appcast_url'))->name('download.appcast');
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
     // -- Dashboard ---------------------------------------------------------
