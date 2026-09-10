@@ -14,12 +14,18 @@ use Throwable;
  * The newest release of the Mac app, read from GitHub and cached for an
  * hour. Null when GitHub cannot be reached or nothing is released yet; the
  * homepage then links the releases page instead of a disk image.
+ *
+ * The cache holds a plain array, not the DTO: an object serialised by one
+ * release and read by the next came back as __PHP_Incomplete_Class.
  */
 class GetLatestMacReleaseAction
 {
     public function handle(): ?MacReleaseData
     {
-        return Cache::remember('kingtime.mac.latest-release', now()->addHour(), fn () => $this->fetch());
+        /** @var array<string, mixed>|null $release */
+        $release = Cache::remember('kingtime.mac.latest-release.v2', now()->addHour(), fn () => $this->fetch()?->toArray());
+
+        return is_array($release) ? MacReleaseData::from($release) : null;
     }
 
     private function fetch(): ?MacReleaseData
