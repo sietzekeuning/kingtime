@@ -56,10 +56,29 @@ it('keeps the page up when GitHub is down and says sign-up is closed once someon
             ->where('macRelease', null));
 });
 
-it('sends a signed-in user straight to the dashboard', function (): void {
-    $this->actingAs(User::factory()->create())
+it('shows a signed-in user the page as well, with their account in the shared props', function (): void {
+    Http::fake([HOME_GITHUB_LATEST => Http::response(null, 503)]);
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
         ->get(route('home'))
-        ->assertRedirect(route('dashboard'));
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('marketing/Home')
+            ->where('auth.user.id', $user->id));
+});
+
+it('loads Google Tag Manager only when a container id is configured', function (): void {
+    Http::fake([HOME_GITHUB_LATEST => Http::response(null, 503)]);
+
+    config()->set('services.gtm.id', null);
+    $this->get(route('home'))->assertOk()->assertDontSee('googletagmanager.com');
+
+    config()->set('services.gtm.id', 'GTM-TEST123');
+    $this->get(route('home'))->assertOk()
+        ->assertSee('https://www.googletagmanager.com/gtm.js?id=', false)
+        ->assertSee("'GTM-TEST123'", false)
+        ->assertSee('https://www.googletagmanager.com/ns.html?id=GTM-TEST123', false);
 });
 
 it('caches the release lookup for an hour', function (): void {

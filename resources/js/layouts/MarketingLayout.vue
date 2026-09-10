@@ -3,7 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import FaIcon from '@/components/FaIcon.vue';
-import { home, login, register } from '@/routes';
+import { dashboard, home, login, register } from '@/routes';
 
 /**
  * Shell of the public pages (kingtime.nl for visitors): a slim top bar with
@@ -12,6 +12,7 @@ import { home, login, register } from '@/routes';
  */
 const page = usePage<{ canRegister?: boolean }>();
 const canRegister = computed(() => page.props.canRegister === true);
+const isSignedIn = computed(() => page.props.auth?.user != null);
 const year = new Date().getFullYear();
 </script>
 
@@ -50,18 +51,28 @@ const year = new Date().getFullYear();
                     GitHub
                 </a>
                 <Link
-                    :href="login()"
-                    class="text-foreground hover:bg-accent rounded-md px-3 py-1.5 font-medium transition"
+                    v-if="isSignedIn"
+                    :href="dashboard()"
+                    class="bg-foreground text-background hover:bg-foreground/90 ml-1 inline-flex items-center gap-2 rounded-md px-3.5 py-1.5 font-medium transition"
                 >
-                    Log in
+                    Go to dashboard
+                    <FaIcon icon="arrow-right" class="text-xs" />
                 </Link>
-                <Link
-                    v-if="canRegister"
-                    :href="register()"
-                    class="bg-foreground text-background hover:bg-foreground/90 ml-1 rounded-md px-3.5 py-1.5 font-medium transition"
-                >
-                    Create account
-                </Link>
+                <template v-else>
+                    <Link
+                        :href="login()"
+                        class="text-foreground hover:bg-accent rounded-md px-3 py-1.5 font-medium transition"
+                    >
+                        Log in
+                    </Link>
+                    <Link
+                        v-if="canRegister"
+                        :href="register()"
+                        class="bg-foreground text-background hover:bg-foreground/90 ml-1 rounded-md px-3.5 py-1.5 font-medium transition"
+                    >
+                        Create account
+                    </Link>
+                </template>
             </nav>
         </header>
 

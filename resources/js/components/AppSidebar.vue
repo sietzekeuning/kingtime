@@ -11,7 +11,7 @@ import {
     SidebarHeader,
     useSidebar,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { dashboard, home } from '@/routes';
 import clients from '@/routes/clients';
 import { edit as editIntegrations } from '@/routes/integrations';
 import invoices from '@/routes/invoices';
@@ -38,6 +38,7 @@ const otherNavItems: NavItem[] = [
 ];
 
 const footerNavItems: NavItem[] = [
+    { title: 'Homepage', href: home(), icon: 'globe' },
     {
         title: 'Repository',
         href: 'https://github.com/sietzekeuning/kingtime',

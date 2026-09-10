@@ -6,23 +6,17 @@ namespace App\Domain\Home\Controllers;
 
 use App\Domain\Desktop\Actions\GetLatestMacReleaseAction;
 use App\Domain\User\Actions\RegistrationIsOpenAction;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * kingtime.nl itself: the product page for visitors, the dashboard for
- * whoever is signed in.
+ * kingtime.nl itself: the product page. Signed-in users see it too, with a
+ * button to the dashboard where visitors get the sign-in links.
  */
 class HomeController
 {
-    public function __invoke(Request $request, RegistrationIsOpenAction $registrationIsOpen, GetLatestMacReleaseAction $latestMacRelease): Response|RedirectResponse
+    public function __invoke(RegistrationIsOpenAction $registrationIsOpen, GetLatestMacReleaseAction $latestMacRelease): Response
     {
-        if ($request->user() !== null) {
-            return redirect()->route('dashboard');
-        }
-
         return Inertia::render('marketing/Home', [
             'canRegister' => $registrationIsOpen->handle(),
             'macRelease' => $latestMacRelease->handle(),

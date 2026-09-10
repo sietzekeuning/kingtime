@@ -54,4 +54,12 @@ return [
         'base_url' => env('MONEYBIRD_BASE_URL', 'https://moneybird.com/api/v2'),
     ],
 
+    /*
+    | Google Tag Manager container of the public site. Leave GTM_ID empty
+    | (the default) and nothing is loaded; self-hosters stay untracked.
+    */
+    'gtm' => [
+        'id' => env('GTM_ID'),
+    ],
+
 ];

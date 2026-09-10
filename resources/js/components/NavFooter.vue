@@ -16,6 +16,11 @@ type Props = {
 };
 
 defineProps<Props>();
+
+/** Outside links (GitHub, docs) open in a new tab; our own pages do not. */
+function isExternal(item: NavItem): boolean {
+    return toUrl(item.href).startsWith('http');
+}
 </script>
 
 <template>
@@ -32,8 +37,12 @@ defineProps<Props>();
                     >
                         <a
                             :href="toUrl(item.href)"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            :target="isExternal(item) ? '_blank' : undefined"
+                            :rel="
+                                isExternal(item)
+                                    ? 'noopener noreferrer'
+                                    : undefined
+                            "
                         >
                             <FaIcon :icon="item.icon" class="text-sm" />
                             <span>{{ item.title }}</span>

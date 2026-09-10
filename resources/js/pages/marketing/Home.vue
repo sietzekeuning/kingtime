@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import FaIcon from '@/components/FaIcon.vue';
-import { login, register } from '@/routes';
+import { dashboard, login, register } from '@/routes';
 import download from '@/routes/download';
 import type { MacReleaseData } from '@/types/generated';
 
@@ -12,6 +12,8 @@ const props = defineProps<{
     repositoryUrl: string;
     macRepositoryUrl: string;
 }>();
+
+const isSignedIn = computed(() => usePage().props.auth?.user != null);
 
 const releaseLine = computed(() => {
     if (!props.macRelease) {
@@ -126,7 +128,15 @@ const macPoints = [
                         Download for Mac
                     </a>
                     <Link
-                        v-if="canRegister"
+                        v-if="isSignedIn"
+                        :href="dashboard()"
+                        class="border-border bg-card hover:bg-accent inline-flex items-center justify-center gap-2 rounded-lg border px-5 py-3 text-sm font-semibold transition"
+                    >
+                        Go to your dashboard
+                        <FaIcon icon="arrow-right" class="text-xs" />
+                    </Link>
+                    <Link
+                        v-else-if="canRegister"
                         :href="register()"
                         class="border-border bg-card hover:bg-accent inline-flex items-center justify-center gap-2 rounded-lg border px-5 py-3 text-sm font-semibold transition"
                     >
@@ -419,18 +429,27 @@ const macPoints = [
             </div>
             <div class="flex shrink-0 flex-col gap-3 sm:flex-row">
                 <Link
-                    v-if="canRegister"
-                    :href="register()"
+                    v-if="isSignedIn"
+                    :href="dashboard()"
                     class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition"
                 >
-                    Create your account
+                    Go to your dashboard
                 </Link>
-                <Link
-                    :href="login()"
-                    class="border-border hover:bg-accent inline-flex items-center justify-center gap-2 rounded-lg border px-5 py-3 text-sm font-semibold transition"
-                >
-                    Log in
-                </Link>
+                <template v-else>
+                    <Link
+                        v-if="canRegister"
+                        :href="register()"
+                        class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition"
+                    >
+                        Create your account
+                    </Link>
+                    <Link
+                        :href="login()"
+                        class="border-border hover:bg-accent inline-flex items-center justify-center gap-2 rounded-lg border px-5 py-3 text-sm font-semibold transition"
+                    >
+                        Log in
+                    </Link>
+                </template>
             </div>
         </div>
     </section>
