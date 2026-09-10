@@ -191,8 +191,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // The window is shown but never made key: a key window would take
         // the keyboard away from whoever is typing elsewhere, and select
         // the first text field. Controls are told to draw as active instead.
-        let root = MenuBarView(store: store, updater: updaterController.updater)
-            .environment(\.controlActiveState, .key)
+        let kind = ProcessInfo.processInfo.environment["KINGTIME_SNAPSHOT_KIND"] ?? "panel"
+        let root = Group {
+            switch kind {
+            case "hero":
+                HeroSnapshotView(store: store, updater: updaterController.updater)
+            case "idle":
+                IdlePromptSnapshotView()
+            default:
+                MenuBarView(store: store, updater: updaterController.updater)
+            }
+        }
+        .environment(\.controlActiveState, .key)
         let view = NSHostingView(rootView: root)
         let window = SnapshotWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 10), styleMask: [.titled], backing: .buffered, defer: false)
         window.contentView = view
