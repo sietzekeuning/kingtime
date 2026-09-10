@@ -74,7 +74,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Status item
 
     private func installStatusItem() {
+        // A new status item lands at the far left of the third-party items,
+        // which on a MacBook is under the notch. macOS keeps the position
+        // per autosave name in UserDefaults, measured from the right edge;
+        // seeding a small value once puts the item next to the system
+        // icons. Dragging it (with the command key) still wins afterwards.
+        let positionKey = "NSStatusItem Preferred Position Kingtime"
+        if !UserDefaults.standard.bool(forKey: "seededStatusItemPosition") {
+            UserDefaults.standard.set(1, forKey: positionKey)
+            UserDefaults.standard.set(true, forKey: "seededStatusItemPosition")
+        }
+
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem.autosaveName = "Kingtime"
 
         if let button = statusItem.button {
             let image = NSImage(named: "MenuBarIcon")

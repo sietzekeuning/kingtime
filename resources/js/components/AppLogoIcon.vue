@@ -11,20 +11,25 @@ defineProps<{
 </script>
 
 <template>
-    <!-- A clock face with a crown notch: time, for a king. -->
     <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        stroke-width="2.25"
+        stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
+        aria-hidden="true"
+        focusable="false"
         :class="className"
         v-bind="$attrs"
     >
-        <circle cx="12" cy="13" r="8" />
-        <path d="M12 9v4l2.5 2.5" />
-        <path d="M8.5 3.5 10 5l2-2.5L14 5l1.5-1.5" />
+        <path
+            d="m6 3.25 3.25 2L12 1.75l2.75 3.5 3.25-2-1.25 4.5h-9.5Z"
+            fill="currentColor"
+            stroke="none"
+        />
+        <path d="M6.25 9.5a7.5 7.5 0 1 0 11.5 0" />
+        <path d="M12 10.75v4l3 1.75" />
     </svg>
 </template>
