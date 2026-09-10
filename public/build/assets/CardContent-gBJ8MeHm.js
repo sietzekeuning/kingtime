@@ -1,0 +1,1 @@
+import{Jt as e,cr as t,dr as n,et as r,lt as i,tn as a}from"./wayfinder-CFFIoNtG.js";import{o}from"./button-DsXRa0Vm.js";var s=i({__name:`CardContent`,props:{class:{type:[Boolean,null,String,Object,Array]}},setup(i){let s=i;return(i,c)=>(e(),r(`div`,{"data-slot":`card-content`,class:n(t(o)(`px-6`,s.class))},[a(i.$slots,`default`)],2))}});export{s as t};

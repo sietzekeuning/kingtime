@@ -1,0 +1,1 @@
+import{gr as e}from"./wayfinder-CFFIoNtG.js";import{a as t}from"./app-pIyevpM_.js";function n(){let{confirm:n}=t();async function r(t,r){r.event?.stopPropagation(),await n({title:r.title,description:r.description,confirmLabel:r.confirmLabel??`Delete`,variant:`destructive`})&&e.delete(t,{preserveScroll:!0,onSuccess:r.onSuccess})}return{confirmDelete:r}}export{n as t};
