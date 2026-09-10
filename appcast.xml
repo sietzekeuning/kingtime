@@ -6,5 +6,15 @@
         <description>Updates for the Kingtime menu bar app. Served through https://kingtime.nl/download/appcast.xml; newest release first.</description>
         <language>en</language>
         <!-- releases -->
+        <item>
+            <title>Kingtime 1.0.0</title>
+            <pubDate>Thu, 10 Sep 2026 12:00:51 +0000</pubDate>
+            <sparkle:version>2</sparkle:version>
+            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://kingtime.nl/download</link>
+            <sparkle:releaseNotesLink>https://github.com/sietzekeuning/kingtime-mac/releases/tag/v1.0.0</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/sietzekeuning/kingtime-mac/releases/download/v1.0.0/Kingtime-1.0.0.zip" length="1534144" type="application/octet-stream" sparkle:edSignature="vT3HW5b3aGZcJ8y041mXcuaEOZ/ChIgAy86wvoWfvYX7wrl6LEePmMxdHiUmRdJMuebqWNdcX7Z9FbMvWuDoAA==" />
+        </item>
     </channel>
 </rss>
