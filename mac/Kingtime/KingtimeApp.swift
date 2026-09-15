@@ -21,6 +21,7 @@ struct KingtimeApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let store = TimerStore()
+    let week = WeekStore()
 
     /// Sparkle: checks kingtime.nl/download/appcast.xml every six hours,
     /// downloads a newer build in the background and installs it on quit.
@@ -48,7 +49,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.onSignedIn = { [weak self] in
             self?.offerLaunchAtLogin()
         }
+        store.onTimerChanged = { [weak self] in
+            Task { @MainActor in await self?.week.reload() }
+        }
         store.start()
+
+        if ProcessInfo.processInfo.environment["KINGTIME_DEMO"] != nil {
+            week.loadDemo()
+        }
 
         if let path = ProcessInfo.processInfo.environment["KINGTIME_SNAPSHOT"] {
             if let appearance = ProcessInfo.processInfo.environment["KINGTIME_APPEARANCE"] {
@@ -104,7 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.behavior = .transient
         popover.animates = false
 
-        let hosting = NSHostingController(rootView: MenuBarView(store: store, updater: updaterController.updater))
+        let hosting = NSHostingController(rootView: MenuBarView(store: store, week: week, updater: updaterController.updater))
         hosting.sizingOptions = [.preferredContentSize]
         popover.contentViewController = hosting
 
@@ -152,6 +160,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // The first time the app finds no account, it opens the sign-in
         // form itself; a fresh install should not leave people hunting for
         // an icon they have never seen.
+        if phase == .signedOut {
+            week.forgetSession()
+        }
+
         if phase == .signedOut, !shownSignInPanel {
             shownSignInPanel = true
             showPanel()
@@ -195,11 +207,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let root = Group {
             switch kind {
             case "hero":
-                HeroSnapshotView(store: store, updater: updaterController.updater)
+                HeroSnapshotView(store: store, week: week, updater: updaterController.updater)
             case "idle":
                 IdlePromptSnapshotView()
             default:
-                MenuBarView(store: store, updater: updaterController.updater)
+                MenuBarView(store: store, week: week, updater: updaterController.updater)
             }
         }
         .environment(\.controlActiveState, .key)

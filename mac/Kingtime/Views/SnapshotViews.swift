@@ -8,6 +8,7 @@ import SwiftUI
 /// (our template glyph plus the running time) and the panel beneath it.
 struct HeroSnapshotView: View {
     let store: TimerStore
+    let week: WeekStore
     let updater: Sparkle.SPUUpdater
 
     var body: some View {
@@ -38,7 +39,7 @@ struct HeroSnapshotView: View {
 
             HStack {
                 Spacer()
-                MenuBarView(store: store, updater: updater)
+                MenuBarView(store: store, week: week, updater: updater)
                     .background(Color(nsColor: .windowBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.black.opacity(0.12)))

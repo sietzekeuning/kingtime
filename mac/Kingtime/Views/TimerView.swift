@@ -4,13 +4,11 @@ import SwiftUI
 struct TimerView: View {
     @Bindable var store: TimerStore
     let updater: SPUUpdater
-
-    @State private var launchAtLogin = LaunchAtLogin.isEnabled
-    @State private var appearance = AppearanceSetting.current
+    @Binding var mode: PanelMode
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            header
+            PanelHeader(store: store, updater: updater, mode: $mode)
 
             if let timer = store.timer {
                 runningCard(timer)
@@ -31,63 +29,6 @@ struct TimerView: View {
     }
 
     // MARK: - Pieces
-
-    private var header: some View {
-        HStack {
-            Image("PanelIcon")
-                .resizable()
-                .frame(width: 22, height: 22)
-            Text("Kingtime")
-                .font(.headline)
-            Spacer()
-            Menu {
-                Button("Open Kingtime in the browser") {
-                    NSWorkspace.shared.open(KingtimeClient.baseURL.appendingPathComponent("time-entries"))
-                }
-                Button("Refresh") {
-                    Task { await store.refresh() }
-                }
-                Divider()
-                Toggle("Launch at login", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { _, enabled in
-                        try? LaunchAtLogin.set(enabled)
-                        launchAtLogin = LaunchAtLogin.isEnabled
-                    }
-                Picker(selection: $appearance) {
-                    ForEach(AppearanceSetting.allCases) { setting in
-                        Label(setting.title, systemImage: setting.symbol).tag(setting)
-                    }
-                } label: {
-                    Label("Appearance", systemImage: appearance.symbol)
-                }
-                .onChange(of: appearance) { _, setting in
-                    AppearanceSetting.current = setting
-                }
-                Button("Check for updates…") {
-                    updater.checkForUpdates()
-                }
-                .disabled(!updater.canCheckForUpdates)
-                Divider()
-                if let user = store.user {
-                    Text("Signed in as \(user.email)")
-                }
-                Button("Sign out") {
-                    Task { await store.signOut() }
-                }
-                Divider()
-                Text("Version \(Bundle.main.shortVersion)")
-                Button("Quit Kingtime") {
-                    NSApp.terminate(nil)
-                }
-                .keyboardShortcut("q")
-            } label: {
-                Image(systemName: "gearshape")
-            }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
-        }
-    }
 
     private func runningCard(_ timer: DesktopTimer) -> some View {
         HStack(alignment: .center, spacing: 12) {

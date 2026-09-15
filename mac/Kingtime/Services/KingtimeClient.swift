@@ -82,6 +82,28 @@ struct KingtimeClient {
         try await send("POST", "api/desktop/timer/idle", body: ["time_entry_id": entryId, "seconds": seconds, "stop": stop])
     }
 
+    // MARK: - Week grid
+
+    /// The week around a date; today's week when the date is left out.
+    func week(around date: String?) async throws -> WeekSheet {
+        try await send("GET", "api/desktop/week", query: date.map { ["date": $0] })
+    }
+
+    /// The hours of a project on a day. `nil` hours clear the cell. Answers
+    /// with the whole week again, totals included.
+    func saveCell(projectId: Int, date: String, hours: Double?) async throws -> WeekSheet {
+        try await send("POST", "api/desktop/week/cell", body: [
+            "project_id": projectId,
+            "spent_on": date,
+            "hours": hours.map { Hours.wire($0) } ?? NSNull(),
+        ])
+    }
+
+    /// Every open entry of one project in the week. Locked hours stay.
+    func deleteRow(projectId: Int, weekStart: String) async throws -> WeekSheet {
+        try await send("DELETE", "api/desktop/week/row", body: ["project_id": projectId, "week_start": weekStart])
+    }
+
     // MARK: - Transport
 
     private struct Empty: Decodable {}
@@ -91,8 +113,15 @@ struct KingtimeClient {
         let errors: [String: [String]]?
     }
 
-    private func send<T: Decodable>(_ method: String, _ path: String, body: [String: Any]? = nil) async throws -> T {
-        var request = URLRequest(url: Self.baseURL.appendingPathComponent(path))
+    private func send<T: Decodable>(_ method: String, _ path: String, body: [String: Any]? = nil, query: [String: String]? = nil) async throws -> T {
+        var url = Self.baseURL.appendingPathComponent(path)
+
+        if let query, var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+            components.queryItems = query.map { URLQueryItem(name: $0.key, value: $0.value) }
+            url = components.url ?? url
+        }
+
+        var request = URLRequest(url: url)
         request.httpMethod = method
         request.timeoutInterval = 20
         request.setValue("application/json", forHTTPHeaderField: "Accept")

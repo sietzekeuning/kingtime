@@ -4,6 +4,9 @@ use App\Domain\Desktop\Controllers\DesktopIdleTimeController;
 use App\Domain\Desktop\Controllers\DesktopStateController;
 use App\Domain\Desktop\Controllers\DesktopTimerController;
 use App\Domain\Desktop\Controllers\DesktopTokenController;
+use App\Domain\Desktop\Controllers\DesktopWeekCellController;
+use App\Domain\Desktop\Controllers\DesktopWeekController;
+use App\Domain\Desktop\Controllers\DesktopWeekRowController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -32,5 +35,8 @@ Route::prefix('desktop')->name('desktop.')->group(function (): void {
         Route::post('timer', [DesktopTimerController::class, 'store'])->name('timer.store');
         Route::delete('timer', [DesktopTimerController::class, 'destroy'])->name('timer.destroy');
         Route::post('timer/idle', DesktopIdleTimeController::class)->name('timer.idle');
+        Route::get('week', DesktopWeekController::class)->name('week');
+        Route::post('week/cell', DesktopWeekCellController::class)->name('week.cell');
+        Route::delete('week/row', DesktopWeekRowController::class)->name('week.row');
     });
 });

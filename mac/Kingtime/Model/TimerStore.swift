@@ -29,6 +29,10 @@ final class TimerStore {
     var onPhaseChange: ((Phase) -> Void)?
     var onSignedIn: (() -> Void)?
 
+    /// Fired when the running timer starts, stops or changes: hours the
+    /// week grid is showing just moved.
+    var onTimerChanged: (() -> Void)?
+
     /// Screenshot aid: behave as if no token were stored.
     var forceSignedOut = false
 
@@ -319,6 +323,7 @@ final class TimerStore {
 
     private func apply(_ state: DesktopState) {
         let previousTimerId = timer?.id
+        let timerChanged = state.timer != timer
 
         clockOffset = state.serverTime.timeIntervalSinceNow
         user = state.user
@@ -346,6 +351,10 @@ final class TimerStore {
 
         if selectedProjectId == nil, previousTimerId == nil {
             restoreLastProject()
+        }
+
+        if timerChanged {
+            onTimerChanged?()
         }
     }
 
