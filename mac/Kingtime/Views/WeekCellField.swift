@@ -11,6 +11,8 @@ struct WeekCellField: View {
     let width: CGFloat
     let onSave: (Double?) -> Void
 
+    @Environment(\.panelTheme) private var theme
+
     @State private var draft = ""
     @State private var isInvalid = false
     @FocusState private var isFocused: Bool
@@ -25,7 +27,7 @@ struct WeekCellField: View {
 
     private var field: some View {
         TextField("", text: $draft, prompt: Text(Hours.display(0)))
-            .textFieldStyle(.roundedBorder)
+            .panelField(theme, cornerRadius: 5)
             .multilineTextAlignment(.trailing)
             .font(.system(size: 12).monospacedDigit())
             .focused($isFocused)

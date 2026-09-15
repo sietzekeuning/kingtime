@@ -3,6 +3,8 @@ import SwiftUI
 struct LoginView: View {
     let store: TimerStore
 
+    @Environment(\.panelTheme) private var theme
+
     @State private var email = ""
     @State private var password = ""
     @State private var code = ""
@@ -43,7 +45,7 @@ struct LoginView: View {
                         .focused($focused, equals: .code)
                 }
             }
-            .textFieldStyle(.roundedBorder)
+            .panelField(theme)
             .onSubmit(submit)
 
             if let message = store.errorMessage {
@@ -64,7 +66,7 @@ struct LoginView: View {
                 }
             }
             .keyboardShortcut(.defaultAction)
-            .buttonStyle(.borderedProminent)
+            .panelPrimaryButton(theme)
             .controlSize(.large)
             .disabled(store.isBusy || email.isEmpty || password.isEmpty)
 

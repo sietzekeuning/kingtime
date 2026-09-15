@@ -18,6 +18,8 @@
 | **Sign in once** | With your Kingtime email and password (and your two-factor code, if you use one). The app gets a personal API token that lives in your keychain and shows up under Settings › API tokens, where you can revoke it. |
 | **Client, project, play** | Choose a client and a project, add a note if you like, press play. Stopping and starting again on the same project continues today's entry instead of scattering the day over many small ones. |
 | **In the menu bar** | The elapsed time is shown next to the icon. Timers started on the web or through the MCP server show up here too. |
+| **Or the whole week** | The gear menu decides what a click on the icon opens: the timer (the default) or the week grid, the same Monday to Sunday timesheet as on the web. Type hours straight into the cells, add rows from the project list, walk through the weeks, and the week total sits in the corner the whole time. |
+| **Classic or glass** | Under the gear: classic panes, the way Kingtime has always looked, or glass, which hands the panes to the system. On macOS 26 and up that is Liquid Glass, so the panel is made of the same material as the rest of your Mac. |
 | **Idle detection** | After 15 minutes without a key or mouse event (sleep counts), the moment you are back the app asks: deduct that time from the entry, deduct it and stop the timer, or keep it. |
 | **Updates itself** | Sparkle checks for a new version every six hours, downloads it in the background and installs it when you quit. |
 
@@ -72,4 +74,4 @@ Installed copies read the appcast through `https://kingtime.nl/download/appcast.
 
 ## How it talks to Kingtime
 
-Everything goes through the desktop API of the Kingtime web app (`/api/desktop/*`): sign in for a token, one call for the state (user, projects, running timer), start, stop, and deduct idle time. See `app/Domain/Desktop` at the root of this repository.
+Everything goes through the desktop API of the Kingtime web app (`/api/desktop/*`): sign in for a token, one call for the state (user, projects, running timer), start, stop, deduct idle time, and for the week grid one call per week plus one per cell or row that changes. See `app/Domain/Desktop` at the root of this repository.

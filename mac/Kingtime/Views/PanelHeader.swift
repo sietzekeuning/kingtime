@@ -7,6 +7,7 @@ struct PanelHeader: View {
     let store: TimerStore
     let updater: SPUUpdater
     @Binding var mode: PanelMode
+    @Binding var theme: PanelTheme
 
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var appearance = AppearanceSetting.current
@@ -75,6 +76,17 @@ struct PanelHeader: View {
             .onChange(of: appearance) { _, setting in
                 AppearanceSetting.current = setting
             }
+            Picker(selection: $theme) {
+                ForEach(PanelTheme.allCases) { option in
+                    Label(option.title, systemImage: option.symbol).tag(option)
+                }
+            } label: {
+                Label("Panel", systemImage: theme.symbol)
+            }
+            .onChange(of: theme) { _, selected in
+                PanelTheme.current = selected
+            }
+            Text(theme.note)
             Button("Check for updates…") {
                 updater.checkForUpdates()
             }

@@ -5,10 +5,11 @@ struct TimerView: View {
     @Bindable var store: TimerStore
     let updater: SPUUpdater
     @Binding var mode: PanelMode
+    @Binding var theme: PanelTheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            PanelHeader(store: store, updater: updater, mode: $mode)
+            PanelHeader(store: store, updater: updater, mode: $mode, theme: $theme)
 
             if let timer = store.timer {
                 runningCard(timer)
@@ -53,7 +54,7 @@ struct TimerView: View {
                 .monospacedDigit()
         }
         .padding(12)
-        .background(Color.accentColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
+        .panelPane(theme)
     }
 
     private var pickers: some View {
@@ -74,7 +75,7 @@ struct TimerView: View {
             .disabled(store.selectedClientId == nil)
 
             TextField("Notes (optional)", text: $store.notes)
-                .textFieldStyle(.roundedBorder)
+                .panelField(theme)
                 .onSubmit {
                     Task { await store.pressPrimaryButton() }
                 }
@@ -98,8 +99,7 @@ struct TimerView: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(stopping ? .red : .accentColor)
+        .panelPrimaryButton(theme, tint: stopping ? .red : .accentColor)
         .controlSize(.large)
         .keyboardShortcut(.defaultAction)
         .disabled(store.isBusy || store.selectedProjectId == nil)

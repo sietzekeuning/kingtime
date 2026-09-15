@@ -9,6 +9,7 @@ struct WeekView: View {
     let week: WeekStore
     let updater: SPUUpdater
     @Binding var mode: PanelMode
+    @Binding var theme: PanelTheme
 
     private let projectWidth: CGFloat = 132
     private let dayWidth: CGFloat = 52
@@ -20,7 +21,7 @@ struct WeekView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            PanelHeader(store: store, updater: updater, mode: $mode)
+            PanelHeader(store: store, updater: updater, mode: $mode, theme: $theme)
 
             navigation
 
@@ -124,7 +125,7 @@ struct WeekView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(Color.accentColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
+        .panelPane(theme, tint: Color(hex: timer.projectColor) ?? .accentColor, cornerRadius: 8)
     }
 
     // MARK: - Grid
