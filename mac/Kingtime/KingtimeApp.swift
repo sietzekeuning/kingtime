@@ -105,11 +105,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let button = statusItem.button {
             button.image = StatusItemImage.crown
-            button.imagePosition = .imageLeading
+            button.imagePosition = .imageOnly
             button.font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
             button.target = self
             button.action = #selector(statusItemClicked)
             button.toolTip = "Kingtime"
+        }
+
+        // The menu bar hands a status item synthetic events (every click
+        // arrives at the centre of the button, and moves never arrive), so
+        // the hover follows the pointer on screen instead.
+        NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in
+            Task { @MainActor in self?.updateHover() }
+        }
+        NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
+            Task { @MainActor in self?.updateHover() }
+
+            return event
         }
 
         popover.behavior = .transient
@@ -130,6 +142,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// the clock. The pill is orange while a timer runs, grey when paused.
     private var statusItemLook: StatusItemImage.Look = .signedOut
     private var statusItemTime: String?
+    private var isHoveringSquare = false
 
     private func refreshTitle() {
         guard let button = statusItem.button else {
@@ -157,7 +170,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if previous != .signedOut, look != .signedOut, previous != look {
             animatePill(from: previous, to: look, on: button)
         } else if pillAnimation == nil {
-            button.image = StatusItemImage.image(for: look, time: time)
+            button.image = StatusItemImage.image(for: look, time: time, hovering: isHoveringSquare)
         }
 
         button.toolTip = switch look {
@@ -186,11 +199,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if linear >= 1 {
                     timer.invalidate()
                     self.pillAnimation = nil
-                    button.image = StatusItemImage.image(for: self.statusItemLook, time: self.statusItemTime)
+                    button.image = StatusItemImage.image(for: self.statusItemLook, time: self.statusItemTime, hovering: self.isHoveringSquare)
                 } else {
-                    button.image = StatusItemImage.frame(from: from, to: to, time: self.statusItemTime, progress: eased)
+                    button.image = StatusItemImage.frame(from: from, to: to, time: self.statusItemTime, progress: eased, hovering: self.isHoveringSquare)
                 }
             }
+        }
+    }
+
+    /// Whether the pointer is over the play/pause square. Measured on
+    /// screen: the click the menu bar hands a status item always sits at
+    /// the centre of the button, whatever was clicked. The image is the only content and sits centred; the padding
+    /// left of the square counts as the square.
+    private func pointerIsOverSquare(_ button: NSStatusBarButton) -> Bool {
+        let frame = button.window?.convertToScreen(button.convert(button.bounds, to: nil)) ?? .zero
+        let pointer = NSEvent.mouseLocation
+        let edge = (frame.width - (button.image?.size.width ?? 0)) / 2 + StatusItemImage.glyphWidth
+
+        return frame.insetBy(dx: 0, dy: -2).contains(pointer) && pointer.x - frame.minX <= edge
+    }
+
+    private func updateHover() {
+        guard let button = statusItem.button else {
+            return
+        }
+
+        let hovering = statusItemLook != .signedOut && pointerIsOverSquare(button)
+
+        guard hovering != isHoveringSquare else {
+            return
+        }
+
+        isHoveringSquare = hovering
+
+        if pillAnimation == nil {
+            button.image = StatusItemImage.image(for: statusItemLook, time: statusItemTime, hovering: hovering)
         }
     }
 
@@ -203,17 +246,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let point = button.convert(event.locationInWindow, from: nil)
-        let imageWidth = button.image?.size.width ?? 0
-        var imageRect = button.cell?.imageRect(forBounds: button.bounds) ?? .zero
-
-        if imageRect.width < 1 {
-            // The image sits centred in the button when there is no title.
-            imageRect = NSRect(x: (button.bounds.width - imageWidth) / 2, y: 0, width: imageWidth, height: button.bounds.height)
-        }
-
-        let buttonEdge = imageRect.minX + StatusItemImage.glyphWidth
-        let onButton = point.x <= buttonEdge && event.modifierFlags.intersection([.control, .option, .command]).isEmpty
+        let onButton = pointerIsOverSquare(button) && event.modifierFlags.intersection([.control, .option, .command]).isEmpty
 
         guard onButton else {
             togglePanel()

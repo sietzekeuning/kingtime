@@ -44,26 +44,31 @@ enum StatusItemImage {
     static let stoppedColor = NSColor(white: 0.5, alpha: 1)
     static let runningColor = NSColor(red: 0xF2 / 255, green: 0x62 / 255, blue: 0x2A / 255, alpha: 1)
 
-    static func image(for look: Look, time: String?) -> NSImage? {
+    static func image(for look: Look, time: String?, hovering: Bool = false) -> NSImage? {
         switch look {
         case .signedOut:
             return crown
         case .stopped:
-            return withPill(glyph: "play.fill", time: time, color: stoppedColor, accessibility: "Continue the timer")
+            return withPill(glyph: "play.fill", time: time, color: lit(stoppedColor, hovering), accessibility: "Continue the timer")
         case .running:
-            return withPill(glyph: "pause.fill", time: time, color: runningColor, accessibility: "Pause the timer")
+            return withPill(glyph: "pause.fill", time: time, color: lit(runningColor, hovering), accessibility: "Pause the timer")
         }
     }
 
-    /// One frame of the change from one look to the other: the pill blends
+    /// One frame of the change from one look to the other: the square blends
     /// between grey and orange, and the glyph swaps halfway.
-    static func frame(from: Look, to: Look, time: String?, progress: CGFloat) -> NSImage? {
+    static func frame(from: Look, to: Look, time: String?, progress: CGFloat, hovering: Bool = false) -> NSImage? {
         let fromColor = from == .running ? runningColor : stoppedColor
         let toColor = to == .running ? runningColor : stoppedColor
         let color = fromColor.blended(withFraction: progress, of: toColor) ?? toColor
         let glyph = (progress < 0.5 ? from : to) == .running ? "pause.fill" : "play.fill"
 
-        return withPill(glyph: glyph, time: time, color: color, accessibility: to == .running ? "Pause the timer" : "Continue the timer")
+        return withPill(glyph: glyph, time: time, color: lit(color, hovering), accessibility: to == .running ? "Pause the timer" : "Continue the timer")
+    }
+
+    /// The square under the pointer lights up a little, so it reads as a button.
+    private static func lit(_ color: NSColor, _ hovering: Bool) -> NSColor {
+        hovering ? color.blended(withFraction: 0.28, of: .white) ?? color : color
     }
 
     private static func withPill(glyph name: String, time: String?, color: NSColor, accessibility: String) -> NSImage? {
