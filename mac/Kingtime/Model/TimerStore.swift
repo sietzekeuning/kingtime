@@ -110,16 +110,6 @@ final class TimerStore {
         timer != nil
     }
 
-    /// The pickers describe the timer that runs, so the button means "stop".
-    /// Anything else, and pressing it starts (or switches to) that project.
-    var selectionMatchesRunningTimer: Bool {
-        guard let timer else {
-            return false
-        }
-
-        return timer.projectId == selectedProjectId && (timer.notes ?? "") == notes.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
     var elapsedSeconds: Int {
         timer?.elapsedSeconds(at: now.addingTimeInterval(clockOffset)) ?? 0
     }
@@ -278,14 +268,6 @@ final class TimerStore {
             if phase == .loading {
                 phase = .signedIn
             }
-        }
-    }
-
-    func pressPrimaryButton() async {
-        if isRunning, selectionMatchesRunningTimer {
-            await stopTimer()
-        } else {
-            await startTimer()
         }
     }
 

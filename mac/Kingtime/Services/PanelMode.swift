@@ -1,10 +1,9 @@
 import Foundation
 
 /// What the panel under the status item opens on: the day with its entries,
-/// the timer with its pickers, or the week grid. Stored in UserDefaults, so the choice outlives a restart.
+/// or the week grid. Stored in UserDefaults, so the choice outlives a restart.
 enum PanelMode: String, CaseIterable, Identifiable {
     case day
-    case timer
     case week
 
     var id: String { rawValue }
@@ -12,7 +11,6 @@ enum PanelMode: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .day: return "Day"
-        case .timer: return "Timer"
         case .week: return "This week"
         }
     }
@@ -20,7 +18,6 @@ enum PanelMode: String, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .day: return "list.bullet"
-        case .timer: return "stopwatch"
         case .week: return "calendar"
         }
     }
@@ -30,10 +27,12 @@ enum PanelMode: String, CaseIterable, Identifiable {
     var panelWidth: CGFloat {
         switch self {
         case .day: return 380
-        case .timer: return 320
         case .week: return 640
         }
     }
+
+    /// The sign-in form and the spinner, before there is a mode to show.
+    static let signedOutWidth: CGFloat = 320
 
     private static let key = "panelMode"
 

@@ -336,6 +336,7 @@ private struct EntryRow: View {
                     .background {
                         if isRunning {
                             Circle().fill(Color.accentColor)
+                                .background(ClockSweep())
                         } else {
                             Circle().strokeBorder(Color.accentColor, lineWidth: 1.5)
                         }
@@ -366,6 +367,36 @@ private struct EntryRowSurface: ViewModifier {
             content.background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.primary.opacity(isHighlighted ? 0.05 : 0))
             )
+        }
+    }
+}
+
+/// A clock hand sweeping around the pause button: a faint dial with a bright
+/// arc that goes round like a second hand, so the entry the clock is running
+/// on is the one that moves.
+private struct ClockSweep: View {
+    @State private var isTurning = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.accentColor.opacity(0.25), lineWidth: 2)
+
+            Circle()
+                .trim(from: 0, to: 0.22)
+                .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                .rotationEffect(.degrees(isTurning ? 270 : -90))
+        }
+        .padding(-5)
+        .onAppear {
+            guard !reduceMotion else {
+                return
+            }
+
+            withAnimation(.linear(duration: 2.4).repeatForever(autoreverses: false)) {
+                isTurning = true
+            }
         }
     }
 }

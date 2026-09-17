@@ -7,7 +7,7 @@ struct MenuBarView: View {
     let day: DayStore
     let updater: SPUUpdater
 
-    /// What a click on the status item opens: the day, the timer or the week.
+    /// What a click on the status item opens: the day or the week.
     /// The gear menu and the switch in the header both write it back.
     @State private var mode = PanelMode.current
 
@@ -27,8 +27,6 @@ struct MenuBarView: View {
                 switch mode {
                 case .day:
                     DayView(store: store, day: day, updater: updater, mode: $mode, theme: $theme)
-                case .timer:
-                    TimerView(store: store, updater: updater, mode: $mode, theme: $theme)
                 case .week:
                     WeekView(store: store, week: week, updater: updater, mode: $mode, theme: $theme)
                 }
@@ -36,7 +34,7 @@ struct MenuBarView: View {
         }
         .environment(\.panelTheme, theme)
         .panelGlass(theme)
-        .frame(width: store.phase == .signedIn ? mode.panelWidth : PanelMode.timer.panelWidth)
+        .frame(width: store.phase == .signedIn ? mode.panelWidth : PanelMode.signedOutWidth)
         .onAppear {
             mode = PanelMode.current
             theme = PanelTheme.current
