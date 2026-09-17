@@ -7,6 +7,16 @@
         <language>en</language>
         <!-- releases -->
         <item>
+            <title>Kingtime 1.5.0</title>
+            <pubDate>Thu, 17 Sep 2026 09:06:50 +0000</pubDate>
+            <sparkle:version>7</sparkle:version>
+            <sparkle:shortVersionString>1.5.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://kingtime.nl/download</link>
+            <sparkle:releaseNotesLink>https://github.com/sietzekeuning/kingtime/releases/tag/mac-v1.5.0</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/sietzekeuning/kingtime/releases/download/mac-v1.5.0/Kingtime-1.5.0.zip" length="2273741" type="application/octet-stream" sparkle:edSignature="tUGYRL3X41rvD9vjoxSiwxg1CsURaPuE4EcrkmdybkH4mB3uRu7q+saeK4X8GRFhINeAdh3C4Nar7FZgLgAqCA==" />
+        </item>
+        <item>
             <title>Kingtime 1.4.0</title>
             <pubDate>Tue, 15 Sep 2026 12:07:33 +0000</pubDate>
             <sparkle:version>6</sparkle:version>
