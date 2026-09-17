@@ -22,13 +22,9 @@ struct HeroSnapshotView: View {
                 Text("View")
                 Text("Go")
                 Spacer()
-                HStack(spacing: 5) {
-                    Image("MenuBarIcon")
-                    Text("1:23").monospacedDigit()
+                if let pill = StatusItemImage.image(for: .running, time: "1:23") {
+                    Image(nsImage: pill)
                 }
-                .padding(.horizontal, 7)
-                .padding(.vertical, 3)
-                .background(Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 5))
                 Text("Thu 10 Sep  14:02").monospacedDigit()
             }
             .font(.system(size: 13))
@@ -46,7 +42,7 @@ struct HeroSnapshotView: View {
                     .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.black.opacity(0.12)))
                     .shadow(color: .black.opacity(0.25), radius: 22, y: 12)
                     .padding(.top, 6)
-                    .padding(.trailing, 118)
+                    .padding(.trailing, 24)
             }
             .padding(.bottom, 32)
         }

@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="design/panel.png" width="320" alt="The Kingtime panel: a running timer on a project, client and project pickers, a notes field and a stop button.">
+  <img src="design/panel.png" width="380" alt="The Kingtime panel: the week with a total per day, today's entries with a play button on each, and a timer running on one of them.">
 </p>
 
 | | |

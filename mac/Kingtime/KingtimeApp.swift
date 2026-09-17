@@ -354,6 +354,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 IdlePromptSnapshotView()
             default:
                 MenuBarView(store: store, week: week, day: day, updater: updaterController.updater)
+                    .background(Color(nsColor: .windowBackgroundColor))
             }
         }
         .environment(\.controlActiveState, .key)

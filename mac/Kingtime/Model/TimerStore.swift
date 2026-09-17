@@ -184,7 +184,7 @@ final class TimerStore {
             timer: DesktopTimer(
                 id: 1, projectId: 1, projectName: "Website redesign", projectColor: "#F2622A",
                 clientId: 1, clientName: "Acme", spentOn: "2026-09-10", notes: "Homepage hero",
-                secondsBeforeTimer: 0, timerStartedAt: Date().addingTimeInterval(-(1 * 3600 + 23 * 60 + 45))
+                secondsBeforeTimer: 0, timerStartedAt: Date().addingTimeInterval(-(1 * 3600 + 23 * 60 + 8))
             ),
             lastEntry: nil,
             serverTime: Date()

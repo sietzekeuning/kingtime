@@ -30,13 +30,13 @@ const features = [
         icon: 'stopwatch',
         image: '/images/site/timesheet-card.png',
         title: 'Timesheet and timer',
-        text: 'A Monday to Sunday week strip with totals per day, a timer that keeps running on every page, and a filterable table of every hour you ever logged.',
+        text: 'A Monday to Sunday week with totals per day, a timer that keeps running on every page, and a filterable table of every hour you ever logged. Type 1:30, 1,5 or 1.5; it reads as 1:30 everywhere.',
     },
     {
         icon: 'desktop',
         image: '/images/mac/panel-light.png',
         title: 'Menu bar app for Mac',
-        text: 'Pick a client and a project, press play. The running time sits in your menu bar, and when your Mac sat idle the app asks whether to deduct it.',
+        text: 'A play and pause button in your menu bar with the running time next to it. One click opens your day: add an entry, press play on it, and when your Mac sat idle the app asks whether to deduct it.',
     },
     {
         icon: 'file-invoice',
@@ -66,7 +66,9 @@ const features = [
 
 const macPoints = [
     'Sign in once with your Kingtime account. The token lives in your keychain.',
-    'Client, project, notes, play. Stopping and starting again continues the same entry.',
+    'Play and pause straight from the menu bar. Play picks up the entry you worked on last.',
+    'Your day in the panel: a week strip with totals, the entries of the day, and a play button on each. Log half an hour by hand, press play, and it counts on from 0:30.',
+    'Or the whole week as a grid, the same timesheet as on the web.',
     'Idle for more than 15 minutes? On your return it offers to deduct that time, or to deduct and stop.',
     'Timers started on the web or through MCP show up in the menu bar too.',
     'Signed with a Developer ID and notarised by Apple, so it opens with a double-click. It updates itself.',
@@ -179,16 +181,16 @@ const macPoints = [
             >
                 <img
                     src="/images/mac/hero-light.png"
-                    alt="The macOS menu bar with the Kingtime status item showing 1:23, and the Kingtime panel under it: a running timer on Website redesign for Acme, client and project pickers, a notes field and a stop button."
+                    alt="The macOS menu bar with the Kingtime pause button showing 1:23, and the Kingtime panel under it: the week with a total per day and today's entries, a timer running on Website redesign for Acme."
                     width="1000"
-                    height="650"
+                    height="597"
                     class="block w-full dark:hidden"
                 />
                 <img
                     src="/images/mac/hero-dark.png"
                     alt="The Kingtime panel under the macOS menu bar, dark appearance."
                     width="1000"
-                    height="650"
+                    height="597"
                     class="hidden w-full dark:block"
                 />
             </div>
@@ -239,7 +241,7 @@ const macPoints = [
                         <p
                             class="bg-primary text-primary-foreground mr-auto max-w-[85%] rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm"
                         >
-                            Done: 2,00 h on Website redesign · Acme, 10
+                            Done: 2:00 h on Website redesign · Acme, 10
                             September. Anything else?
                         </p>
                         <p
@@ -344,9 +346,9 @@ const macPoints = [
             <div class="order-1 flex items-end justify-center gap-4 md:order-2">
                 <img
                     src="/images/mac/panel-dark.png"
-                    alt="The Kingtime panel with a running timer, dark appearance."
-                    width="640"
-                    height="518"
+                    alt="The Kingtime panel with today's entries and a running timer, dark appearance."
+                    width="760"
+                    height="728"
                     class="w-full max-w-xs min-w-0 rounded-xl shadow-2xl ring-1 ring-white/10"
                 />
                 <img
