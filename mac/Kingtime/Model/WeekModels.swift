@@ -12,6 +12,37 @@ struct WeekSheet: Codable, Equatable {
     let rows: [WeekRow]
     /// Projects that had hours the week before, for "copy from last week".
     let previousWeekProjectIds: [Int]
+    /// The day the week was asked around, its total and its entries: what
+    /// the day view lists.
+    let selectedDate: String
+    let dayTotal: String
+    let entries: [DayEntry]
+}
+
+/// One entry of the selected day. Hours of a running entry are the live
+/// hours at the moment the server answered.
+struct DayEntry: Codable, Equatable, Identifiable {
+    let id: Int
+    let projectId: Int
+    let spentOn: String
+    let hours: String
+    let notes: String?
+    let isBilled: Bool
+    let isLocked: Bool
+    let isRunning: Bool
+    let projectName: String?
+    let projectCode: String?
+    let projectColor: String?
+    let clientName: String?
+
+    var value: Double {
+        Double(hours) ?? 0
+    }
+
+    /// Billed or locked: it belongs to an invoice and stays as it is.
+    var isReadOnly: Bool {
+        isBilled || isLocked
+    }
 }
 
 struct WeekDay: Codable, Equatable, Identifiable {

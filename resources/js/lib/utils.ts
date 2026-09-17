@@ -22,16 +22,20 @@ export function moneyFormatter(
     });
 }
 
-/** "12.50" → "12,50"; hours are shown with two decimals everywhere. */
+/**
+ * "0.50" → "0:30", "12.25" → "12:15": hours are shown as hours and minutes
+ * everywhere. They are stored with two decimals, so minutes are rounded.
+ */
 export function formatHours(value: string | number | null | undefined): string {
     const amount = typeof value === 'string' ? Number.parseFloat(value) : value;
 
     if (amount === null || amount === undefined || Number.isNaN(amount)) {
-        return '0,00';
+        return '0:00';
     }
 
-    return new Intl.NumberFormat('nl-NL', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(amount);
+    const totalMinutes = Math.round(Math.abs(amount) * 60);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = String(totalMinutes % 60).padStart(2, '0');
+
+    return `${amount < 0 && totalMinutes > 0 ? '-' : ''}${hours}:${minutes}`;
 }

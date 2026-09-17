@@ -1,5 +1,7 @@
 <?php
 
+use App\Domain\Desktop\Controllers\DesktopEntryController;
+use App\Domain\Desktop\Controllers\DesktopEntryTimerController;
 use App\Domain\Desktop\Controllers\DesktopIdleTimeController;
 use App\Domain\Desktop\Controllers\DesktopStateController;
 use App\Domain\Desktop\Controllers\DesktopTimerController;
@@ -38,5 +40,8 @@ Route::prefix('desktop')->name('desktop.')->group(function (): void {
         Route::get('week', DesktopWeekController::class)->name('week');
         Route::post('week/cell', DesktopWeekCellController::class)->name('week.cell');
         Route::delete('week/row', DesktopWeekRowController::class)->name('week.row');
+        Route::apiResource('entries', DesktopEntryController::class)->only(['store', 'update', 'destroy'])
+            ->parameters(['entries' => 'time_entry']);
+        Route::post('entries/{time_entry}/timer', DesktopEntryTimerController::class)->name('entries.timer');
     });
 });

@@ -49,23 +49,22 @@ enum Hours {
         String(format: "%.2f", amount)
     }
 
-    /// "2.50" from the server as this Mac writes it: "2,50" in Dutch.
+    /// "0.50" from the server as "0:30": hours are shown as hours and
+    /// minutes everywhere, the way the menu bar clock counts them.
     static func display(_ raw: String) -> String {
         display(Double(raw) ?? 0)
     }
 
     static func display(_ amount: Double) -> String {
-        formatter.string(from: NSNumber(value: amount)) ?? String(format: "%.2f", amount)
+        let minutes = Int((abs(amount) * 60).rounded())
+
+        return String(format: "%@%d:%02d", amount < 0 && minutes > 0 ? "-" : "", minutes / 60, minutes % 60)
     }
 
-    private static let formatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
-
-        return formatter
-    }()
+    /// Whole seconds as "1:05", the same hours and minutes.
+    static func display(seconds: Int) -> String {
+        display(Double(seconds) / 3600)
+    }
 }
 
 /// The `Y-m-d` dates the API speaks, kept out of any time zone so a day

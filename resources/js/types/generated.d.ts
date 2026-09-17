@@ -66,11 +66,20 @@ export type DesktopStateData = {
 user: DesktopUserData,
 projects: ProjectOptionData[],
 timer: DesktopTimerData | null,
+last_entry: DesktopLastEntryData | null,
 server_time: string,
 };
 export type DesktopTokenData = {
 token: string,
 user: DesktopUserData,
+};
+export type DesktopLastEntryData = {
+id: number,
+project_id: number,
+project_name: string,
+client_name: string,
+notes: string | null,
+seconds: number,
 };
 export type DesktopTimerData = {
 id: number,

@@ -98,6 +98,10 @@ final class TimerStore {
         return projects.filter { $0.clientId == selectedClientId }
     }
 
+    func projects(forClient clientId: Int?) -> [ProjectOption] {
+        projects.filter { $0.clientId == clientId }
+    }
+
     var selectedProject: ProjectOption? {
         projects.first { $0.id == selectedProjectId }
     }
@@ -124,12 +128,14 @@ final class TimerStore {
         Self.format(seconds: elapsedSeconds)
     }
 
+    /// The entry of today that was worked on last, while nothing runs. The
+    /// menu bar shows its time and play continues it.
+    private(set) var lastEntry: DesktopLastEntry?
+
     var menuBarText: String? {
-        guard isRunning else {
+        guard let seconds = isRunning ? elapsedSeconds : lastEntry?.seconds else {
             return nil
         }
-
-        let seconds = elapsedSeconds
 
         return String(format: "%d:%02d", seconds / 3600, (seconds % 3600) / 60)
     }
@@ -190,6 +196,7 @@ final class TimerStore {
                 clientId: 1, clientName: "Acme", spentOn: "2026-09-10", notes: "Homepage hero",
                 secondsBeforeTimer: 0, timerStartedAt: Date().addingTimeInterval(-(1 * 3600 + 23 * 60 + 45))
             ),
+            lastEntry: nil,
             serverTime: Date()
         ))
         phase = .signedIn
@@ -240,6 +247,7 @@ final class TimerStore {
         user = nil
         projects = []
         timer = nil
+        lastEntry = nil
         needsTwoFactorCode = false
         phase = .signedOut
         stopTicking()
@@ -291,6 +299,43 @@ final class TimerStore {
         }
     }
 
+    /// The play button on an entry in the day view.
+    func startTimer(entryId: Int) async {
+        await perform {
+            try await client.startTimer(entryId: entryId)
+        }
+    }
+
+    /// The play and pause button in the menu bar. Pause stops the timer;
+    /// play continues the entry of today that was worked on last, and
+    /// failing that starts the project in the pickers. Answers false when
+    /// there is nothing to start, so the panel can open instead.
+    func toggleFromMenuBar() async -> Bool {
+        guard phase == .signedIn else {
+            return false
+        }
+
+        if isRunning {
+            await stopTimer()
+
+            return true
+        }
+
+        if let lastEntry {
+            await startTimer(entryId: lastEntry.id)
+
+            return true
+        }
+
+        guard selectedProjectId != nil else {
+            return false
+        }
+
+        await startTimer()
+
+        return true
+    }
+
     func stopTimer() async {
         await perform {
             try await client.stopTimer()
@@ -325,10 +370,12 @@ final class TimerStore {
         let previousTimerId = timer?.id
         let timerChanged = state.timer != timer
 
+
         clockOffset = state.serverTime.timeIntervalSinceNow
         user = state.user
         projects = state.projects
         timer = state.timer
+        lastEntry = state.lastEntry
         now = Date()
 
         if let timer = state.timer {

@@ -11,9 +11,10 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * Everything the menu bar app shows, in one payload: who is signed in, the
- * projects to pick from and the timer that is running right now (if any).
- * The app polls this, so a timer started on the web or through MCP shows
- * up in the menu bar too.
+ * projects to pick from, the timer that is running right now (if any) and,
+ * when nothing runs, the entry of today that was worked on last. The app
+ * polls this, so a timer started on the web or through MCP shows up in the
+ * menu bar too.
  */
 #[TypeScript]
 class DesktopStateData extends BaseData
@@ -25,6 +26,7 @@ class DesktopStateData extends BaseData
         public DesktopUserData $user,
         public Collection $projects,
         public ?DesktopTimerData $timer,
+        public ?DesktopLastEntryData $last_entry,
         public string $server_time,
     ) {}
 }

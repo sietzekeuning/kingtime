@@ -104,6 +104,36 @@ struct KingtimeClient {
         try await send("DELETE", "api/desktop/week/row", body: ["project_id": projectId, "week_start": weekStart])
     }
 
+    // MARK: - Day view
+
+    /// A new entry on a day. Answers with the week around that day, its
+    /// entries included.
+    func addEntry(projectId: Int, date: String, hours: Double, notes: String) async throws -> WeekSheet {
+        try await send("POST", "api/desktop/entries", body: [
+            "project_id": projectId,
+            "spent_on": date,
+            "hours": Hours.wire(hours),
+            "notes": notes,
+        ])
+    }
+
+    func updateEntry(id: Int, projectId: Int, hours: Double, notes: String) async throws -> WeekSheet {
+        try await send("PATCH", "api/desktop/entries/\(id)", body: [
+            "project_id": projectId,
+            "hours": Hours.wire(hours),
+            "notes": notes,
+        ])
+    }
+
+    func deleteEntry(id: Int) async throws -> WeekSheet {
+        try await send("DELETE", "api/desktop/entries/\(id)")
+    }
+
+    /// Continues the timer on an entry, on top of the hours it has.
+    func startTimer(entryId: Int) async throws -> DesktopState {
+        try await send("POST", "api/desktop/entries/\(entryId)/timer")
+    }
+
     // MARK: - Transport
 
     private struct Empty: Decodable {}

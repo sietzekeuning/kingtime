@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { parseHoursInput } from '@/lib/time';
+import { formatHours } from '@/lib/utils';
 import type { ProjectOptionData } from '@/types/generated';
 
 export type TimeEntryFormData = {
@@ -42,6 +44,27 @@ const selectedProject = computed(
         props.projects.find((project) => project.id === form.project_id) ??
         null,
 );
+
+// Hours are typed and shown as "1:30"; the server stores decimals, so the
+// value is converted on the way out. Input that is not hours goes as typed
+// and the server's validation message explains it.
+if (form.hours !== '' && Number.parseFloat(form.hours) > 0) {
+    form.hours = formatHours(form.hours);
+}
+
+form.transform((data) => {
+    const parsed = parseHoursInput(String(data.hours ?? ''));
+
+    return {
+        ...data,
+        hours:
+            parsed === undefined
+                ? data.hours
+                : parsed === null
+                  ? ''
+                  : (Math.round(parsed * 100) / 100).toFixed(2),
+    };
+});
 
 watch(
     () => form.project_id,
@@ -132,12 +155,9 @@ watch(
             >
                 <Input
                     v-model="form.hours"
-                    type="number"
+                    type="text"
                     inputmode="decimal"
-                    step="0.25"
-                    min="0"
-                    max="24"
-                    placeholder="0.00"
+                    placeholder="0:00"
                     :disabled="disabled"
                     :class="stacked ? '' : 'w-28'"
                 />

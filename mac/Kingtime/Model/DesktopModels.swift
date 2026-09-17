@@ -39,10 +39,22 @@ struct DesktopTimer: Codable, Identifiable, Equatable {
     }
 }
 
+/// The entry of today that was worked on last while nothing runs: the menu
+/// bar shows its time next to play, and play continues it.
+struct DesktopLastEntry: Codable, Identifiable, Equatable {
+    let id: Int
+    let projectId: Int
+    let projectName: String
+    let clientName: String
+    let notes: String?
+    let seconds: Int
+}
+
 struct DesktopState: Codable {
     let user: DesktopUser
     let projects: [ProjectOption]
     let timer: DesktopTimer?
+    let lastEntry: DesktopLastEntry?
     let serverTime: Date
 }
 

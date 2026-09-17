@@ -104,7 +104,29 @@ it('describes the signed-in user, the active projects and the running timer', fu
             ->where('timer.notes', 'Homepage')
             ->where('timer.project_name', 'Website')
             ->where('timer.client_name', 'Acme')
+            ->where('last_entry', null)
             ->where('server_time', now()->toIso8601String()));
+});
+
+it('names the entry of today that was worked on last while nothing runs, so play can continue it', function (): void {
+    TimeEntry::factory()->for($this->user)->for($this->project)->create(['spent_on' => '2026-09-09', 'hours' => '3.00']);
+    $older = TimeEntry::factory()->for($this->user)->for($this->project)->create(['spent_on' => '2026-09-10', 'hours' => '1.00', 'updated_at' => '2026-09-10 08:00:00']);
+    $last = TimeEntry::factory()->for($this->user)->for($this->project)->create(['spent_on' => '2026-09-10', 'hours' => '0.50', 'notes' => 'Footer', 'updated_at' => '2026-09-10 09:00:00']);
+    TimeEntry::factory()->for($this->user)->for($this->project)->create(['spent_on' => '2026-09-10', 'hours' => '2.00', 'is_billed' => true, 'updated_at' => '2026-09-10 09:30:00']);
+
+    Sanctum::actingAs($this->user);
+
+    $this->getJson(route('desktop.state'))
+        ->assertOk()
+        ->assertJson(fn (AssertableJson $json) => $json
+            ->where('timer', null)
+            ->where('last_entry.id', $last->id)
+            ->where('last_entry.project_name', 'Website')
+            ->where('last_entry.notes', 'Footer')
+            ->where('last_entry.seconds', 1800)
+            ->etc());
+
+    expect($older->id)->not->toBe($last->id);
 });
 
 it('starts a timer on a project for today and resumes the same entry after a stop', function (): void {

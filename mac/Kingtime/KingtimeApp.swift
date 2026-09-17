@@ -22,6 +22,7 @@ struct KingtimeApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let store = TimerStore()
     let week = WeekStore()
+    let day = DayStore()
 
     /// Sparkle: checks kingtime.nl/download/appcast.xml every six hours,
     /// downloads a newer build in the background and installs it on quit.
@@ -50,12 +51,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.offerLaunchAtLogin()
         }
         store.onTimerChanged = { [weak self] in
-            Task { @MainActor in await self?.week.reload() }
+            Task { @MainActor in
+                await self?.week.reload()
+                await self?.day.reload()
+            }
         }
         store.start()
 
         if ProcessInfo.processInfo.environment["KINGTIME_DEMO"] != nil {
             week.loadDemo()
+            day.loadDemo()
         }
 
         if let path = ProcessInfo.processInfo.environment["KINGTIME_SNAPSHOT"] {
@@ -99,20 +104,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.autosaveName = "Kingtime"
 
         if let button = statusItem.button {
-            let image = NSImage(named: "MenuBarIcon")
-            image?.isTemplate = true
-            button.image = image
+            button.image = StatusItemImage.crown
             button.imagePosition = .imageLeading
             button.font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
             button.target = self
-            button.action = #selector(togglePanel)
+            button.action = #selector(statusItemClicked)
             button.toolTip = "Kingtime"
         }
 
         popover.behavior = .transient
         popover.animates = false
 
-        let hosting = NSHostingController(rootView: MenuBarView(store: store, week: week, updater: updaterController.updater))
+        let hosting = NSHostingController(rootView: MenuBarView(store: store, week: week, day: day, updater: updaterController.updater))
         hosting.sizingOptions = [.preferredContentSize]
         popover.contentViewController = hosting
 
@@ -122,19 +125,124 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         refreshTitle()
     }
 
+    /// What the status item shows: the clock while there is no account;
+    /// once signed in a pill with play or pause and the time, followed by
+    /// the clock. The pill is orange while a timer runs, grey when paused.
+    private var statusItemLook: StatusItemImage.Look = .signedOut
+    private var statusItemTime: String?
+
     private func refreshTitle() {
         guard let button = statusItem.button else {
             return
         }
 
-        let text = store.menuBarText.map { " " + $0 } ?? ""
+        let look: StatusItemImage.Look = store.phase != .signedIn ? .signedOut : store.isRunning ? .running : .stopped
+        show(look, time: look == .signedOut ? nil : store.menuBarText ?? "0:00", on: button)
+    }
 
-        if button.title != text {
-            button.title = text
+    private var pillAnimation: Timer?
+
+    private func show(_ look: StatusItemImage.Look, time: String?, on button: NSStatusBarButton) {
+        guard look != statusItemLook || time != statusItemTime else {
+            return
+        }
+
+        let previous = statusItemLook
+        statusItemLook = look
+        statusItemTime = time
+        button.title = ""
+
+        // Play to pause (and back) blends the pill over a quarter second
+        // instead of flipping; every other change draws at once.
+        if previous != .signedOut, look != .signedOut, previous != look {
+            animatePill(from: previous, to: look, on: button)
+        } else if pillAnimation == nil {
+            button.image = StatusItemImage.image(for: look, time: time)
+        }
+
+        button.toolTip = switch look {
+        case .signedOut: "Kingtime"
+        case .stopped: "Play continues the last timer · the time opens Kingtime"
+        case .running: "Pause stops the timer · the time opens Kingtime"
         }
     }
 
-    @objc private func togglePanel() {
+    private func animatePill(from: StatusItemImage.Look, to: StatusItemImage.Look, on button: NSStatusBarButton) {
+        pillAnimation?.invalidate()
+
+        let duration: TimeInterval = 0.25
+        let started = Date()
+
+        pillAnimation = Timer.scheduledTimer(withTimeInterval: 1 / 60, repeats: true) { [weak self] timer in
+            Task { @MainActor in
+                guard let self else {
+                    timer.invalidate()
+                    return
+                }
+
+                let linear = min(1, Date().timeIntervalSince(started) / duration)
+                let eased = CGFloat(linear < 0.5 ? 2 * linear * linear : 1 - pow(-2 * linear + 2, 2) / 2)
+
+                if linear >= 1 {
+                    timer.invalidate()
+                    self.pillAnimation = nil
+                    button.image = StatusItemImage.image(for: self.statusItemLook, time: self.statusItemTime)
+                } else {
+                    button.image = StatusItemImage.frame(from: from, to: to, time: self.statusItemTime, progress: eased)
+                }
+            }
+        }
+    }
+
+    /// The play/pause square at the leading edge plays or pauses without
+    /// opening anything; the time next to it opens the panel. When there is
+    /// nothing to continue yet, play opens the panel instead.
+    @objc private func statusItemClicked() {
+        guard let button = statusItem.button, let event = NSApp.currentEvent, statusItemLook != .signedOut else {
+            togglePanel()
+            return
+        }
+
+        let point = button.convert(event.locationInWindow, from: nil)
+        let imageWidth = button.image?.size.width ?? 0
+        var imageRect = button.cell?.imageRect(forBounds: button.bounds) ?? .zero
+
+        if imageRect.width < 1 {
+            // The image sits centred in the button when there is no title.
+            imageRect = NSRect(x: (button.bounds.width - imageWidth) / 2, y: 0, width: imageWidth, height: button.bounds.height)
+        }
+
+        let buttonEdge = imageRect.minX + StatusItemImage.glyphWidth
+        let onButton = point.x <= buttonEdge && event.modifierFlags.intersection([.control, .option, .command]).isEmpty
+
+        guard onButton else {
+            togglePanel()
+            return
+        }
+
+        guard !store.isBusy else {
+            return
+        }
+
+        if popover.isShown {
+            popover.performClose(nil)
+        }
+
+        // Answer the click at once: the pill turns before the server does.
+        show(store.isRunning ? .stopped : .running, time: statusItemTime, on: button)
+
+        Task { @MainActor in
+            let didToggle = await store.toggleFromMenuBar()
+            statusItemLook = .signedOut
+            refreshTitle()
+
+            if !didToggle {
+                showPanel()
+            }
+        }
+    }
+
+    private func togglePanel() {
         if popover.isShown {
             popover.performClose(nil)
         } else {
@@ -162,6 +270,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // an icon they have never seen.
         if phase == .signedOut {
             week.forgetSession()
+            day.forgetSession()
         }
 
         if phase == .signedOut, !shownSignInPanel {
@@ -207,11 +316,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let root = Group {
             switch kind {
             case "hero":
-                HeroSnapshotView(store: store, week: week, updater: updaterController.updater)
+                HeroSnapshotView(store: store, week: week, day: day, updater: updaterController.updater)
             case "idle":
                 IdlePromptSnapshotView()
             default:
-                MenuBarView(store: store, week: week, updater: updaterController.updater)
+                MenuBarView(store: store, week: week, day: day, updater: updaterController.updater)
             }
         }
         .environment(\.controlActiveState, .key)

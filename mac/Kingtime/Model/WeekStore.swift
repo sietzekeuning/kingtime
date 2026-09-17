@@ -236,7 +236,11 @@ final class WeekStore {
     /// no server (see TimerStore.loadDemo for the matching projects).
     func loadDemo() {
         isDemo = true
+        sheet = Self.demoSheet()
+    }
 
+    /// The made-up week, shared with the day view (see DayStore.loadDemo).
+    static func demoSheet() -> WeekSheet {
         let dates = (0 ... 6).map { WeekDates.add(days: $0, to: "2026-09-07") }
         let weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         let byProject: [(Int, String, String?, String, [String])] = [
@@ -264,7 +268,13 @@ final class WeekStore {
             Hours.wire(rows.reduce(0) { $0 + (Double($1.cells[index].hours) ?? 0) })
         }
 
-        sheet = WeekSheet(
+        let entries = [
+            DayEntry(id: 1, projectId: 1, spentOn: dates[3], hours: "2.00", notes: "Homepage hero", isBilled: false, isLocked: false, isRunning: false, projectName: "Website redesign", projectCode: nil, projectColor: "#F2622A", clientName: "Acme"),
+            DayEntry(id: 2, projectId: 3, spentOn: dates[3], hours: "4.00", notes: "Logo sketches", isBilled: false, isLocked: false, isRunning: false, projectName: "Brand identity", projectCode: nil, projectColor: "#10B981", clientName: "Globex"),
+            DayEntry(id: 3, projectId: 1, spentOn: dates[3], hours: "1.50", notes: nil, isBilled: false, isLocked: false, isRunning: false, projectName: "Website redesign", projectCode: nil, projectColor: "#F2622A", clientName: "Acme"),
+        ]
+
+        return WeekSheet(
             weekStart: dates[0],
             weekEnd: dates[6],
             weekTotal: Hours.wire(dayTotals.reduce(0) { $0 + (Double($1) ?? 0) }),
@@ -272,7 +282,10 @@ final class WeekStore {
                 WeekDay(date: pair.0, weekday: pair.1, totalHours: total, isToday: pair.0 == dates[3], isWeekend: pair.1 == "Sat" || pair.1 == "Sun", isFuture: false)
             },
             rows: rows,
-            previousWeekProjectIds: []
+            previousWeekProjectIds: [],
+            selectedDate: dates[3],
+            dayTotal: dayTotals[3],
+            entries: entries
         )
     }
 }

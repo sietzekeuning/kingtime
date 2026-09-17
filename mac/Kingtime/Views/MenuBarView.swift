@@ -4,9 +4,10 @@ import SwiftUI
 struct MenuBarView: View {
     let store: TimerStore
     let week: WeekStore
+    let day: DayStore
     let updater: SPUUpdater
 
-    /// What a click on the status item opens: the timer or the week grid.
+    /// What a click on the status item opens: the day, the timer or the week.
     /// The gear menu and the switch in the header both write it back.
     @State private var mode = PanelMode.current
 
@@ -23,10 +24,13 @@ struct MenuBarView: View {
             case .signedOut:
                 LoginView(store: store)
             case .signedIn:
-                if mode == .week {
-                    WeekView(store: store, week: week, updater: updater, mode: $mode, theme: $theme)
-                } else {
+                switch mode {
+                case .day:
+                    DayView(store: store, day: day, updater: updater, mode: $mode, theme: $theme)
+                case .timer:
                     TimerView(store: store, updater: updater, mode: $mode, theme: $theme)
+                case .week:
+                    WeekView(store: store, week: week, updater: updater, mode: $mode, theme: $theme)
                 }
             }
         }

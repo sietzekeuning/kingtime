@@ -9,6 +9,7 @@ import SwiftUI
 struct HeroSnapshotView: View {
     let store: TimerStore
     let week: WeekStore
+    let day: DayStore
     let updater: Sparkle.SPUUpdater
 
     var body: some View {
@@ -39,7 +40,7 @@ struct HeroSnapshotView: View {
 
             HStack {
                 Spacer()
-                MenuBarView(store: store, week: week, updater: updater)
+                MenuBarView(store: store, week: week, day: day, updater: updater)
                     .background(Color(nsColor: .windowBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.black.opacity(0.12)))

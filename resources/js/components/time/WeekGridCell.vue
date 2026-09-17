@@ -107,7 +107,7 @@ const readOnlyTitle = computed(() => {
             ]"
             :disabled="saving"
             :title="cell.notes ?? undefined"
-            placeholder="0,00"
+            placeholder="0:00"
             @focus="onFocus"
             @blur="commit"
             @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"

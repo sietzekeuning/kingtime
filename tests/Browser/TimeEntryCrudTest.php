@@ -24,7 +24,7 @@ it('logs time from the entry form', function (): void {
     $page->click('[data-field="project_id"] button[role="combobox"]');
     browserWaitUntilSee($page, 'Website');
     $page->click('[role="option"]:has-text("Website")');
-    $page->fill('[data-field="hours"] input', '1.5');
+    $page->fill('[data-field="hours"] input', '1:30');
     $page->fill('[data-field="notes"] textarea', 'Refactoring');
     $page->press('Save');
 
@@ -43,7 +43,7 @@ it('logs time from the entry form', function (): void {
     $page->assertPathIs('/time-entries')
         ->assertQueryStringHas('date', '2026-09-07')
         ->assertSee('Website')
-        ->assertSee('1,50')
+        ->assertSee('1:30')
         ->assertNoJavaScriptErrors();
 });
 
