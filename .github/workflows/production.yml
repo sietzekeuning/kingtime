@@ -127,7 +127,8 @@ jobs:
   browser:
     runs-on: [self-hosted, linux, x64]
     needs: [build]
-    timeout-minutes: 20
+    # 20 minutes for the suite plus at most 15 waiting for the browser lock (see the step).
+    timeout-minutes: 35
 
     steps:
       - name: Checkout
@@ -159,8 +160,13 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install chromium
 
+      # One browser suite at a time on the whole runner box: friso, l2, pos, vvw and kingtime
+      # share 2 vCPUs and 4 GB, and two suites side by side make the box swap until clicks run
+      # into the 20 s timeout (24 September: friso went red while l2 ran alongside). flock makes
+      # this step wait for the other suite (at most 15 minutes); the lock goes away with the
+      # process, also when the run is cancelled.
       - name: Run browser tests
-        run: ./vendor/bin/pest --testsuite=Browser --colors=always
+        run: flock --verbose --wait 900 /tmp/ci-browser-suite.lock ./vendor/bin/pest --testsuite=Browser --colors=always
 
       - name: Upload screenshots on failure
         if: failure()
