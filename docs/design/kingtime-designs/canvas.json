@@ -1,0 +1,48 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-02T12:20:00Z" },
+  "title": "Kingtime designs",
+  "launch": { "view": "canvas", "page": "brand" },
+  "pages": [
+    { "id": "brand", "name": "Brand" },
+    { "id": "web-app", "name": "Web app" },
+    { "id": "mac-app", "name": "Kingtime for Mac" },
+    { "id": "product-page", "name": "Product page" }
+  ],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "title": "Brand: logo, icons and colours", "page": "brand" },
+    "Dashboard.dc.html": { "x": 0, "y": 0, "w": 1400, "h": 875, "title": "Dashboard", "page": "web-app" },
+    "Timesheet.dc.html": { "x": 1480, "y": 0, "w": 1400, "h": 875, "title": "Timesheet", "page": "web-app" },
+    "Invoices.dc.html": { "x": 0, "y": 995, "w": 1400, "h": 875, "title": "Invoices", "page": "web-app" },
+    "Integrations.dc.html": { "x": 1480, "y": 995, "w": 1400, "h": 875, "title": "Integrations", "page": "web-app" },
+    "PanelLight.dc.html": { "x": 0, "y": 0, "w": 760, "h": 728, "title": "Panel · light", "page": "mac-app" },
+    "PanelDark.dc.html": { "x": 840, "y": 0, "w": 760, "h": 728, "title": "Panel · dark", "page": "mac-app" },
+    "SignIn.dc.html": { "x": 1680, "y": 0, "w": 640, "h": 414, "title": "Sign in", "page": "mac-app" },
+    "IdlePrompt.dc.html": { "x": 2400, "y": 0, "w": 648, "h": 736, "title": "Idle prompt", "page": "mac-app" },
+    "HeroLight.dc.html": { "x": 0, "y": 856, "w": 1000, "h": 597, "title": "Menu bar hero · light", "page": "mac-app" },
+    "HeroDark.dc.html": { "x": 1080, "y": 856, "w": 1000, "h": 597, "title": "Menu bar hero · dark", "page": "mac-app" },
+    "ProductPageLight.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 3440, "title": "kingtime.nl · light", "page": "product-page" },
+    "ProductPageDark.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 3440, "title": "kingtime.nl · dark", "page": "product-page" }
+  },
+  "order": [
+    "Main.dc.html",
+    "Dashboard.dc.html",
+    "Timesheet.dc.html",
+    "Invoices.dc.html",
+    "Integrations.dc.html",
+    "PanelLight.dc.html",
+    "PanelDark.dc.html",
+    "SignIn.dc.html",
+    "IdlePrompt.dc.html",
+    "HeroLight.dc.html",
+    "HeroDark.dc.html",
+    "ProductPageLight.dc.html",
+    "ProductPageDark.dc.html"
+  ],
+  "notes": {
+    "webapp-title": { "x": 0, "y": -300, "text": "Web app", "kind": "title1", "maxW": 2880, "page": "web-app" },
+    "mac-title": { "x": 0, "y": -300, "text": "Kingtime for Mac", "kind": "title1", "maxW": 3048, "page": "mac-app" },
+    "site-title": { "x": 0, "y": -300, "text": "Product page", "kind": "title1", "maxW": 2960, "page": "product-page" }
+  },
+  "designSystems": []
+}

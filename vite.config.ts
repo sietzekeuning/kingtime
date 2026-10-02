@@ -51,6 +51,7 @@ export default defineConfig({
     lint: {
         ignorePatterns: [
             'mac/**',
+            'docs/design/**',
             'vendor/**',
             'node_modules/**',
             'public/**',
@@ -77,6 +78,7 @@ export default defineConfig({
         htmlWhitespaceSensitivity: 'css',
         ignorePatterns: [
             '.github/**',
+            'docs/design/**',
             'mac/**',
             'composer.json',
             'resources/js/components/ui/*',

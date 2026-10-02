@@ -268,6 +268,10 @@ Every list is a `Table` class (`App\Domain\{Domain}\Tables\{Resource}Table exten
 - Shared primitives first: `PageHeader`, `StatusBadge`, `MetricCard`, `EmptyState`, `EnumSelect`, `formatEuro`, `formatHours`, `formatDate`. Extract on the second copy.
 - Light theme is the design (see the dashboard mock: warm off-white page, white cards with `border-border`, orange primary). Dark mode tokens exist and must keep working, so use theme tokens (`bg-card`, `text-muted-foreground`), never raw grays.
 
+## Designs
+
+All designs are on one Claude design canvas, [Kingtime designs](https://claude.ai/artifact/2H34thswAizZcZPok9qBvm), with the pages Brand, Web app, Kingtime for Mac and Product page. `docs/design/` holds the copy in the repository and its README maps every board to the asset it shows. Draw new designs on that canvas (a new board on the right page), not on a new one, and copy changed boards back to `docs/design/kingtime-designs/`.
+
 ## Kingtime for Mac
 
 The menu bar app lives in `mac/` (Swift, AppKit status item + SwiftUI panel, Sparkle updates, xcodegen; see `mac/README.md`). It talks to `/api/desktop/*` (`App\Domain\Desktop`), signs in with email + password (+ two-factor code) for a Sanctum token, and polls `GET /api/desktop/state`. Releases are GitHub releases of this repository tagged `mac-vX.Y.Z`, cut with `mac/scripts/release.sh`; that commit only touches `mac/`, which `production.yml` ignores. `GET /download/mac` redirects to the newest DMG (cached an hour), `GET /download/appcast.xml` redirects to `mac/appcast.xml` on `master`; the appcast URL is baked into every installed copy, so the route must stay. Panel screenshots on the homepage come from the app's `KINGTIME_SNAPSHOT` mode and live in `public/images/mac/`. Pint, PHPStan, `vp check` and Vite ignore `mac/`.
