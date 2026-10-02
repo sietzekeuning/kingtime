@@ -8,36 +8,6 @@ export type EnumOption = {
 
 export type EnumOptions = Record<string, EnumOption>
 
-export enum HarvestImportStatus {
-    Queued = 'queued',
-    Running = 'running',
-    Finished = 'finished',
-    Failed = 'failed',
-}
-
-export const HarvestImportStatusOptions: EnumOptions = {
-    Queued: {
-        value: 'queued',
-        label: 'Queued',
-        colorClass: 'bg-slate-100 text-slate-700',
-    },
-    Running: {
-        value: 'running',
-        label: 'Running',
-        colorClass: 'bg-blue-100 text-blue-700',
-    },
-    Finished: {
-        value: 'finished',
-        label: 'Finished',
-        colorClass: 'bg-green-100 text-green-700',
-    },
-    Failed: {
-        value: 'failed',
-        label: 'Failed',
-        colorClass: 'bg-red-100 text-red-700',
-    },
-};
-
 export enum InvoiceStatus {
     Draft = 'draft',
     Open = 'open',
@@ -71,6 +41,36 @@ export const InvoiceStatusOptions: EnumOptions = {
         value: 'uncollectible',
         label: 'Uncollectible',
         colorClass: 'bg-gray-200 text-gray-600',
+    },
+};
+
+export enum HarvestImportStatus {
+    Queued = 'queued',
+    Running = 'running',
+    Finished = 'finished',
+    Failed = 'failed',
+}
+
+export const HarvestImportStatusOptions: EnumOptions = {
+    Queued: {
+        value: 'queued',
+        label: 'Queued',
+        colorClass: 'bg-slate-100 text-slate-700',
+    },
+    Running: {
+        value: 'running',
+        label: 'Running',
+        colorClass: 'bg-blue-100 text-blue-700',
+    },
+    Finished: {
+        value: 'finished',
+        label: 'Finished',
+        colorClass: 'bg-green-100 text-green-700',
+    },
+    Failed: {
+        value: 'failed',
+        label: 'Failed',
+        colorClass: 'bg-red-100 text-red-700',
     },
 };
 
